@@ -8,52 +8,54 @@
   <style>
     :root { --primary: #0066ff; --success: #00c853; --danger: #ff1744; --bg: #f5f7fa; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: linear-gradient(135deg, var(--bg) 0%, #e4e9f2 100%); min-height: 100vh; padding: 15px; }
-    .container { max-width: 620px; margin: 0 auto; }
-    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    body { background: #f0f2f5; padding: 15px; }
+    .container { max-width: 500px; margin: 0 auto; }
+    
+    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .saldo-card { background: #e3f2fd; border-left: 6px solid var(--primary); }
+    
     label { font-weight: 600; font-size: 14px; color: #555; display: block; margin-bottom: 5px; }
-    input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; }
-    input:focus { border-color: var(--primary); outline: none; }
-    button { width: 100%; padding: 16px; margin: 5px 0; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-primary { background: var(--primary); color: white; }
+    input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
+    
+    button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
     .btn-scanner { background: #673ab7; color: white; }
-    .btn-success { background: var(--success); color: white; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; margin-top: 10px; }
     .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
-    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; border: 2px solid var(--primary); }
+
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
     #status_msg { padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; display: none; text-align: center; }
-    #status_saldo { font-size: 20px; font-weight: bold; text-align: right; margin-top: 5px; }
-    .item { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
-    .total-container { background: white; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    .total-valor { font-size: 32px; font-weight: 800; }
+    
+    .item { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+    .total-container { background: white; border-radius: 16px; padding: 15px; text-align: center; margin-top: 10px; border: 2px solid #eee; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1 style="text-align:center; margin-bottom:20px;">🛒 Lista com Scanner</h1>
+    <h1 style="text-align:center; margin-bottom:15px;">🛒 Lista de Compras</h1>
 
     <div class="card saldo-card">
-      <label>💰 Saldo Disponível (R$)</label>
-      <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="Ex: 200,00" oninput="atualizarCalculos()">
-      <div id="status_saldo">Restante: R$ 0,00</div>
+      <label>💰 Quanto quer gastar hoje?</label>
+      <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="R$ 0,00" oninput="atualizarCalculos()">
+      <div id="status_saldo" style="font-weight:bold; text-align:right;">Restante: R$ 0,00</div>
     </div>
 
     <div class="card">
       <div id="reader"></div>
+      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ABRIR CÂMERA / LER CÓDIGO</button>
       
-      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 Abrir Câmera para Ler</button>
-      
-      <label style="margin-top:15px;">Código de Barras</label>
-      <input type="text" id="codigo" placeholder="EAN / Código..." oninput="buscaAutomaticaAoDigitar()">
-      <button class="btn-primary" onclick="tentarBuscar()">🔍 Buscar Manual</button>
+      <hr style="margin: 15px 0; opacity: 0.2;">
 
+      <label>Código de Barras</label>
+      <input type="text" id="codigo" placeholder="EAN ou Digite aqui..." oninput="buscaAutomaticaAoDigitar()">
+      
       <div id="status_msg"></div>
 
       <label>Nome do Produto</label>
-      <input type="text" id="nome" placeholder="Nome do item">
+      <input type="text" id="nome" placeholder="Ex: Feijão Carioca">
       
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 8px;">
         <div style="flex: 2;">
           <label>Preço (R$)</label>
           <input type="number" id="valor" step="0.01" inputmode="decimal" placeholder="0,00">
@@ -64,107 +66,110 @@
         </div>
       </div>
 
-      <button class="btn-success" onclick="adicionarItem()">➕ Adicionar na Lista</button>
+      <button class="btn-success" onclick="adicionarItem()">➕ ADICIONAR NA LISTA</button>
     </div>
 
     <div id="lista"></div>
 
     <div class="total-container">
-      <div style="color: #777; font-size: 12px;">TOTAL ACUMULADO</div>
-      <div class="total-valor">R$ <span id="total">0,00</span></div>
+      <span style="color: #777; font-size: 12px;">TOTAL GERAL</span><br>
+      <strong style="font-size: 28px;">R$ <span id="total">0,00</span></strong>
     </div>
 
-    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista</button>
+    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Tudo</button>
   </div>
 
   <script>
     let itens = [];
     let memoriaProdutos = {};
-    let html5QrCode;
+    let scannerHtml5;
 
+    // Iniciar carregando dados
     window.onload = () => {
-      if (localStorage.getItem('itens_v5')) itens = JSON.parse(localStorage.getItem('itens_v5'));
-      if (localStorage.getItem('saldo_v5')) document.getElementById('saldo_limite').value = localStorage.getItem('saldo_v5');
-      if (localStorage.getItem('memo_v5')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v5'));
+      if (localStorage.getItem('itens_v6')) itens = JSON.parse(localStorage.getItem('itens_v6'));
+      if (localStorage.getItem('saldo_v6')) document.getElementById('saldo_limite').value = localStorage.getItem('saldo_v6');
+      if (localStorage.getItem('memo_v6')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v6'));
       renderizarLista();
     };
 
-    // FUNÇÕES DO SCANNER
-    async function alternarScanner() {
-      const readerDiv = document.getElementById('reader');
+    // FUNÇÕES DO SCANNER (CÂMERA)
+    function alternarScanner() {
       const btn = document.getElementById('btnScan');
+      const readerDiv = document.getElementById('reader');
 
-      if (!html5QrCode) {
+      if (!scannerHtml5) {
         readerDiv.style.display = 'block';
-        btn.innerHTML = "❌ Fechar Câmera";
+        btn.innerHTML = "❌ FECHAR CÂMERA";
         btn.style.background = "#555";
         
-        html5QrCode = new Html5Qrcode("reader");
+        scannerHtml5 = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 150 } };
 
-        try {
-          await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        scannerHtml5.start({ facingMode: "environment" }, config, (decodedText) => {
             document.getElementById('codigo').value = decodedText;
             pararScanner();
-            tentarBuscar(); // Busca assim que lê
-          });
-        } catch (err) {
-          alert("Erro ao abrir câmera: " + err);
-          pararScanner();
-        }
+            tentarBuscar(); // Busca automática após ler
+        }).catch(err => {
+            alert("Erro na Câmera: Verifique se deu permissão e se está usando HTTPS.");
+            pararScanner();
+        });
       } else {
         pararScanner();
       }
     }
 
     function pararScanner() {
-      if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-          html5QrCode = null;
+      if (scannerHtml5) {
+        scannerHtml5.stop().then(() => {
+          scannerHtml5 = null;
           document.getElementById('reader').style.display = 'none';
-          document.getElementById('btnScan').innerHTML = "📷 Abrir Câmera para Ler";
+          document.getElementById('btnScan').innerHTML = "📷 ABRIR CÂMERA / LER CÓDIGO";
           document.getElementById('btnScan').style.background = "#673ab7";
         });
       }
     }
 
-    // BUSCA E MEMÓRIA
+    // BUSCA E LÓGICA
     function buscaAutomaticaAoDigitar() {
       const cod = document.getElementById('codigo').value.trim();
       if (memoriaProdutos[cod]) {
         document.getElementById('nome').value = memoriaProdutos[cod];
-        mostrarStatus("✅ Memória: " + memoriaProdutos[cod], "#e8f5e9", "#2e7d32");
+        msgStatus("Produto já conhecido!", "green");
       }
     }
 
     async function tentarBuscar() {
       const cod = document.getElementById('codigo').value.trim();
-      const inputNome = document.getElementById('nome');
       if (!cod) return;
 
       if (memoriaProdutos[cod]) {
-        inputNome.value = memoriaProdutos[cod];
-        mostrarStatus("✅ Memória: " + memoriaProdutos[cod], "#e8f5e9", "#2e7d32");
+        document.getElementById('nome').value = memoriaProdutos[cod];
         document.getElementById('valor').focus();
         return;
       }
 
-      mostrarStatus("🔄 Buscando na web...", "#e3f2fd", "#0066ff");
+      msgStatus("Buscando na internet...", "blue");
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cod}.json`);
         const data = await res.json();
         if (data.status === 1) {
-          const nomeNet = data.product.product_name || "";
-          inputNome.value = nomeNet;
-          mostrarStatus("✅ Web: " + nomeNet, "#e8f5e9", "#2e7d32");
+          document.getElementById('nome').value = data.product.product_name || "";
           document.getElementById('valor').focus();
+          msgStatus("Encontrado!", "green");
         } else {
-          throw new Error();
+          msgStatus("Não encontrado. Digite o nome.", "orange");
+          document.getElementById('nome').focus();
         }
       } catch (e) {
-        mostrarStatus("⚠️ Não achamos. Digite o nome para salvar.", "#fff3cd", "#856404");
-        inputNome.focus();
+        msgStatus("Erro na busca.", "red");
       }
+    }
+
+    function msgStatus(texto, cor) {
+      const st = document.getElementById('status_msg');
+      st.style.display = 'block';
+      st.innerHTML = texto;
+      st.style.color = cor;
     }
 
     function adicionarItem() {
@@ -173,76 +178,67 @@
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
-      if (!nome || valor <= 0) return alert("Preencha nome e valor!");
+      if (!nome || valor <= 0) return alert("Preencha Nome e Preço!");
 
       if (cod) {
         memoriaProdutos[cod] = nome;
-        localStorage.setItem('memo_v5', JSON.stringify(memoriaProdutos));
+        localStorage.setItem('memo_v6', JSON.stringify(memoriaProdutos));
       }
 
       itens.push({ nome, valor, qtd, subtotal: valor * qtd });
-      salvarTudo();
+      salvar();
       
+      document.getElementById('codigo').value = '';
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
-      document.getElementById('codigo').value = '';
-      document.getElementById('status_msg').style.display = "none";
+      document.getElementById('status_msg').style.display = 'none';
     }
 
-    function mostrarStatus(msg, bg, color) {
-      const el = document.getElementById('status_msg');
-      el.style.display = "block";
-      el.style.background = bg;
-      el.style.color = color;
-      el.innerHTML = msg;
-    }
-
-    function atualizarCalculos() {
-      localStorage.setItem('saldo_v5', document.getElementById('saldo_limite').value);
-      renderizarLista();
-    }
-
-    function salvarTudo() {
-      localStorage.setItem('itens_v5', JSON.stringify(itens));
+    function salvar() {
+      localStorage.setItem('itens_v6', JSON.stringify(itens));
       renderizarLista();
     }
 
     function renderizarLista() {
-      const container = document.getElementById('lista');
+      const listaDiv = document.getElementById('lista');
+      const saldoInput = document.getElementById('saldo_limite');
       const totalSpan = document.getElementById('total');
       const statusSaldo = document.getElementById('status_saldo');
-      const saldoMax = parseFloat(document.getElementById('saldo_limite').value) || 0;
       
-      container.innerHTML = '';
-      let totalGeral = 0;
+      listaDiv.innerHTML = '';
+      let total = 0;
 
       itens.forEach((item, index) => {
-        totalGeral += item.subtotal;
-        container.innerHTML += `
+        total += item.subtotal;
+        listaDiv.innerHTML += `
           <div class="item">
             <div><strong>${item.nome}</strong><br><small>${item.qtd}x R$ ${item.valor.toFixed(2)}</small></div>
             <div style="text-align:right;">
               <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
-              <span onclick="removerItem(${index})" style="color:red; cursor:pointer; font-size:12px; font-weight:bold;">Remover</span>
+              <span onclick="removerItem(${index})" style="color:red; cursor:pointer; font-size:12px;">Remover</span>
             </div>
           </div>`;
       });
 
-      totalSpan.textContent = totalGeral.toFixed(2).replace('.', ',');
-      const restante = saldoMax - totalGeral;
-      statusSaldo.innerHTML = `Restante: R$ ${restante.toFixed(2).replace('.', ',')}`;
-      statusSaldo.style.color = restante < 0 ? "red" : "#2e7d32";
+      totalSpan.innerText = total.toFixed(2);
+      const saldo = parseFloat(saldoInput.value) || 0;
+      const resta = saldo - total;
+      statusSaldo.innerHTML = "Restante: R$ " + resta.toFixed(2);
+      statusSaldo.style.color = resta < 0 ? "red" : "green";
+      localStorage.setItem('saldo_v6', saldo);
     }
 
     function removerItem(index) {
       itens.splice(index, 1);
-      salvarTudo();
+      salvar();
     }
 
+    function atualizarCalculos() { renderizarLista(); }
+
     function limparLista() {
-      if (confirm("Limpar lista atual? Sua memória de produtos será mantida.")) {
+      if (confirm("Limpar lista?")) {
         itens = [];
-        salvarTudo();
+        salvar();
       }
     }
   </script>
