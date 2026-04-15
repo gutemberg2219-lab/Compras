@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Compras Família - V25</title>
+  <title>🛒 Compras Família - V27</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; }
+    :root { --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; --adm-bg: #37474f; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { background: var(--bg); padding: 15px; padding-bottom: 180px; }
     .container { max-width: 500px; margin: 0 auto; }
     .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
     button { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
-    #tela-login, #app-principal { display: none; }
+    #tela-login, #tela-cadastro, #app-principal, #painel-adm { display: none; }
     .grid-saldos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; }
     .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 100; text-align: center; }
     .alerta-preco { font-size: 11px; padding: 10px; background: #e3f2fd; border-radius: 8px; margin-bottom: 10px; display: none; border-left: 4px solid var(--primary); color: #0d47a1; }
+    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
   </style>
 </head>
 <body>
@@ -29,12 +30,37 @@
         <input type="text" id="login_user" placeholder="Usuário">
         <input type="password" id="login_pass" placeholder="Senha">
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
+        <button style="background: none; color: var(--primary); border: 1px solid var(--primary);" onclick="abrirCadastro()">NOVO CADASTRO</button>
+    </div>
+
+    <div id="tela-cadastro" class="card">
+        <h2 style="text-align:center; margin-bottom:15px;">📝 Criar Conta</h2>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px; text-align: center;">Senha inicial: <strong>Compras@2026</strong></p>
+        <input type="text" id="novo_usuario" placeholder="Nome do Usuário">
+        <button style="background: #4caf50; color: white;" onclick="registrarUsuario()">CADASTRAR</button>
+        <button style="background: none; color: #666;" onclick="voltarLogin()">VOLTAR</button>
+    </div>
+
+    <div id="painel-adm">
+        <div class="card" style="background: var(--adm-bg); color: white;">
+            <h3>🛡️ Painel Master (ADM)</h3>
+            <p style="font-size: 12px; opacity: 0.8;">Gerencie as contas da família</p>
+        </div>
+        <div class="card">
+            <h4>Usuários Cadastrados</h4>
+            <div id="lista-usuarios-master" style="margin-top: 10px;"></div>
+        </div>
+        <button style="background: var(--primary); color: white;" onclick="acessarAppComoAdm()">IR PARA O COMPARADOR</button>
+        <button style="background: #ccc; color: #333;" onclick="logout()">SAIR</button>
     </div>
 
     <div id="app-principal">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 id="boas_vindas"></h3>
-        <button onclick="logout()" style="width:auto; padding:5px; font-size:10px; background:#ccc;">Sair</button>
+        <div style="display: flex; gap: 5px;">
+            <button id="btn-voltar-adm" onclick="abrirPainelAdm()" style="display:none; width:auto; padding:5px; font-size:10px; background:var(--adm-bg); color:white;">Painel</button>
+            <button onclick="logout()" style="width:auto; padding:5px; font-size:10px; background:#ccc;">Sair</button>
+        </div>
       </div>
 
       <div class="card" style="background:#fff9c4;">
@@ -61,7 +87,7 @@
           
           <div style="display:flex; gap:5px;">
             <input type="number" id="valor_prod" placeholder="Valor R$" step="0.01" style="flex:1">
-            <select id="modalidade" style="flex:1">
+            <select id="modalbody_modalidade" style="flex:1">
                 <option value="refeicao">VR</option>
                 <option value="alimentacao">VA</option>
                 <option value="debito">DÉBITO</option>
@@ -73,21 +99,13 @@
       <div id="lista_itens"></div>
 
       <div class="card" style="background: #e8f5e9; border: 1px solid #2e7d32;">
-          <button style="background: #2e7d32; color: white;" onclick="finalizarCompra()">✅ FINALIZAR E SALVAR NO HISTÓRICO</button>
-          <p style="font-size: 10px; text-align: center; color: #2e7d32;">Isso guardará os preços para você comparar no futuro.</p>
-      </div>
-
-      <div class="card" style="background:#f0f0f0;">
-          <div style="display:flex; gap:5px;">
-              <button style="background:#555; color:white; font-size:10px; flex:1;" onclick="exportar()">Backup (Copiar)</button>
-              <button style="background:#555; color:white; font-size:10px; flex:1;" onclick="importar()">Restaurar (Colar)</button>
-          </div>
+          <button style="background: #2e7d32; color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA DO DIA</button>
       </div>
     </div>
   </div>
 
-  <div class="resumo-fixo">
-    <div style="font-weight:800; font-size:16px;">DISPONÍVEL: R$ <span id="res_total">0,00</span></div>
+  <div class="resumo-fixo" id="barra-resumo">
+    <div style="font-weight:800; font-size:16px;">RESTANTE: R$ <span id="res_total">0,00</span></div>
   </div>
 
   <script>
@@ -97,127 +115,86 @@
     let scanner;
 
     window.onload = () => {
-        if (userAtivo) iniciarApp();
+        if (userAtivo === "adm") abrirPainelAdm();
+        else if (userAtivo) iniciarApp();
         else document.getElementById('tela-login').style.display='block';
     };
 
     function tentarLogin() {
         const u = document.getElementById('login_user').value.trim().toLowerCase();
         const p = document.getElementById('login_pass').value;
-        if ((u === "adm" && p === "Melissa@2016") || (db.usuarios[u] && db.usuarios[u].senha === p)) {
+        if (u === "adm" && p === "Melissa@2016") {
+            userAtivo = "adm"; sessionStorage.setItem('sessao', "adm");
+            abrirPainelAdm();
+        } else if (db.usuarios[u] && db.usuarios[u].senha === p) {
             userAtivo = u; sessionStorage.setItem('sessao', u);
-            if(u !== "adm" && !db.usuarios[u]) db.usuarios[u] = {nome:u, saldos:{vr:0, va:0, deb:0}};
-            location.reload();
-        } else { alert("Login inválido!"); }
+            iniciarApp();
+        } else { alert("Usuário ou senha incorretos!"); }
     }
 
-    function salvarTudo() {
-        if (userAtivo && userAtivo !== "adm") {
-            db.usuarios[userAtivo].saldos = {
-                vr: parseFloat(document.getElementById('saldo_vr').value) || 0,
-                va: parseFloat(document.getElementById('saldo_va').value) || 0,
-                deb: parseFloat(document.getElementById('saldo_deb').value) || 0
-            };
-            db.mercado = document.getElementById('mercado_atual').value;
+    function abrirPainelAdm() {
+        esconderTudo();
+        document.getElementById('painel-adm').style.display = 'block';
+        document.getElementById('barra-resumo').style.display = 'none';
+        
+        const lista = document.getElementById('lista-usuarios-master');
+        lista.innerHTML = "";
+        
+        Object.keys(db.usuarios).forEach(userKey => {
+            lista.innerHTML += `
+                <div class="user-row">
+                    <span><strong>${db.usuarios[userKey].nome}</strong></span>
+                    <button onclick="resetarSenha('${userKey}')" style="width:auto; padding:5px 10px; background:var(--danger); color:white; font-size:10px;">Resetar Senha</button>
+                </div>`;
+        });
+        if(Object.keys(db.usuarios).length === 0) lista.innerHTML = "<p style='font-size:12px; color:#999;'>Nenhum usuário cadastrado.</p>";
+    }
+
+    function resetarSenha(userKey) {
+        if(confirm(`Deseja resetar a senha de ${db.usuarios[userKey].nome} para "Compras@2026"?`)) {
+            db.usuarios[userKey].senha = "Compras@2026";
+            localStorage.setItem(KEY, JSON.stringify(db));
+            alert("Senha resetada com sucesso!");
         }
-        localStorage.setItem(KEY, JSON.stringify(db));
-        renderizar();
+    }
+
+    function acessarAppComoAdm() {
+        iniciarApp();
+        document.getElementById('btn-voltar-adm').style.display = 'block';
     }
 
     function iniciarApp() {
+        esconderTudo();
         document.getElementById('app-principal').style.display='block';
+        document.getElementById('barra-resumo').style.display='block';
         document.getElementById('boas_vindas').innerText = "Oi, " + userAtivo;
-        if (userAtivo !== "adm") {
+        
+        if (userAtivo !== "adm" && db.usuarios[userAtivo]) {
             const s = db.usuarios[userAtivo].saldos;
-            document.getElementById('saldo_vr').value = s.vr;
-            document.getElementById('saldo_va').value = s.va;
-            document.getElementById('saldo_deb').value = s.deb;
+            document.getElementById('saldo_vr').value = s.vr || 0;
+            document.getElementById('saldo_va').value = s.va || 0;
+            document.getElementById('saldo_deb').value = s.deb || 0;
             document.getElementById('mercado_atual').value = db.mercado || "";
         }
         renderizar();
     }
 
+    function registrarUsuario() {
+        const u = document.getElementById('novo_usuario').value.trim().toLowerCase();
+        if (!u || u === "adm" || db.usuarios[u]) return alert("Nome inválido ou já existe!");
+        db.usuarios[u] = { nome: u, senha: "Compras@2026", saldos: { vr: 0, va: 0, deb: 0 } };
+        localStorage.setItem(KEY, JSON.stringify(db));
+        alert("Cadastrado! Senha padrão: Compras@2026");
+        voltarLogin();
+    }
+
     function adicionarItem() {
         const n = document.getElementById('nome_prod').value;
         const v = parseFloat(document.getElementById('valor_prod').value) || 0;
-        const m = document.getElementById('modalidade').value;
+        const m = document.getElementById('modalbody_modalidade').value;
         const cod = document.getElementById('codigo').value.trim();
         if (!n || v <= 0) return;
         db.itens.push({ n, v, m, cod });
         salvarTudo();
-        document.getElementById('nome_prod').value = "";
-        document.getElementById('valor_prod').value = "";
-        document.getElementById('codigo').value = "";
-        document.getElementById('status_preco').style.display = "none";
-    }
-
-    function finalizarCompra() {
-        if (db.itens.length === 0) return alert("Lista vazia!");
-        if (confirm("Finalizar e guardar preços para comparar depois?")) {
-            const mercado = db.mercado || "Mercado Geral";
-            db.itens.forEach(it => {
-                const chave = it.cod || it.n.toLowerCase();
-                if (!db.memo[chave]) db.memo[chave] = { nome: it.n, historico: [] };
-                db.memo[chave].historico.push({ preco: it.v, loja: mercado, data: new Date().toLocaleDateString() });
-                if (db.memo[chave].historico.length > 5) db.memo[chave].historico.shift();
-            });
-            db.itens = [];
-            salvarTudo();
-            alert("Compra salva no histórico!");
-        }
-    }
-
-    function buscaAuto() {
-        const c = document.getElementById('codigo').value.trim();
-        const n = document.getElementById('nome_prod').value.trim().toLowerCase();
-        const chave = c || n;
-        if(db.memo[chave]) {
-            const h = db.memo[chave].historico;
-            const ultimo = h[h.length - 1];
-            document.getElementById('status_preco').style.display = "block";
-            document.getElementById('status_preco').innerHTML = `📊 <b>Última vez:</b> R$ ${ultimo.preco.toFixed(2)} (${ultimo.loja})`;
-            if(!document.getElementById('nome_prod').value) document.getElementById('nome_prod').value = db.memo[chave].nome;
-        }
-    }
-
-    function renderizar() {
-        const lista = document.getElementById('lista_itens');
-        lista.innerHTML = "";
-        let totalGasto = 0;
-        db.itens.forEach((it, i) => {
-            totalGasto += it.v;
-            lista.innerHTML += `<div class="item-lista"><span><b>${it.n}</b><br><small>R$ ${it.v.toFixed(2)} (${it.m})</small></span><button onclick="remover(${i})" style="width:auto; color:red; background:none; font-size:20px;">×</button></div>`;
-        });
-        if (userAtivo !== "adm") {
-            const s = db.usuarios[userAtivo].saldos;
-            document.getElementById('res_total').innerText = ((s.vr + s.va + s.deb) - totalGasto).toFixed(2);
-        }
-    }
-
-    function remover(i) { db.itens.splice(i, 1); salvarTudo(); }
-    function alternarScanner() {
-        if(!scanner) {
-            document.getElementById('reader').style.display='block';
-            scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt; buscaAuto();
-                scanner.stop(); scanner = null; document.getElementById('reader').style.display='none';
-            });
-        }
-    }
-    function exportar() {
-        const dummy = document.createElement("textarea");
-        document.body.appendChild(dummy);
-        dummy.value = localStorage.getItem(KEY);
-        dummy.select(); document.execCommand("copy");
-        document.body.removeChild(dummy);
-        alert("Backup copiado! Cole no outro aparelho.");
-    }
-    function importar() {
-        const cod = prompt("Cole o código aqui:");
-        if (cod) { localStorage.setItem(KEY, cod); location.reload(); }
-    }
-    function logout() { sessionStorage.removeItem('sessao'); location.reload(); }
-  </script>
-</body>
-</html>
+        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
+        document.getElementById('codigo').value
