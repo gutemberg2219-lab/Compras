@@ -3,32 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Compras do Mês Pro</title>
+  <title>🛒 Compras do Mês</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; }
+    :root { 
+        --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; 
+        --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; 
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 150px; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 140px; }
     .container { max-width: 500px; margin: 0 auto; }
+    
     .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .titulo-secao { font-weight: bold; margin-bottom: 10px; display: block; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    
     label { font-weight: 600; font-size: 13px; color: #666; display: block; margin-bottom: 3px; }
     input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
+    
     .grid-saldos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    
     button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-scanner { background: #673ab7; color: white; }
     .btn-success { background: #2e7d32; color: white; }
     .btn-info { background: #0288d1; color: white; margin-top: 10px; font-size: 14px; }
+    .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
+
     #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
-    .alerta-preco { font-size: 12px; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none; line-height: 1.4; }
-    .info-comparativa { background: #e3f2fd; color: #0d47a1; border-left: 4px solid #2196f3; }
+    
+    .alerta-preco { font-size: 12px; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: none; line-height: 1.4; background: #e3f2fd; color: #0d47a1; border-left: 4px solid #2196f3; }
+
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; }
     .item-refeicao { border-left-color: var(--refeicao); }
     .item-alimentacao { border-left-color: var(--alimentacao); }
     .item-debito { border-left-color: var(--debito); }
+
     .tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
+    
     .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 100; }
-    .total-disponivel-barra { text-align: center; border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 5px; font-size: 14px; font-weight: 800; }
+    .total-disponivel-barra { text-align: center; border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 5px; font-size: 14px; font-weight: 800; color: #333; }
     .colunas-resumo { display: flex; justify-content: space-around; }
     .resumo-box { text-align: center; font-size: 10px; font-weight: bold; }
   </style>
@@ -39,16 +51,16 @@
     <h1 style="text-align:center; margin-bottom:15px;">🛒 Compras do Mês</h1>
 
     <div class="card" style="background: #fff9c4;">
-      <label>🏪 Onde você está comprando agora?</label>
+      <label>🏪 Supermercado Atual</label>
       <input type="text" id="mercado_atual" placeholder="Ex: Carrefour, Atacadão..." oninput="salvarMercado()">
     </div>
 
     <div class="card">
       <span class="titulo-secao">💰 Meus Saldos</span>
       <div class="grid-saldos">
-        <div><label>VR</label><input type="number" id="saldo_vr" oninput="atualizarCalculos()"></div>
-        <div><label>VA</label><input type="number" id="saldo_va" oninput="atualizarCalculos()"></div>
-        <div><label>Débito</label><input type="number" id="saldo_deb" oninput="atualizarCalculos()"></div>
+        <div><label>VR</label><input type="number" id="saldo_vr" placeholder="0,00" oninput="atualizarCalculos()"></div>
+        <div><label>VA</label><input type="number" id="saldo_va" placeholder="0,00" oninput="atualizarCalculos()"></div>
+        <div><label>Débito</label><input type="number" id="saldo_deb" placeholder="0,00" oninput="atualizarCalculos()"></div>
       </div>
     </div>
 
@@ -56,7 +68,7 @@
       <div id="reader"></div>
       <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ESCANEAR</button>
       
-      <div id="status_preco" class="alerta-preco info-comparativa"></div>
+      <div id="status_preco" class="alerta-preco"></div>
 
       <label style="margin-top:10px;">Produto</label>
       <div style="display: flex; gap: 5px;">
@@ -81,12 +93,14 @@
 
     <div id="lista"></div>
 
-    <button class="btn-info" onclick="gerarRelatorio()">📊 Comparativo Geral de Lojas</button>
-    <button class="btn-danger" style="background:#ff1744; color:white; margin-top:10px;" onclick="limparLista()">🗑️ Limpar Lista Atual</button>
+    <button class="btn-info" onclick="gerarRelatorio()">📊 Comparativo de Lojas</button>
+    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista Atual</button>
   </div>
 
   <div class="resumo-fixo">
-    <div class="total-disponivel-barra">DISPONÍVEL TOTAL: R$ <span id="res_disponivel_total">0,00</span></div>
+    <div class="total-disponivel-barra">
+      DISPONÍVEL TOTAL: R$ <span id="res_disponivel_total">0,00</span>
+    </div>
     <div class="colunas-resumo">
       <div class="resumo-box" style="color: var(--refeicao)">VR RESTANTE<br><span id="res_vr">0,00</span></div>
       <div class="resumo-box" style="color: var(--alimentacao)">VA RESTANTE<br><span id="res_va">0,00</span></div>
@@ -97,20 +111,20 @@
 
   <script>
     let itens = [];
-    let memoriaProdutos = {}; // { cod: { nome: "", historico: [{loja: "", preco: 0, data: ""}] } }
+    let memoriaProdutos = {};
     let scanner;
 
     window.onload = () => {
-      if (localStorage.getItem('itens_v10')) itens = JSON.parse(localStorage.getItem('itens_v10'));
-      if (localStorage.getItem('memo_v10')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v10'));
-      document.getElementById('mercado_atual').value = localStorage.getItem('mercado_v10') || "";
+      if (localStorage.getItem('itens_v11')) itens = JSON.parse(localStorage.getItem('itens_v11'));
+      if (localStorage.getItem('memo_v11')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v11'));
+      document.getElementById('mercado_atual').value = localStorage.getItem('mercado_v11') || "";
       document.getElementById('saldo_vr').value = localStorage.getItem('s_vr') || "";
       document.getElementById('saldo_va').value = localStorage.getItem('s_va') || "";
       document.getElementById('saldo_deb').value = localStorage.getItem('s_deb') || "";
       renderizarLista();
     };
 
-    function salvarMercado() { localStorage.setItem('mercado_v10', document.getElementById('mercado_atual').value); }
+    function salvarMercado() { localStorage.setItem('mercado_v11', document.getElementById('mercado_atual').value); }
 
     function alternarScanner() {
       if (!scanner) {
@@ -140,21 +154,13 @@
 
     function exibirComparativo(cod) {
       const statusPreco = document.getElementById('status_preco');
-      if (memoriaProdutos[cod]) {
-        const hist = memoriaProdutos[cod].historico || [];
-        if (hist.length > 0) {
-            const ultimo = hist[hist.length - 1];
-            // Busca o menor preço em qualquer loja
-            const melhor = hist.reduce((min, p) => p.preco < min.preco ? p : min, hist[0]);
-            
-            statusPreco.style.display = "block";
-            statusPreco.innerHTML = `<strong>Histórico do Produto:</strong><br>
-                                     🛒 Último: R$ ${ultimo.preco.toFixed(2)} (${ultimo.loja})<br>
-                                     💎 Melhor: R$ ${melhor.preco.toFixed(2)} (${melhor.loja})`;
-            return;
-        }
-      }
-      statusPreco.style.display = "none";
+      if (memoriaProdutos[cod] && memoriaProdutos[cod].historico.length > 0) {
+        const hist = memoriaProdutos[cod].historico;
+        const ultimo = hist[hist.length - 1];
+        const melhor = hist.reduce((min, p) => p.preco < min.preco ? p : min, hist[0]);
+        statusPreco.style.display = "block";
+        statusPreco.innerHTML = `<strong>Histórico:</strong><br>🛒 Último: R$ ${ultimo.preco.toFixed(2)} (${ultimo.loja})<br>💎 Melhor: R$ ${melhor.preco.toFixed(2)} (${melhor.loja})`;
+      } else { statusPreco.style.display = "none"; }
     }
 
     async function tentarBuscar() {
@@ -177,17 +183,15 @@
       const nome = document.getElementById('nome').value.trim();
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const mod = document.getElementById('modalidade').value;
-      const loja = document.getElementById('mercado_atual').value || "Não informado";
+      const loja = document.getElementById('mercado_atual').value || "Loja s/ Nome";
 
       if (!nome || valor <= 0) return;
 
       if (cod) {
         if (!memoriaProdutos[cod]) memoriaProdutos[cod] = { nome: nome, historico: [] };
-        // Adiciona ao histórico se o preço for diferente do último ou loja diferente
         memoriaProdutos[cod].historico.push({ loja, preco: valor, data: new Date().toLocaleDateString() });
-        // Mantém apenas os últimos 5 registros para não pesar
         if (memoriaProdutos[cod].historico.length > 5) memoriaProdutos[cod].historico.shift();
-        localStorage.setItem('memo_v10', JSON.stringify(memoriaProdutos));
+        localStorage.setItem('memo_v11', JSON.stringify(memoriaProdutos));
       }
 
       itens.push({ cod, nome, valor, mod, loja });
@@ -196,7 +200,7 @@
       document.getElementById('valor').value = ''; document.getElementById('status_preco').style.display = "none";
     }
 
-    function salvar() { localStorage.setItem('itens_v10', JSON.stringify(itens)); renderizarLista(); }
+    function salvar() { localStorage.setItem('itens_v11', JSON.stringify(itens)); renderizarLista(); }
 
     function renderizarLista() {
       const listaDiv = document.getElementById('lista');
@@ -215,24 +219,28 @@
       const sVR = parseFloat(document.getElementById('saldo_vr').value) || 0;
       const sVA = parseFloat(document.getElementById('saldo_va').value) || 0;
       const sDEB = parseFloat(document.getElementById('saldo_deb').value) || 0;
-      const totalGeral = gastos.refeicao + gastos.alimentacao + gastos.debito;
       
-      document.getElementById('res_disponivel_total').innerText = ((sVR + sVA + sDEB) - totalGeral).toFixed(2).replace('.',',');
+      localStorage.setItem('s_vr', sVR); localStorage.setItem('s_va', sVA); localStorage.setItem('s_deb', sDEB);
+
+      const totalGeralGasto = gastos.refeicao + gastos.alimentacao + gastos.debito;
+      const disponivel = (sVR + sVA + sDEB) - totalGeralGasto;
+
+      document.getElementById('res_disponivel_total').innerText = disponivel.toFixed(2).replace('.',',');
       document.getElementById('res_vr').innerText = (sVR - gastos.refeicao).toFixed(2);
       document.getElementById('res_va').innerText = (sVA - gastos.alimentacao).toFixed(2);
       document.getElementById('res_deb').innerText = (sDEB - gastos.debito).toFixed(2);
-      document.getElementById('res_total').innerText = totalGeral.toFixed(2).replace('.',',');
+      document.getElementById('res_total').innerText = totalGeralGasto.toFixed(2).replace('.',',');
     }
 
     function gerarRelatorio() {
-        let rel = "📊 COMPARATIVO DE LOJAS:\n\n";
+        let rel = "📊 HISTÓRICO DE LOJAS:\n\n";
         Object.values(memoriaProdutos).forEach(p => {
-            if (p.historico.length > 1) {
+            if (p.historico.length > 0) {
                 rel += `🔹 ${p.nome}:\n`;
                 p.historico.forEach(h => rel += `   - R$ ${h.preco.toFixed(2)} (${h.loja})\n`);
             }
         });
-        alert(rel || "Histórico ainda insuficiente para comparar.");
+        alert(rel || "Ainda não há histórico salvo.");
     }
 
     function removerItem(index) { itens.splice(index, 1); salvar(); }
