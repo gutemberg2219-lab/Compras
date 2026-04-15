@@ -9,7 +9,6 @@
       --primary: #0066ff; 
       --success: #00c853; 
       --danger: #ff1744; 
-      --warning: #ffc107;
       --bg: #f5f7fa;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -18,7 +17,6 @@
       background: linear-gradient(135deg, var(--bg) 0%, #e4e9f2 100%);
       min-height: 100vh;
       padding: 15px;
-      color: #333;
     }
     .container { max-width: 620px; margin: 0 auto; }
     h1 { font-size: 28px; text-align: center; margin-bottom: 20px; color: #1a1a1a; }
@@ -31,6 +29,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
 
+    /* ESTILO DO CARD DE SALDO */
     .saldo-card {
       background: #e3f2fd;
       border-left: 6px solid var(--primary);
@@ -45,11 +44,9 @@
       border-radius: 12px;
       font-size: 16px;
       margin-bottom: 12px;
-      transition: border-color 0.3s;
     }
     input:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(0,102,255,0.15);
       outline: none;
     }
 
@@ -62,31 +59,17 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      transition: opacity 0.2s;
     }
-    button:active { opacity: 0.8; }
     .btn-primary { background: var(--primary); color: white; }
     .btn-success { background: var(--success); color: white; }
     .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
-
-    #status {
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      font-size: 14px;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-    }
 
     #status_saldo {
       font-size: 20px;
       font-weight: bold;
       text-align: right;
       margin-top: 5px;
+      color: #333;
     }
 
     .item {
@@ -94,10 +77,10 @@
       border-radius: 12px;
       padding: 15px;
       margin-bottom: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     }
 
     .total-container {
@@ -106,10 +89,8 @@
       padding: 20px;
       text-align: center;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-      margin-top: 20px;
     }
-    .total-label { font-size: 14px; color: #777; text-transform: uppercase; }
-    .total-valor { font-size: 32px; font-weight: 800; color: #1a1a1a; }
+    .total-valor { font-size: 32px; font-weight: 800; }
   </style>
 </head>
 <body>
@@ -118,29 +99,29 @@
     <h1>🛒 Lista de Compras</h1>
 
     <div class="card saldo-card">
-      <label>💰 Saldo Disponível (R$)</label>
-      <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="Quanto pretende gastar?" oninput="atualizarCalculos()">
+      <label>💰 Quanto você pode gastar? (R$)</label>
+      <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="Ex: 200,00" oninput="atualizarCalculos()">
       <div id="status_saldo">Restante: R$ 0,00</div>
     </div>
 
     <div class="card">
-      <label>Código de Barras</label>
-      <input type="text" id="codigo" placeholder="EAN / Código de barras">
+      <label>Código de Barras (Opcional)</label>
+      <input type="text" id="codigo" placeholder="Digite ou cole o código">
       <button class="btn-primary" onclick="tentarBuscar()">🔍 Buscar Produto</button>
 
-      <div id="status">Aguardando busca ou digitação...</div>
+      <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
 
       <label>Nome do Produto</label>
-      <input type="text" id="nome" placeholder="Ex: Arroz Tio João 5kg">
+      <input type="text" id="nome" placeholder="Ex: Arroz 5kg">
       
       <div style="display: flex; gap: 10px;">
         <div style="flex: 2;">
-          <label>Preço Unitário (R$)</label>
+          <label>Preço (R$)</label>
           <input type="number" id="valor" step="0.01" inputmode="decimal" placeholder="0,00">
         </div>
         <div style="flex: 1;">
           <label>Qtd.</label>
-          <input type="number" id="quantidade" value="1" inputmode="numeric">
+          <input type="number" id="quantidade" value="1">
         </div>
       </div>
 
@@ -151,7 +132,7 @@
     <div id="lista"></div>
 
     <div class="total-container">
-      <div class="total-label">Total da Compra</div>
+      <div style="color: #777; text-transform: uppercase; font-size: 12px;">Total acumulado</div>
       <div class="total-valor">R$ <span id="total">0,00</span></div>
     </div>
 
@@ -161,7 +142,7 @@
   <script>
     let itens = [];
 
-    // Carregar dados ao abrir a página
+    // Carregar dados salvos ao abrir
     window.onload = () => {
       const listaSalva = localStorage.getItem('itens_compras');
       const saldoSalvo = localStorage.getItem('saldo_compras');
@@ -172,35 +153,19 @@
 
     async function tentarBuscar() {
       const codigo = document.getElementById('codigo').value.trim();
-      const status = document.getElementById('status');
-
-      if (!codigo) {
-        status.innerHTML = "⚠️ Digite o código primeiro!";
-        return;
-      }
-
-      status.innerHTML = "🔄 Buscando...";
-      status.style.background = "#e3f2fd";
-
-      let nomeEncontrado = "";
-
+      if (!codigo) return alert("Digite um código!");
+      
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
         const data = await res.json();
-        if (data.status === 1 && data.product) {
-          nomeEncontrado = data.product.product_name || data.product.generic_name || "";
+        if (data.status === 1) {
+          document.getElementById('nome').value = data.product.product_name || "";
+          document.getElementById('valor').focus();
+        } else {
+          alert("Produto não encontrado na base internacional.");
         }
-      } catch (e) {}
-
-      if (nomeEncontrado) {
-        status.innerHTML = `✅ <strong>${nomeEncontrado}</strong>`;
-        status.style.background = "#e8f5e9";
-        document.getElementById('nome').value = nomeEncontrado;
-        document.getElementById('valor').focus();
-      } else {
-        status.innerHTML = "❌ Não encontrado. Digite manualmente.";
-        status.style.background = "#fff3cd";
-        document.getElementById('nome').focus();
+      } catch (e) {
+        alert("Erro na busca.");
       }
     }
 
@@ -209,34 +174,29 @@
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
-      if (!nome || valor <= 0) {
-        alert("Preencha nome e valor corretamente!");
-        return;
-      }
+      if (!nome || valor <= 0) return alert("Preencha os dados do produto!");
 
       itens.push({ nome, valor, qtd, subtotal: valor * qtd });
-      salvarEDesenhar();
-
+      salvar();
+      
       // Limpar campos
-      document.getElementById('codigo').value = '';
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
       document.getElementById('quantidade').value = '1';
-      document.getElementById('status').innerHTML = "Pronto para o próximo...";
-      document.getElementById('status').style.background = "#f8f9fa";
+      document.getElementById('codigo').value = '';
     }
 
     function removerItem(index) {
       itens.splice(index, 1);
-      salvarEDesenhar();
+      salvar();
     }
 
     function atualizarCalculos() {
-      renderizarLista();
       localStorage.setItem('saldo_compras', document.getElementById('saldo_limite').value);
+      renderizarLista();
     }
 
-    function salvarEDesenhar() {
+    function salvar() {
       localStorage.setItem('itens_compras', JSON.stringify(itens));
       renderizarLista();
     }
@@ -260,7 +220,7 @@
             </div>
             <div style="text-align:right;">
               <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
-              <button onclick="removerItem(${index})" style="background:none; color:var(--danger); padding:0; font-size:12px; font-weight:bold; width:auto; display:inline;">Remover</button>
+              <span onclick="removerItem(${index})" style="color:red; cursor:pointer; font-size:12px;">Remover</span>
             </div>
           </div>`;
       });
@@ -268,12 +228,11 @@
       totalSpan.textContent = totalGeral.toFixed(2);
 
       // Lógica do Saldo
-      const saldo = parseFloat(saldoInput.value) || 0;
-      if (saldo > 0) {
-        const restante = saldo - totalGeral;
+      const saldoMax = parseFloat(saldoInput.value) || 0;
+      if (saldoMax > 0) {
+        const restante = saldoMax - totalGeral;
         statusSaldo.innerHTML = `Restante: R$ ${restante.toFixed(2)}`;
-        statusSaldo.style.color = restante < 0 ? "var(--danger)" : "var(--success)";
-        if (restante < 0) statusSaldo.innerHTML += " ⚠️";
+        statusSaldo.style.color = restante < 0 ? "red" : "green";
       } else {
         statusSaldo.innerHTML = "Restante: R$ 0,00";
         statusSaldo.style.color = "#333";
@@ -281,9 +240,9 @@
     }
 
     function limparLista() {
-      if (confirm("Deseja apagar todos os itens da lista?")) {
+      if (confirm("Apagar tudo?")) {
         itens = [];
-        salvarEDesenhar();
+        salvar();
       }
     }
   </script>
