@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Super Lista de Compras</title>
+  <title>🛒 Super Lista Pro + Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { --primary: #0066ff; --success: #00c853; --danger: #ff1744; --bg: #f5f7fa; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -14,11 +15,12 @@
     label { font-weight: 600; font-size: 14px; color: #555; display: block; margin-bottom: 5px; }
     input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; }
     input:focus { border-color: var(--primary); outline: none; }
-    button { width: 100%; padding: 16px; margin: 5px 0; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-    button:active { transform: scale(0.98); }
+    button { width: 100%; padding: 16px; margin: 5px 0; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-primary { background: var(--primary); color: white; }
+    .btn-scanner { background: #673ab7; color: white; }
     .btn-success { background: var(--success); color: white; }
     .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; border: 2px solid var(--primary); }
     #status_msg { padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; display: none; text-align: center; }
     #status_saldo { font-size: 20px; font-weight: bold; text-align: right; margin-top: 5px; }
     .item { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
@@ -29,23 +31,27 @@
 <body>
 
   <div class="container">
-    <h1 style="text-align:center; margin-bottom:20px;">🛒 Minha Lista</h1>
+    <h1 style="text-align:center; margin-bottom:20px;">🛒 Lista com Scanner</h1>
 
     <div class="card saldo-card">
-      <label>💰 Saldo para gastar (R$)</label>
+      <label>💰 Saldo Disponível (R$)</label>
       <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="Ex: 200,00" oninput="atualizarCalculos()">
       <div id="status_saldo">Restante: R$ 0,00</div>
     </div>
 
     <div class="card">
-      <label>Código de Barras</label>
-      <input type="text" id="codigo" placeholder="EAN do produto...">
-      <button class="btn-primary" onclick="tentarBuscar()">🔍 Buscar Produto</button>
+      <div id="reader"></div>
+      
+      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 Abrir Câmera para Ler</button>
+      
+      <label style="margin-top:15px;">Código de Barras</label>
+      <input type="text" id="codigo" placeholder="EAN / Código..." oninput="buscaAutomaticaAoDigitar()">
+      <button class="btn-primary" onclick="tentarBuscar()">🔍 Buscar Manual</button>
 
       <div id="status_msg"></div>
 
       <label>Nome do Produto</label>
-      <input type="text" id="nome" placeholder="Digite o nome aqui">
+      <input type="text" id="nome" placeholder="Nome do item">
       
       <div style="display: flex; gap: 10px;">
         <div style="flex: 2;">
@@ -64,7 +70,7 @@
     <div id="lista"></div>
 
     <div class="total-container">
-      <div style="color: #777; font-size: 12px;">TOTAL DA COMPRA</div>
+      <div style="color: #777; font-size: 12px;">TOTAL ACUMULADO</div>
       <div class="total-valor">R$ <span id="total">0,00</span></div>
     </div>
 
@@ -73,79 +79,131 @@
 
   <script>
     let itens = [];
+    let memoriaProdutos = {};
+    let html5QrCode;
 
     window.onload = () => {
-      const listaSalva = localStorage.getItem('itens_v3');
-      const saldoSalvo = localStorage.getItem('saldo_v3');
-      if (listaSalva) itens = JSON.parse(listaSalva);
-      if (saldoSalvo) document.getElementById('saldo_limite').value = saldoSalvo;
+      if (localStorage.getItem('itens_v5')) itens = JSON.parse(localStorage.getItem('itens_v5'));
+      if (localStorage.getItem('saldo_v5')) document.getElementById('saldo_limite').value = localStorage.getItem('saldo_v5');
+      if (localStorage.getItem('memo_v5')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v5'));
       renderizarLista();
     };
 
-    async function tentarBuscar() {
-      const codigo = document.getElementById('codigo').value.trim();
-      const statusMsg = document.getElementById('status_msg');
-      const inputNome = document.getElementById('nome');
-      
-      if (!codigo) return;
+    // FUNÇÕES DO SCANNER
+    async function alternarScanner() {
+      const readerDiv = document.getElementById('reader');
+      const btn = document.getElementById('btnScan');
 
-      statusMsg.style.display = "block";
-      statusMsg.innerHTML = "🔄 Buscando...";
-      statusMsg.style.background = "#e3f2fd";
-      statusMsg.style.color = "#0066ff";
-
-      try {
-        // Usando apenas a base mais estável para evitar erros de alerta
-        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
-        const data = await res.json();
+      if (!html5QrCode) {
+        readerDiv.style.display = 'block';
+        btn.innerHTML = "❌ Fechar Câmera";
+        btn.style.background = "#555";
         
-        if (data.status === 1 && data.product) {
-          inputNome.value = data.product.product_name || data.product.generic_name || "";
-          statusMsg.innerHTML = "✅ Encontrado!";
-          statusMsg.style.background = "#e8f5e9";
-          statusMsg.style.color = "#00c853";
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+        try {
+          await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            document.getElementById('codigo').value = decodedText;
+            pararScanner();
+            tentarBuscar(); // Busca assim que lê
+          });
+        } catch (err) {
+          alert("Erro ao abrir câmera: " + err);
+          pararScanner();
+        }
+      } else {
+        pararScanner();
+      }
+    }
+
+    function pararScanner() {
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          html5QrCode = null;
+          document.getElementById('reader').style.display = 'none';
+          document.getElementById('btnScan').innerHTML = "📷 Abrir Câmera para Ler";
+          document.getElementById('btnScan').style.background = "#673ab7";
+        });
+      }
+    }
+
+    // BUSCA E MEMÓRIA
+    function buscaAutomaticaAoDigitar() {
+      const cod = document.getElementById('codigo').value.trim();
+      if (memoriaProdutos[cod]) {
+        document.getElementById('nome').value = memoriaProdutos[cod];
+        mostrarStatus("✅ Memória: " + memoriaProdutos[cod], "#e8f5e9", "#2e7d32");
+      }
+    }
+
+    async function tentarBuscar() {
+      const cod = document.getElementById('codigo').value.trim();
+      const inputNome = document.getElementById('nome');
+      if (!cod) return;
+
+      if (memoriaProdutos[cod]) {
+        inputNome.value = memoriaProdutos[cod];
+        mostrarStatus("✅ Memória: " + memoriaProdutos[cod], "#e8f5e9", "#2e7d32");
+        document.getElementById('valor').focus();
+        return;
+      }
+
+      mostrarStatus("🔄 Buscando na web...", "#e3f2fd", "#0066ff");
+      try {
+        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cod}.json`);
+        const data = await res.json();
+        if (data.status === 1) {
+          const nomeNet = data.product.product_name || "";
+          inputNome.value = nomeNet;
+          mostrarStatus("✅ Web: " + nomeNet, "#e8f5e9", "#2e7d32");
           document.getElementById('valor').focus();
         } else {
           throw new Error();
         }
       } catch (e) {
-        statusMsg.innerHTML = "⚠️ Não encontrado. Digite o nome manualmente.";
-        statusMsg.style.background = "#fff3cd";
-        statusMsg.style.color = "#856404";
+        mostrarStatus("⚠️ Não achamos. Digite o nome para salvar.", "#fff3cd", "#856404");
         inputNome.focus();
       }
     }
 
     function adicionarItem() {
+      const cod = document.getElementById('codigo').value.trim();
       const nome = document.getElementById('nome').value.trim();
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
-      if (!nome || valor <= 0) return;
+      if (!nome || valor <= 0) return alert("Preencha nome e valor!");
+
+      if (cod) {
+        memoriaProdutos[cod] = nome;
+        localStorage.setItem('memo_v5', JSON.stringify(memoriaProdutos));
+      }
 
       itens.push({ nome, valor, qtd, subtotal: valor * qtd });
-      salvar();
+      salvarTudo();
       
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
-      document.getElementById('quantidade').value = '1';
       document.getElementById('codigo').value = '';
       document.getElementById('status_msg').style.display = "none";
-      document.getElementById('codigo').focus();
     }
 
-    function removerItem(index) {
-      itens.splice(index, 1);
-      salvar();
+    function mostrarStatus(msg, bg, color) {
+      const el = document.getElementById('status_msg');
+      el.style.display = "block";
+      el.style.background = bg;
+      el.style.color = color;
+      el.innerHTML = msg;
     }
 
     function atualizarCalculos() {
-      localStorage.setItem('saldo_v3', document.getElementById('saldo_limite').value);
+      localStorage.setItem('saldo_v5', document.getElementById('saldo_limite').value);
       renderizarLista();
     }
 
-    function salvar() {
-      localStorage.setItem('itens_v3', JSON.stringify(itens));
+    function salvarTudo() {
+      localStorage.setItem('itens_v5', JSON.stringify(itens));
       renderizarLista();
     }
 
@@ -153,7 +211,7 @@
       const container = document.getElementById('lista');
       const totalSpan = document.getElementById('total');
       const statusSaldo = document.getElementById('status_saldo');
-      const saldoInput = document.getElementById('saldo_limite');
+      const saldoMax = parseFloat(document.getElementById('saldo_limite').value) || 0;
       
       container.innerHTML = '';
       let totalGeral = 0;
@@ -170,24 +228,21 @@
           </div>`;
       });
 
-      totalSpan.textContent = totalGeral.toFixed(2);
+      totalSpan.textContent = totalGeral.toFixed(2).replace('.', ',');
+      const restante = saldoMax - totalGeral;
+      statusSaldo.innerHTML = `Restante: R$ ${restante.toFixed(2).replace('.', ',')}`;
+      statusSaldo.style.color = restante < 0 ? "red" : "#2e7d32";
+    }
 
-      const saldoMax = parseFloat(saldoInput.value) || 0;
-      if (saldoMax > 0) {
-        const restante = saldoMax - totalGeral;
-        statusSaldo.innerHTML = `Restante: R$ ${restante.toFixed(2)}`;
-        statusSaldo.style.color = restante < 0 ? "red" : "green";
-        if (restante < 0) statusSaldo.innerHTML += " ⚠️";
-      } else {
-        statusSaldo.innerHTML = "Restante: R$ 0,00";
-        statusSaldo.style.color = "#333";
-      }
+    function removerItem(index) {
+      itens.splice(index, 1);
+      salvarTudo();
     }
 
     function limparLista() {
-      if (confirm("Deseja apagar toda a lista?")) {
+      if (confirm("Limpar lista atual? Sua memória de produtos será mantida.")) {
         itens = [];
-        salvar();
+        salvarTudo();
       }
     }
   </script>
