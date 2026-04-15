@@ -3,53 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Super Lista - Comparador Pro</title>
+  <title>🛒 Compras do Mês Pro</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { 
-        --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; 
-        --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; 
-    }
+    :root { --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 120px; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 150px; }
     .container { max-width: 500px; margin: 0 auto; }
-    
     .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .titulo-secao { font-weight: bold; margin-bottom: 10px; display: block; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-    
     label { font-weight: 600; font-size: 13px; color: #666; display: block; margin-bottom: 3px; }
     input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
-    
     .grid-saldos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    
     button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-scanner { background: #673ab7; color: white; }
     .btn-success { background: #2e7d32; color: white; }
     .btn-info { background: #0288d1; color: white; margin-top: 10px; font-size: 14px; }
-    .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
-
     #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
-    
-    /* Histórico de Preços */
-    .alerta-preco { font-size: 12px; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: none; }
-    .subiu { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
-    .desceu { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
-
+    .alerta-preco { font-size: 12px; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none; line-height: 1.4; }
+    .info-comparativa { background: #e3f2fd; color: #0d47a1; border-left: 4px solid #2196f3; }
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; }
     .item-refeicao { border-left-color: var(--refeicao); }
     .item-alimentacao { border-left-color: var(--alimentacao); }
     .item-debito { border-left-color: var(--debito); }
-
     .tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
-    
-    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-around; z-index: 100; }
+    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 100; }
+    .total-disponivel-barra { text-align: center; border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 5px; font-size: 14px; font-weight: 800; }
+    .colunas-resumo { display: flex; justify-content: space-around; }
     .resumo-box { text-align: center; font-size: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1 style="text-align:center; margin-bottom:15px;">🛒 Comparador de Preços</h1>
+    <h1 style="text-align:center; margin-bottom:15px;">🛒 Compras do Mês</h1>
+
+    <div class="card" style="background: #fff9c4;">
+      <label>🏪 Onde você está comprando agora?</label>
+      <input type="text" id="mercado_atual" placeholder="Ex: Carrefour, Atacadão..." oninput="salvarMercado()">
+    </div>
 
     <div class="card">
       <span class="titulo-secao">💰 Meus Saldos</span>
@@ -64,7 +56,7 @@
       <div id="reader"></div>
       <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ESCANEAR</button>
       
-      <div id="status_preco" class="alerta-preco"></div>
+      <div id="status_preco" class="alerta-preco info-comparativa"></div>
 
       <label style="margin-top:10px;">Produto</label>
       <div style="display: flex; gap: 5px;">
@@ -89,32 +81,36 @@
 
     <div id="lista"></div>
 
-    <button class="btn-info" onclick="gerarRelatorio()">📊 Gerar Relatório de Variação</button>
-    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista Atual</button>
+    <button class="btn-info" onclick="gerarRelatorio()">📊 Comparativo Geral de Lojas</button>
+    <button class="btn-danger" style="background:#ff1744; color:white; margin-top:10px;" onclick="limparLista()">🗑️ Limpar Lista Atual</button>
   </div>
 
   <div class="resumo-fixo">
-    <div class="resumo-box" style="color: var(--refeicao)">VR<br><span id="res_vr">0,00</span></div>
-    <div class="resumo-box" style="color: var(--alimentacao)">VA<br><span id="res_va">0,00</span></div>
-    <div class="resumo-box" style="color: var(--debito)">DÉB<br><span id="res_deb">0,00</span></div>
-    <div class="resumo-box" style="border-left:1px solid #ddd; padding-left:10px">TOTAL<br><span id="res_total">0,00</span></div>
+    <div class="total-disponivel-barra">DISPONÍVEL TOTAL: R$ <span id="res_disponivel_total">0,00</span></div>
+    <div class="colunas-resumo">
+      <div class="resumo-box" style="color: var(--refeicao)">VR RESTANTE<br><span id="res_vr">0,00</span></div>
+      <div class="resumo-box" style="color: var(--alimentacao)">VA RESTANTE<br><span id="res_va">0,00</span></div>
+      <div class="resumo-box" style="color: var(--debito)">DÉB RESTANTE<br><span id="res_deb">0,00</span></div>
+      <div class="resumo-box" style="border-left:1px solid #ddd; padding-left:10px">GSTO TOTAL<br><span id="res_total">0,00</span></div>
+    </div>
   </div>
 
   <script>
     let itens = [];
-    let memoriaProdutos = {}; // { codigo: {nome: "Arroz", ultimoPreco: 10.50, melhorPreco: 9.00} }
+    let memoriaProdutos = {}; // { cod: { nome: "", historico: [{loja: "", preco: 0, data: ""}] } }
     let scanner;
 
     window.onload = () => {
-      if (localStorage.getItem('itens_v8')) itens = JSON.parse(localStorage.getItem('itens_v8'));
-      if (localStorage.getItem('memo_v8')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v8'));
-      
+      if (localStorage.getItem('itens_v10')) itens = JSON.parse(localStorage.getItem('itens_v10'));
+      if (localStorage.getItem('memo_v10')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v10'));
+      document.getElementById('mercado_atual').value = localStorage.getItem('mercado_v10') || "";
       document.getElementById('saldo_vr').value = localStorage.getItem('s_vr') || "";
       document.getElementById('saldo_va').value = localStorage.getItem('s_va') || "";
       document.getElementById('saldo_deb').value = localStorage.getItem('s_deb') || "";
-      
       renderizarLista();
     };
+
+    function salvarMercado() { localStorage.setItem('mercado_v10', document.getElementById('mercado_atual').value); }
 
     function alternarScanner() {
       if (!scanner) {
@@ -129,12 +125,7 @@
     }
 
     function pararScanner() {
-      if (scanner) {
-        scanner.stop().then(() => {
-          scanner = null;
-          document.getElementById('reader').style.display = 'none';
-        });
-      }
+      if (scanner) { scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; }); }
     }
 
     function buscaAutomaticaAoDigitar() {
@@ -145,32 +136,25 @@
       }
     }
 
-    function compararPrecoAoDigitar() {
-      const cod = document.getElementById('codigo').value.trim();
-      exibirComparativo(cod);
-    }
+    function compararPrecoAoDigitar() { exibirComparativo(document.getElementById('codigo').value.trim()); }
 
     function exibirComparativo(cod) {
       const statusPreco = document.getElementById('status_preco');
-      const precoAtual = parseFloat(document.getElementById('valor').value) || 0;
-      
-      if (memoriaProdutos[cod] && precoAtual > 0) {
-        const ult = memoriaProdutos[cod].ultimoPreco;
-        const melhor = memoriaProdutos[cod].melhorPreco;
-        statusPreco.style.display = "block";
-        
-        if (precoAtual > ult) {
-          statusPreco.className = "alerta-preco subiu";
-          statusPreco.innerHTML = `⚠️ Subiu! (Última vez: R$ ${ult.toFixed(2)})`;
-        } else if (precoAtual < ult) {
-          statusPreco.className = "alerta-preco desceu";
-          statusPreco.innerHTML = `✅ Mais barato! (Última vez: R$ ${ult.toFixed(2)})`;
-        } else {
-          statusPreco.style.display = "none";
+      if (memoriaProdutos[cod]) {
+        const hist = memoriaProdutos[cod].historico || [];
+        if (hist.length > 0) {
+            const ultimo = hist[hist.length - 1];
+            // Busca o menor preço em qualquer loja
+            const melhor = hist.reduce((min, p) => p.preco < min.preco ? p : min, hist[0]);
+            
+            statusPreco.style.display = "block";
+            statusPreco.innerHTML = `<strong>Histórico do Produto:</strong><br>
+                                     🛒 Último: R$ ${ultimo.preco.toFixed(2)} (${ultimo.loja})<br>
+                                     💎 Melhor: R$ ${melhor.preco.toFixed(2)} (${melhor.loja})`;
+            return;
         }
-      } else {
-        statusPreco.style.display = "none";
       }
+      statusPreco.style.display = "none";
     }
 
     async function tentarBuscar() {
@@ -184,10 +168,7 @@
         try {
             const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cod}.json`);
             const data = await res.json();
-            if (data.status === 1) {
-                document.getElementById('nome').value = data.product.product_name || "";
-                document.getElementById('valor').focus();
-            }
+            if (data.status === 1) { document.getElementById('nome').value = data.product.product_name || ""; document.getElementById('valor').focus(); }
         } catch (e) {}
     }
 
@@ -196,33 +177,26 @@
       const nome = document.getElementById('nome').value.trim();
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const mod = document.getElementById('modalidade').value;
+      const loja = document.getElementById('mercado_atual').value || "Não informado";
 
       if (!nome || valor <= 0) return;
 
-      // ATUALIZA MEMÓRIA COM HISTÓRICO
       if (cod) {
-        if (!memoriaProdutos[cod]) {
-            memoriaProdutos[cod] = { nome: nome, ultimoPreco: valor, melhorPreco: valor };
-        } else {
-            memoriaProdutos[cod].ultimoPreco = valor;
-            if (valor < memoriaProdutos[cod].melhorPreco) memoriaProdutos[cod].melhorPreco = valor;
-        }
-        localStorage.setItem('memo_v8', JSON.stringify(memoriaProdutos));
+        if (!memoriaProdutos[cod]) memoriaProdutos[cod] = { nome: nome, historico: [] };
+        // Adiciona ao histórico se o preço for diferente do último ou loja diferente
+        memoriaProdutos[cod].historico.push({ loja, preco: valor, data: new Date().toLocaleDateString() });
+        // Mantém apenas os últimos 5 registros para não pesar
+        if (memoriaProdutos[cod].historico.length > 5) memoriaProdutos[cod].historico.shift();
+        localStorage.setItem('memo_v10', JSON.stringify(memoriaProdutos));
       }
 
-      itens.push({ cod, nome, valor, mod });
+      itens.push({ cod, nome, valor, mod, loja });
       salvar();
-      
-      document.getElementById('codigo').value = '';
-      document.getElementById('nome').value = '';
-      document.getElementById('valor').value = '';
-      document.getElementById('status_preco').style.display = "none";
+      document.getElementById('codigo').value = ''; document.getElementById('nome').value = ''; 
+      document.getElementById('valor').value = ''; document.getElementById('status_preco').style.display = "none";
     }
 
-    function salvar() {
-      localStorage.setItem('itens_v8', JSON.stringify(itens));
-      renderizarLista();
-    }
+    function salvar() { localStorage.setItem('itens_v10', JSON.stringify(itens)); renderizarLista(); }
 
     function renderizarLista() {
       const listaDiv = document.getElementById('lista');
@@ -233,7 +207,7 @@
         gastos[item.mod] += item.valor;
         listaDiv.innerHTML += `
           <div class="item-lista item-${item.mod}">
-            <div><strong>${item.nome}</strong><br><span class="tag" style="background:var(--${item.mod})">${item.mod}</span></div>
+            <div><strong>${item.nome}</strong><br><small>${item.loja}</small> | <span class="tag" style="background:var(--${item.mod})">${item.mod}</span></div>
             <div style="text-align:right"><strong>R$ ${item.valor.toFixed(2)}</strong><br><span onclick="removerItem(${index})" style="color:red; font-size:11px; cursor:pointer;">Remover</span></div>
           </div>`;
       });
@@ -241,25 +215,24 @@
       const sVR = parseFloat(document.getElementById('saldo_vr').value) || 0;
       const sVA = parseFloat(document.getElementById('saldo_va').value) || 0;
       const sDEB = parseFloat(document.getElementById('saldo_deb').value) || 0;
-      localStorage.setItem('s_vr', sVR); localStorage.setItem('s_va', sVA); localStorage.setItem('s_deb', sDEB);
-
+      const totalGeral = gastos.refeicao + gastos.alimentacao + gastos.debito;
+      
+      document.getElementById('res_disponivel_total').innerText = ((sVR + sVA + sDEB) - totalGeral).toFixed(2).replace('.',',');
       document.getElementById('res_vr').innerText = (sVR - gastos.refeicao).toFixed(2);
       document.getElementById('res_va').innerText = (sVA - gastos.alimentacao).toFixed(2);
       document.getElementById('res_deb').innerText = (sDEB - gastos.debito).toFixed(2);
-      document.getElementById('res_total').innerText = (gastos.refeicao + gastos.alimentacao + gastos.debito).toFixed(2);
+      document.getElementById('res_total').innerText = totalGeral.toFixed(2).replace('.',',');
     }
 
     function gerarRelatorio() {
-        let relatorio = "📊 RELATÓRIO DE VARIAÇÃO:\n\n";
-        itens.forEach(item => {
-            if (item.cod && memoriaProdutos[item.cod]) {
-                const info = memoriaProdutos[item.cod];
-                const diff = item.valor - info.ultimoPreco;
-                const status = diff > 0 ? "📈 Aumentou" : diff < 0 ? "📉 Baixou" : "➖ Igual";
-                relatorio += `${item.nome}: R$ ${item.valor.toFixed(2)} (${status})\n`;
+        let rel = "📊 COMPARATIVO DE LOJAS:\n\n";
+        Object.values(memoriaProdutos).forEach(p => {
+            if (p.historico.length > 1) {
+                rel += `🔹 ${p.nome}:\n`;
+                p.historico.forEach(h => rel += `   - R$ ${h.preco.toFixed(2)} (${h.loja})\n`);
             }
         });
-        alert(relatorio || "Sem itens com código para comparar.");
+        alert(rel || "Histórico ainda insuficiente para comparar.");
     }
 
     function removerItem(index) { itens.splice(index, 1); salvar(); }
