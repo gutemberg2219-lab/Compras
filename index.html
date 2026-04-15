@@ -197,4 +197,68 @@
         db.itens.push({ n, v, m, cod });
         salvarTudo();
         document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
-        document.getElementById('codigo').value
+        document.getElementById('codigo').value = ""; document.getElementById('status_preco').style.display = "none";
+    }
+
+    function finalizarCompra() {
+        if (db.itens.length === 0) return;
+        if (confirm("Salvar preços no histórico?")) {
+            const mercado = db.mercado || "Geral";
+            db.itens.forEach(it => {
+                const chave = it.cod || it.n.toLowerCase();
+                if (!db.memo[chave]) db.memo[chave] = { nome: it.n, historico: [] };
+                db.memo[chave].historico.push({ preco: it.v, loja: mercado, data: new Date().toLocaleDateString() });
+                if (db.memo[chave].historico.length > 5) db.memo[chave].historico.shift();
+            });
+            db.itens = []; salvarTudo(); alert("Concluído!");
+        }
+    }
+
+    function buscaAuto() {
+        const chave = document.getElementById('codigo').value.trim() || document.getElementById('nome_prod').value.trim().toLowerCase();
+        if(db.memo[chave]) {
+            const ultimo = db.memo[chave].historico[db.memo[chave].historico.length - 1];
+            document.getElementById('status_preco').style.display = "block";
+            document.getElementById('status_preco').innerHTML = `📊 <b>Último:</b> R$ ${ultimo.preco.toFixed(2)} (${ultimo.loja})`;
+            if(!document.getElementById('nome_prod').value) document.getElementById('nome_prod').value = db.memo[chave].nome;
+        }
+    }
+
+    function renderizar() {
+        const lista = document.getElementById('lista_itens');
+        lista.innerHTML = ""; let total = 0;
+        db.itens.forEach((it, i) => {
+            total += it.v;
+            lista.innerHTML += `<div class="item-lista"><span><b>${it.n}</b><br><small>R$ ${it.v.toFixed(2)} (${it.m})</small></span><button onclick="remover(${i})" style="width:auto; color:red; background:none; font-size:20px;">×</button></div>`;
+        });
+        if (userAtivo !== "adm" && db.usuarios[userAtivo]) {
+            const s = db.usuarios[userAtivo].saldos;
+            document.getElementById('res_total').innerText = ((s.vr + s.va + s.deb) - total).toFixed(2);
+        }
+    }
+
+    function esconderTudo() {
+        document.getElementById('tela-login').style.display='none';
+        document.getElementById('tela-cadastro').style.display='none';
+        document.getElementById('painel-adm').style.display='none';
+        document.getElementById('app-principal').style.display='none';
+    }
+
+    function abrirCadastro() { esconderTudo(); document.getElementById('tela-cadastro').style.display='block'; }
+    function voltarLogin() { esconderTudo(); document.getElementById('tela-login').style.display='block'; }
+    function salvarTudo() { localStorage.setItem(KEY, JSON.stringify(db)); renderizar(); }
+    function remover(i) { db.itens.splice(i, 1); salvarTudo(); }
+    function logout() { sessionStorage.removeItem('sessao'); location.reload(); }
+    function alternarScanner() {
+        if(!scanner) {
+            document.getElementById('reader').style.display='block';
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('codigo').value = txt; buscaAuto();
+                scanner.stop(); scanner = null; document.getElementById('reader').style.display='none';
+            });
+        }
+    }
+  </script>
+</body>
+</html>
