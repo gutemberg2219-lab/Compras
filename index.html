@@ -14,12 +14,12 @@
       padding: 15px;
     }
     .container { max-width: 620px; margin: 0 auto; }
-    h1 { font-size: 28px; text-align: center; margin-bottom: 20px; color: #1a1a1a; }
+    h1 { font-size: 28px; text-align: center; margin-bottom: 25px; color: #1a1a1a; }
     .card {
       background: white;
       border-radius: 16px;
       padding: 20px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     input {
@@ -48,14 +48,13 @@
     .btn-primary { background: var(--primary); color: white; }
     .btn-success { background: var(--success); color: white; }
     .btn-danger { background: var(--danger); color: white; }
-    #produtoInfo {
-      background: #f8fbff;
-      border: 2px dashed #0066ff;
-      min-height: 100px;
+    #status {
+      min-height: 90px;
+      padding: 15px;
       border-radius: 12px;
-      padding: 16px;
       margin: 15px 0;
       font-size: 15px;
+      line-height: 1.5;
     }
     .item {
       background: white;
@@ -73,12 +72,11 @@
       text-align: center;
       color: var(--success);
       margin: 25px 0;
-      padding: 15px;
+      padding: 18px;
       background: white;
       border-radius: 16px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
-    .small { font-size: 13.5px; color: #555; }
   </style>
 </head>
 <body>
@@ -86,17 +84,17 @@
     <h1>🛒 Lista de Compras</h1>
 
     <div class="card">
-      <input type="text" id="codigo" placeholder="Código de barras" value="7898960419993">
-      <button class="btn-primary" onclick="buscarProduto()">🔍 Buscar Produto</button>
+      <input type="text" id="codigo" placeholder="Código de barras (opcional)">
+      <button class="btn-primary" onclick="tentarBuscar()">🔍 Tentar Buscar Automaticamente</button>
 
-      <div id="produtoInfo">
-        Não encontrou automaticamente.<br>
-        <strong>Digite o nome do produto abaixo.</strong>
+      <div id="status" style="background:#fff3cd; border: 2px solid #ffc107;">
+        A busca automática nem sempre encontra produtos brasileiros.<br>
+        <strong>Recomendação:</strong> Digite o nome do produto manualmente (mais rápido no supermercado).
       </div>
 
-      <input type="text" id="nomeManual" placeholder="Nome do produto (ex: Álcool Gel Supervale 70°)">
-      <input type="number" id="valor" step="0.01" placeholder="Valor pago (R$)">
-      <input type="number" id="quantidade" value="1" placeholder="Quantidade">
+      <input type="text" id="nome" placeholder="Nome completo do produto (ex: Álcool Gel 70° 450ml)" />
+      <input type="number" id="valor" step="0.01" placeholder="Valor pago (R$)" />
+      <input type="number" id="quantidade" value="1" placeholder="Quantidade" />
 
       <button class="btn-success" onclick="adicionarItem()">➕ Adicionar à Lista</button>
     </div>
@@ -114,77 +112,75 @@
   <script>
     let itens = [];
 
-    // Função de busca mantida (para quando funcionar)
-    async function buscarProduto() {
+    async function tentarBuscar() {
       const codigo = document.getElementById('codigo').value.trim();
-      const infoDiv = document.getElementById('produtoInfo');
+      const status = document.getElementById('status');
 
       if (!codigo) {
-        infoDiv.innerHTML = "Digite o código de barras primeiro.";
+        status.innerHTML = "Digite o código de barras primeiro!";
         return;
       }
 
-      infoDiv.innerHTML = "🔄 Buscando...";
+      status.innerHTML = "🔄 Tentando buscar...";
+      status.style.background = "#e3f2fd";
 
-      // Tentativas de APIs (mantidas)
+      let nomeEncontrado = "";
+
+      // Tentativa com Open Food Facts
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
         const data = await res.json();
         if (data.status === 1 && data.product) {
-          const p = data.product;
-          mostrarProduto(p.product_name || p.generic_name, p.brands);
-          return;
+          nomeEncontrado = data.product.product_name || data.product.generic_name;
         }
-      } catch(e){}
+      } catch (e) {}
 
-      try {
-        const res = await fetch(`http://www.eanpictures.com.br:9000/api/gtin/${codigo}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.name) {
-            mostrarProduto(data.name, data.brand);
-            return;
+      // Tentativa com EAN Pictures (Brasil)
+      if (!nomeEncontrado) {
+        try {
+          const res = await fetch(`http://www.eanpictures.com.br:9000/api/gtin/${codigo}`);
+          if (res.ok) {
+            const data = await res.json();
+            nomeEncontrado = data.name || data.description;
           }
-        }
-      } catch(e){}
+        } catch (e) {}
+      }
 
-      infoDiv.innerHTML = `❌ Não encontrado automaticamente.<br>
-                           <span class="small">Produto comum de limpeza ou higiene.<br>
-                           Digite o nome manualmente abaixo.</span>`;
-    }
-
-    function mostrarProduto(nome, marca) {
-      const infoDiv = document.getElementById('produtoInfo');
-      let html = `<strong>${nome}</strong>`;
-      if (marca) html += `<br>Marca: ${marca}`;
-      html += `<br><span class="small">✅ Encontrado</span>`;
-      infoDiv.innerHTML = html;
-      document.getElementById('nomeManual').value = nome;
+      if (nomeEncontrado) {
+        status.innerHTML = `✅ Encontrado: <strong>${nomeEncontrado}</strong>`;
+        status.style.background = "#e8f5e9";
+        document.getElementById('nome').value = nomeEncontrado;
+      } else {
+        status.innerHTML = `❌ Não encontrado automaticamente.<br>
+                            <strong>Digite o nome do produto abaixo.</strong>`;
+        status.style.background = "#fff3cd";
+        document.getElementById('nome').focus();
+      }
     }
 
     function adicionarItem() {
-      let nome = document.getElementById('nomeManual').value.trim();
-      const codigo = document.getElementById('codigo').value.trim();
+      const nome = document.getElementById('nome').value.trim();
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
       if (!nome) {
-        nome = codigo ? `Produto ${codigo}` : "Produto sem nome";
+        alert("Por favor, digite o nome do produto!");
+        return;
       }
-
       if (valor <= 0) {
-        alert("⚠️ Informe o valor do produto!");
+        alert("Informe o valor pago!");
         return;
       }
 
-      itens.push({ codigo: codigo || "—", nome, valor, qtd, subtotal: valor * qtd });
+      itens.push({ nome, valor, qtd, subtotal: valor * qtd });
       renderizarLista();
 
-      // Limpar campos
+      // Limpar para próximo item
       document.getElementById('codigo').value = '';
-      document.getElementById('nomeManual').value = '';
+      document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
-      document.getElementById('produtoInfo').innerHTML = "Digite o código ou nome do próximo produto.";
+      document.getElementById('status').innerHTML = "Pronto para o próximo produto...";
+      document.getElementById('status').style.background = "#f8f9fa";
     }
 
     function renderizarLista() {
@@ -198,11 +194,11 @@
           <div class="item">
             <div>
               <strong>${item.nome}</strong><br>
-              <span class="small">×${item.qtd} • R$ ${item.valor.toFixed(2)}</span>
+              ×${item.qtd} • R$ ${item.valor.toFixed(2)}
             </div>
             <div style="text-align:right;">
               <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
-              <button onclick="removerItem(${index})" style="margin-top:6px;background:#ff1744;color:white;border:none;padding:6px 12px;border-radius:8px;font-size:13px;">
+              <button onclick="removerItem(${index})" style="margin-top:6px; background:#ff1744; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:13px;">
                 Remover
               </button>
             </div>
