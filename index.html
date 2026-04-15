@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Super Lista - Carteira Inteligente</title>
+  <title>🛒 Super Lista - Comparador Pro</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
@@ -11,7 +11,7 @@
         --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; 
     }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 100px; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 120px; }
     .container { max-width: 500px; margin: 0 auto; }
     
     .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -21,15 +21,20 @@
     input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
     
     .grid-saldos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .mini-card { padding: 8px; border-radius: 8px; text-align: center; font-size: 11px; font-weight: bold; color: white; }
     
     button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-scanner { background: #673ab7; color: white; }
     .btn-success { background: #2e7d32; color: white; }
+    .btn-info { background: #0288d1; color: white; margin-top: 10px; font-size: 14px; }
     .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
 
     #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
     
+    /* Histórico de Preços */
+    .alerta-preco { font-size: 12px; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: none; }
+    .subiu { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+    .desceu { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; }
     .item-refeicao { border-left-color: var(--refeicao); }
     .item-alimentacao { border-left-color: var(--alimentacao); }
@@ -44,76 +49,66 @@
 <body>
 
   <div class="container">
-    <h1 style="text-align:center; margin-bottom:15px;">🛒 Carteira de Compras</h1>
+    <h1 style="text-align:center; margin-bottom:15px;">🛒 Comparador de Preços</h1>
 
     <div class="card">
-      <span class="titulo-secao">💰 Meus Saldos Disponíveis</span>
+      <span class="titulo-secao">💰 Meus Saldos</span>
       <div class="grid-saldos">
-        <div>
-          <label>VR</label>
-          <input type="number" id="saldo_vr" placeholder="0,00" oninput="atualizarCalculos()" style="border-color: var(--refeicao)">
-        </div>
-        <div>
-          <label>VA</label>
-          <input type="number" id="saldo_va" placeholder="0,00" oninput="atualizarCalculos()" style="border-color: var(--alimentacao)">
-        </div>
-        <div>
-          <label>Débito</label>
-          <input type="number" id="saldo_deb" placeholder="0,00" oninput="atualizarCalculos()" style="border-color: var(--debito)">
-        </div>
+        <div><label>VR</label><input type="number" id="saldo_vr" oninput="atualizarCalculos()"></div>
+        <div><label>VA</label><input type="number" id="saldo_va" oninput="atualizarCalculos()"></div>
+        <div><label>Débito</label><input type="number" id="saldo_deb" oninput="atualizarCalculos()"></div>
       </div>
     </div>
 
     <div class="card">
       <div id="reader"></div>
-      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ESCANEAR PRODUTO</button>
+      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ESCANEAR</button>
       
-      <label style="margin-top:10px;">Código / Nome</label>
+      <div id="status_preco" class="alerta-preco"></div>
+
+      <label style="margin-top:10px;">Produto</label>
       <div style="display: flex; gap: 5px;">
         <input type="text" id="codigo" placeholder="EAN" oninput="buscaAutomaticaAoDigitar()" style="flex: 1;">
-        <input type="text" id="nome" placeholder="Nome do item" style="flex: 2;">
+        <input type="text" id="nome" placeholder="Nome" style="flex: 2;">
       </div>
       
       <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;"><label>Preço Atual</label><input type="number" id="valor" step="0.01" inputmode="decimal" oninput="compararPrecoAoDigitar()"></div>
         <div style="flex: 1;">
-          <label>Preço</label>
-          <input type="number" id="valor" step="0.01" inputmode="decimal" placeholder="0,00">
-        </div>
-        <div style="flex: 1;">
-          <label>Pagar com:</label>
-          <select id="modalidade">
-            <option value="refeicao">Vale Refeição</option>
-            <option value="alimentacao">Vale Alimentação</option>
-            <option value="debito">Débito / Dinheiro</option>
-          </select>
+            <label>Pagar com:</label>
+            <select id="modalidade">
+                <option value="refeicao">VR</option>
+                <option value="alimentacao">VA</option>
+                <option value="debito">DÉBITO</option>
+            </select>
         </div>
       </div>
 
-      <button class="btn-success" onclick="adicionarItem()">➕ ADICIONAR À LISTA</button>
+      <button class="btn-success" onclick="adicionarItem()">➕ ADICIONAR</button>
     </div>
 
     <div id="lista"></div>
 
-    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista</button>
+    <button class="btn-info" onclick="gerarRelatorio()">📊 Gerar Relatório de Variação</button>
+    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista Atual</button>
   </div>
 
-  <div class="resumo-fixo" id="resumo_footer">
+  <div class="resumo-fixo">
     <div class="resumo-box" style="color: var(--refeicao)">VR<br><span id="res_vr">0,00</span></div>
     <div class="resumo-box" style="color: var(--alimentacao)">VA<br><span id="res_va">0,00</span></div>
     <div class="resumo-box" style="color: var(--debito)">DÉB<br><span id="res_deb">0,00</span></div>
-    <div class="resumo-box" style="border-left: 1px solid #ddd; padding-left: 10px;">TOTAL<br><span id="res_total">0,00</span></div>
+    <div class="resumo-box" style="border-left:1px solid #ddd; padding-left:10px">TOTAL<br><span id="res_total">0,00</span></div>
   </div>
 
   <script>
     let itens = [];
-    let memoriaProdutos = {};
+    let memoriaProdutos = {}; // { codigo: {nome: "Arroz", ultimoPreco: 10.50, melhorPreco: 9.00} }
     let scanner;
 
     window.onload = () => {
-      if (localStorage.getItem('itens_v7')) itens = JSON.parse(localStorage.getItem('itens_v7'));
-      if (localStorage.getItem('memo_v7')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v7'));
+      if (localStorage.getItem('itens_v8')) itens = JSON.parse(localStorage.getItem('itens_v8'));
+      if (localStorage.getItem('memo_v8')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v8'));
       
-      // Carregar saldos individualmente
       document.getElementById('saldo_vr').value = localStorage.getItem('s_vr') || "";
       document.getElementById('saldo_va').value = localStorage.getItem('s_va') || "";
       document.getElementById('saldo_deb').value = localStorage.getItem('s_deb') || "";
@@ -122,7 +117,6 @@
     };
 
     function alternarScanner() {
-      const btn = document.getElementById('btnScan');
       if (!scanner) {
         document.getElementById('reader').style.display = 'block';
         scanner = new Html5Qrcode("reader");
@@ -131,7 +125,6 @@
           pararScanner();
           tentarBuscar();
         });
-        btn.innerHTML = "❌ PARAR";
       } else { pararScanner(); }
     }
 
@@ -140,31 +133,62 @@
         scanner.stop().then(() => {
           scanner = null;
           document.getElementById('reader').style.display = 'none';
-          document.getElementById('btnScan').innerHTML = "📷 ESCANEAR PRODUTO";
         });
       }
     }
 
     function buscaAutomaticaAoDigitar() {
       const cod = document.getElementById('codigo').value.trim();
-      if (memoriaProdutos[cod]) document.getElementById('nome').value = memoriaProdutos[cod];
+      if (memoriaProdutos[cod]) {
+        document.getElementById('nome').value = memoriaProdutos[cod].nome;
+        exibirComparativo(cod);
+      }
+    }
+
+    function compararPrecoAoDigitar() {
+      const cod = document.getElementById('codigo').value.trim();
+      exibirComparativo(cod);
+    }
+
+    function exibirComparativo(cod) {
+      const statusPreco = document.getElementById('status_preco');
+      const precoAtual = parseFloat(document.getElementById('valor').value) || 0;
+      
+      if (memoriaProdutos[cod] && precoAtual > 0) {
+        const ult = memoriaProdutos[cod].ultimoPreco;
+        const melhor = memoriaProdutos[cod].melhorPreco;
+        statusPreco.style.display = "block";
+        
+        if (precoAtual > ult) {
+          statusPreco.className = "alerta-preco subiu";
+          statusPreco.innerHTML = `⚠️ Subiu! (Última vez: R$ ${ult.toFixed(2)})`;
+        } else if (precoAtual < ult) {
+          statusPreco.className = "alerta-preco desceu";
+          statusPreco.innerHTML = `✅ Mais barato! (Última vez: R$ ${ult.toFixed(2)})`;
+        } else {
+          statusPreco.style.display = "none";
+        }
+      } else {
+        statusPreco.style.display = "none";
+      }
     }
 
     async function tentarBuscar() {
-      const cod = document.getElementById('codigo').value.trim();
-      if (memoriaProdutos[cod]) {
-        document.getElementById('nome').value = memoriaProdutos[cod];
-        document.getElementById('valor').focus();
-        return;
-      }
-      try {
-        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cod}.json`);
-        const data = await res.json();
-        if (data.status === 1) {
-          document.getElementById('nome').value = data.product.product_name || "";
-          document.getElementById('valor').focus();
+        const cod = document.getElementById('codigo').value.trim();
+        if (memoriaProdutos[cod]) {
+            document.getElementById('nome').value = memoriaProdutos[cod].nome;
+            exibirComparativo(cod);
+            document.getElementById('valor').focus();
+            return;
         }
-      } catch (e) {}
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cod}.json`);
+            const data = await res.json();
+            if (data.status === 1) {
+                document.getElementById('nome').value = data.product.product_name || "";
+                document.getElementById('valor').focus();
+            }
+        } catch (e) {}
     }
 
     function adicionarItem() {
@@ -173,55 +197,51 @@
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const mod = document.getElementById('modalidade').value;
 
-      if (!nome || valor <= 0) return alert("Preencha os dados!");
+      if (!nome || valor <= 0) return;
 
+      // ATUALIZA MEMÓRIA COM HISTÓRICO
       if (cod) {
-        memoriaProdutos[cod] = nome;
-        localStorage.setItem('memo_v7', JSON.stringify(memoriaProdutos));
+        if (!memoriaProdutos[cod]) {
+            memoriaProdutos[cod] = { nome: nome, ultimoPreco: valor, melhorPreco: valor };
+        } else {
+            memoriaProdutos[cod].ultimoPreco = valor;
+            if (valor < memoriaProdutos[cod].melhorPreco) memoriaProdutos[cod].melhorPreco = valor;
+        }
+        localStorage.setItem('memo_v8', JSON.stringify(memoriaProdutos));
       }
 
-      itens.push({ nome, valor, mod, subtotal: valor });
+      itens.push({ cod, nome, valor, mod });
       salvar();
       
       document.getElementById('codigo').value = '';
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
+      document.getElementById('status_preco').style.display = "none";
     }
 
     function salvar() {
-      localStorage.setItem('itens_v7', JSON.stringify(itens));
+      localStorage.setItem('itens_v8', JSON.stringify(itens));
       renderizarLista();
     }
 
     function renderizarLista() {
       const listaDiv = document.getElementById('lista');
       listaDiv.innerHTML = '';
-      
       let gastos = { refeicao: 0, alimentacao: 0, debito: 0 };
 
       itens.forEach((item, index) => {
         gastos[item.mod] += item.valor;
         listaDiv.innerHTML += `
           <div class="item-lista item-${item.mod}">
-            <div>
-                <strong>${item.nome}</strong><br>
-                <span class="tag" style="background:var(--${item.mod})">${item.mod}</span>
-            </div>
-            <div style="text-align:right">
-                <strong>R$ ${item.valor.toFixed(2)}</strong><br>
-                <span onclick="removerItem(${index})" style="color:red; font-size:11px; cursor:pointer;">Remover</span>
-            </div>
+            <div><strong>${item.nome}</strong><br><span class="tag" style="background:var(--${item.mod})">${item.mod}</span></div>
+            <div style="text-align:right"><strong>R$ ${item.valor.toFixed(2)}</strong><br><span onclick="removerItem(${index})" style="color:red; font-size:11px; cursor:pointer;">Remover</span></div>
           </div>`;
       });
 
-      // Lógica de Saldos Restantes
       const sVR = parseFloat(document.getElementById('saldo_vr').value) || 0;
       const sVA = parseFloat(document.getElementById('saldo_va').value) || 0;
       const sDEB = parseFloat(document.getElementById('saldo_deb').value) || 0;
-
-      localStorage.setItem('s_vr', sVR);
-      localStorage.setItem('s_va', sVA);
-      localStorage.setItem('s_deb', sDEB);
+      localStorage.setItem('s_vr', sVR); localStorage.setItem('s_va', sVA); localStorage.setItem('s_deb', sDEB);
 
       document.getElementById('res_vr').innerText = (sVR - gastos.refeicao).toFixed(2);
       document.getElementById('res_va').innerText = (sVA - gastos.alimentacao).toFixed(2);
@@ -229,16 +249,22 @@
       document.getElementById('res_total').innerText = (gastos.refeicao + gastos.alimentacao + gastos.debito).toFixed(2);
     }
 
-    function removerItem(index) {
-      itens.splice(index, 1);
-      salvar();
+    function gerarRelatorio() {
+        let relatorio = "📊 RELATÓRIO DE VARIAÇÃO:\n\n";
+        itens.forEach(item => {
+            if (item.cod && memoriaProdutos[item.cod]) {
+                const info = memoriaProdutos[item.cod];
+                const diff = item.valor - info.ultimoPreco;
+                const status = diff > 0 ? "📈 Aumentou" : diff < 0 ? "📉 Baixou" : "➖ Igual";
+                relatorio += `${item.nome}: R$ ${item.valor.toFixed(2)} (${status})\n`;
+            }
+        });
+        alert(relatorio || "Sem itens com código para comparar.");
     }
 
+    function removerItem(index) { itens.splice(index, 1); salvar(); }
     function atualizarCalculos() { renderizarLista(); }
-
-    function limparLista() {
-      if (confirm("Limpar lista?")) { itens = []; salvar(); }
-    }
+    function limparLista() { if (confirm("Limpar lista?")) { itens = []; salvar(); } }
   </script>
 </body>
 </html>
