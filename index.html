@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛒 Lista de Compras - Supermercado</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 15px; max-width: 600px; margin: 0 auto; background: #f8f9fa; }
+    h1 { text-align: center; color: #222; }
+    input, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+    button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #0056b3; }
+    #produtoInfo { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; min-height: 90px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    ul { list-style: none; padding: 0; }
+    li { background: white; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .total { font-size: 1.5em; font-weight: bold; text-align: center; margin: 20px 0; color: #28a745; }
+    .small { font-size: 0.85em; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>🛒 Lista de Compras</h1>
+  
+  <input type="text" id="codigo" placeholder="Código de barras (ex: 7898960419993)" value="7898960419993" />
+  <button onclick="buscarProduto()">🔍 Buscar Produto</button>
+  
+  <div id="produtoInfo">Clique em Buscar para tentar encontrar o produto automaticamente...</div>
+  
+  <input type="text" id="nomeManual" placeholder="Nome do produto (se não encontrar automaticamente)" />
+  <input type="number" id="valor" step="0.01" placeholder="Valor pago (R$)" />
+  <input type="number" id="quantidade" value="1" placeholder="Quantidade" />
+  
+  <button onclick="adicionarItem()">➕ Adicionar à Lista</button>
+  
+  <h2>Itens na lista</h2>
+  <ul id="lista"></ul>
+  
+  <div class="total">Total: R$ <span id="total">0.00</span></div>
+  
+  <button onclick="limparLista()">🗑️ Limpar Lista</button>
+
+  <script>
+    let itens = [];
+
+    async function buscarProduto() {
+      const codigo = document.getElementById('codigo').value.trim();
+      const infoDiv = document.getElementById('produtoInfo');
+      
+      if (!codigo || codigo.length < 8) {
+        infoDiv.innerHTML = "⚠️ Digite um código de barras válido!";
+        return;
+      }
+
+      infoDiv.innerHTML = "🔄 Buscando em múltiplas bases (pode demorar alguns segundos)...";
+
+      let nomeEncontrado = "";
+      let marcaEncontrada = "";
+
+      // 1. Open Food Facts (alimentos)
+      try {
+        const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
+        const data = await res.json();
+        if (data.status === 1 && data.product) {
+          const p = data.product;
+          nomeEncontrado = p.product_name || p.generic_name || "";
+          marcaEncontrada = p.brands || "";
+          if (nomeEncontrado) {
+            mostrarProduto(nomeEncontrado, marcaEncontrada, p.image_url || "", "Open Food Facts");
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // 2. EAN Pictures (boa para produtos brasileiros)
+      try {
+        const res = await fetch(`http://www.eanpictures.com.br:9000/api/gtin/${codigo}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && (data.name || data.description)) {
+            nomeEncontrado = data.name || data.description || "Produto encontrado";
+            marcaEncontrada = data.brand || "";
+            mostrarProduto(nomeEncontrado, marcaEncontrada, data.image || "", "EAN Pictures (BR)");
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // 3. UPCitemDB (base geral)
+      try {
+        const res = await fetch(`https://api.upcitemdb.com/prod?upc=${codigo}`);
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          const p = data.items[0];
+          nomeEncontrado = p.title || "";
+          marcaEncontrada = p.brand || "";
+          if (nomeEncontrado) {
+            mostrarProduto(nomeEncontrado, marcaEncontrada, "", "UPCitemDB");
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // Se nenhuma encontrou
+      infoDiv.innerHTML = `❌ Não encontrado automaticamente.<br>
+                           <span class="small">Produto: Álcool em Gel ou item de limpeza (comum no Brasil).<br>
+                           Digite o nome manualmente abaixo.</span>`;
+      document.getElementById('nomeManual').focus();
+    }
+
+    function mostrarProduto(nome, marca, imagem, fonte) {
+      const infoDiv = document.getElementById('produtoInfo');
+      infoDiv.innerHTML = `
+        <strong>${nome}</strong><br>
+        ${marca ? `Marca: ${marca}<br>` : ''}
+        ${imagem ? `<img src="${imagem}" width="130" style="margin-top:8px; border-radius:8px;">` : ''}
+        <span class="small">✅ Encontrado via ${fonte}</span>
+      `;
+      document.getElementById('nomeManual').value = nome;
+    }
+
+    function adicionarItem() {
+      let nome = document.getElementById('nomeManual').value.trim();
+      const codigo = document.getElementById('codigo').value.trim();
+      const valor = parseFloat(document.getElementById('valor').value) || 0;
+      const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
+
+      if (!nome) nome = "Produto " + (codigo || "");
+
+      if (valor <= 0) {
+        alert("Informe o valor do produto!");
+        return;
+      }
+
+      itens.push({ codigo: codigo || "—", nome, valor, qtd, subtotal: valor * qtd });
+      renderizarLista();
+
+      // Limpar campos
+      document.getElementById('codigo').value = '';
+      document.getElementById('nomeManual').value = '';
+      document.getElementById('valor').value = '';
+      document.getElementById('produtoInfo').innerHTML = "Clique em Buscar para tentar encontrar o produto automaticamente...";
+    }
+
+    function renderizarLista() {
+      const ul = document.getElementById('lista');
+      ul.innerHTML = '';
+      let total = 0;
+
+      itens.forEach((item, i) => {
+        total += item.subtotal;
+        ul.innerHTML += `
+          <li>
+            <div>
+              <strong>${item.nome}</strong> ×${item.qtd}<br>
+              <span class="small">R$ ${item.valor.toFixed(2)} unid.</span>
+            </div>
+            <div style="text-align:right;">
+              R$ ${item.subtotal.toFixed(2)}<br>
+              <button onclick="removerItem(${i})" style="background:#dc3545; font-size:12px; padding:4px 8px;">Remover</button>
+            </div>
+          </li>`;
+      });
+
+      document.getElementById('total').textContent = total.toFixed(2);
+    }
+
+    function removerItem(index) {
+      itens.splice(index, 1);
+      renderizarLista();
+    }
+
+    function limparLista() {
+      if (confirm("Limpar toda a lista?")) {
+        itens = [];
+        renderizarLista();
+      }
+    }
+  </script>
+</body>
+</html>
