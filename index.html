@@ -3,117 +3,162 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Lista de Compras - Supermercado</title>
+  <title>🛒 Lista de Compras</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 15px; max-width: 600px; margin: 0 auto; background: #f8f9fa; }
-    h1 { text-align: center; color: #222; }
-    input, button { padding: 12px; margin: 8px 0; width: 100%; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
-    button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background: #0056b3; }
-    #produtoInfo { background: white; padding: 15px; border-radius: 8px; margin: 10px 0; min-height: 90px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    ul { list-style: none; padding: 0; }
-    li { background: white; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .total { font-size: 1.5em; font-weight: bold; text-align: center; margin: 20px 0; color: #28a745; }
-    .small { font-size: 0.85em; color: #666; }
+    :root { --primary: #0066ff; --success: #00c853; --danger: #ff1744; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+      min-height: 100vh;
+      padding: 15px;
+    }
+    .container { max-width: 620px; margin: 0 auto; }
+    h1 { font-size: 28px; text-align: center; margin-bottom: 20px; color: #1a1a1a; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0,102,255,0.15);
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    #produtoInfo {
+      background: #f8fbff;
+      border: 2px dashed #0066ff;
+      min-height: 100px;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 15px 0;
+      font-size: 15px;
+    }
+    .item {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .total {
+      font-size: 26px;
+      font-weight: bold;
+      text-align: center;
+      color: var(--success);
+      margin: 25px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    .small { font-size: 13.5px; color: #555; }
   </style>
 </head>
 <body>
-  <h1>🛒 Lista de Compras</h1>
-  
-  <input type="text" id="codigo" placeholder="Código de barras (ex: 7898960419993)" value="7898960419993" />
-  <button onclick="buscarProduto()">🔍 Buscar Produto</button>
-  
-  <div id="produtoInfo">Clique em Buscar para tentar encontrar o produto automaticamente...</div>
-  
-  <input type="text" id="nomeManual" placeholder="Nome do produto (se não encontrar automaticamente)" />
-  <input type="number" id="valor" step="0.01" placeholder="Valor pago (R$)" />
-  <input type="number" id="quantidade" value="1" placeholder="Quantidade" />
-  
-  <button onclick="adicionarItem()">➕ Adicionar à Lista</button>
-  
-  <h2>Itens na lista</h2>
-  <ul id="lista"></ul>
-  
-  <div class="total">Total: R$ <span id="total">0.00</span></div>
-  
-  <button onclick="limparLista()">🗑️ Limpar Lista</button>
+  <div class="container">
+    <h1>🛒 Lista de Compras</h1>
+
+    <div class="card">
+      <input type="text" id="codigo" placeholder="Código de barras" value="7898960419993">
+      <button class="btn-primary" onclick="buscarProduto()">🔍 Buscar Produto</button>
+
+      <div id="produtoInfo">
+        Não encontrou automaticamente.<br>
+        <strong>Digite o nome do produto abaixo.</strong>
+      </div>
+
+      <input type="text" id="nomeManual" placeholder="Nome do produto (ex: Álcool Gel Supervale 70°)">
+      <input type="number" id="valor" step="0.01" placeholder="Valor pago (R$)">
+      <input type="number" id="quantidade" value="1" placeholder="Quantidade">
+
+      <button class="btn-success" onclick="adicionarItem()">➕ Adicionar à Lista</button>
+    </div>
+
+    <h2 style="margin: 15px 0 10px 5px;">Itens na lista</h2>
+    <div id="lista"></div>
+
+    <div class="total">
+      Total: R$ <span id="total">0.00</span>
+    </div>
+
+    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista</button>
+  </div>
 
   <script>
     let itens = [];
 
+    // Função de busca mantida (para quando funcionar)
     async function buscarProduto() {
       const codigo = document.getElementById('codigo').value.trim();
       const infoDiv = document.getElementById('produtoInfo');
-      
-      if (!codigo || codigo.length < 8) {
-        infoDiv.innerHTML = "⚠️ Digite um código de barras válido!";
+
+      if (!codigo) {
+        infoDiv.innerHTML = "Digite o código de barras primeiro.";
         return;
       }
 
-      infoDiv.innerHTML = "🔄 Buscando em múltiplas bases (pode demorar alguns segundos)...";
+      infoDiv.innerHTML = "🔄 Buscando...";
 
-      let nomeEncontrado = "";
-      let marcaEncontrada = "";
-
-      // 1. Open Food Facts (alimentos)
+      // Tentativas de APIs (mantidas)
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
         const data = await res.json();
         if (data.status === 1 && data.product) {
           const p = data.product;
-          nomeEncontrado = p.product_name || p.generic_name || "";
-          marcaEncontrada = p.brands || "";
-          if (nomeEncontrado) {
-            mostrarProduto(nomeEncontrado, marcaEncontrada, p.image_url || "", "Open Food Facts");
-            return;
-          }
+          mostrarProduto(p.product_name || p.generic_name, p.brands);
+          return;
         }
-      } catch (e) {}
+      } catch(e){}
 
-      // 2. EAN Pictures (boa para produtos brasileiros)
       try {
         const res = await fetch(`http://www.eanpictures.com.br:9000/api/gtin/${codigo}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && (data.name || data.description)) {
-            nomeEncontrado = data.name || data.description || "Produto encontrado";
-            marcaEncontrada = data.brand || "";
-            mostrarProduto(nomeEncontrado, marcaEncontrada, data.image || "", "EAN Pictures (BR)");
+          if (data.name) {
+            mostrarProduto(data.name, data.brand);
             return;
           }
         }
-      } catch (e) {}
+      } catch(e){}
 
-      // 3. UPCitemDB (base geral)
-      try {
-        const res = await fetch(`https://api.upcitemdb.com/prod?upc=${codigo}`);
-        const data = await res.json();
-        if (data.items && data.items.length > 0) {
-          const p = data.items[0];
-          nomeEncontrado = p.title || "";
-          marcaEncontrada = p.brand || "";
-          if (nomeEncontrado) {
-            mostrarProduto(nomeEncontrado, marcaEncontrada, "", "UPCitemDB");
-            return;
-          }
-        }
-      } catch (e) {}
-
-      // Se nenhuma encontrou
       infoDiv.innerHTML = `❌ Não encontrado automaticamente.<br>
-                           <span class="small">Produto: Álcool em Gel ou item de limpeza (comum no Brasil).<br>
+                           <span class="small">Produto comum de limpeza ou higiene.<br>
                            Digite o nome manualmente abaixo.</span>`;
-      document.getElementById('nomeManual').focus();
     }
 
-    function mostrarProduto(nome, marca, imagem, fonte) {
+    function mostrarProduto(nome, marca) {
       const infoDiv = document.getElementById('produtoInfo');
-      infoDiv.innerHTML = `
-        <strong>${nome}</strong><br>
-        ${marca ? `Marca: ${marca}<br>` : ''}
-        ${imagem ? `<img src="${imagem}" width="130" style="margin-top:8px; border-radius:8px;">` : ''}
-        <span class="small">✅ Encontrado via ${fonte}</span>
-      `;
+      let html = `<strong>${nome}</strong>`;
+      if (marca) html += `<br>Marca: ${marca}`;
+      html += `<br><span class="small">✅ Encontrado</span>`;
+      infoDiv.innerHTML = html;
       document.getElementById('nomeManual').value = nome;
     }
 
@@ -123,10 +168,12 @@
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
-      if (!nome) nome = "Produto " + (codigo || "");
+      if (!nome) {
+        nome = codigo ? `Produto ${codigo}` : "Produto sem nome";
+      }
 
       if (valor <= 0) {
-        alert("Informe o valor do produto!");
+        alert("⚠️ Informe o valor do produto!");
         return;
       }
 
@@ -137,27 +184,29 @@
       document.getElementById('codigo').value = '';
       document.getElementById('nomeManual').value = '';
       document.getElementById('valor').value = '';
-      document.getElementById('produtoInfo').innerHTML = "Clique em Buscar para tentar encontrar o produto automaticamente...";
+      document.getElementById('produtoInfo').innerHTML = "Digite o código ou nome do próximo produto.";
     }
 
     function renderizarLista() {
-      const ul = document.getElementById('lista');
-      ul.innerHTML = '';
+      const container = document.getElementById('lista');
+      container.innerHTML = '';
       let total = 0;
 
-      itens.forEach((item, i) => {
+      itens.forEach((item, index) => {
         total += item.subtotal;
-        ul.innerHTML += `
-          <li>
+        container.innerHTML += `
+          <div class="item">
             <div>
-              <strong>${item.nome}</strong> ×${item.qtd}<br>
-              <span class="small">R$ ${item.valor.toFixed(2)} unid.</span>
+              <strong>${item.nome}</strong><br>
+              <span class="small">×${item.qtd} • R$ ${item.valor.toFixed(2)}</span>
             </div>
             <div style="text-align:right;">
-              R$ ${item.subtotal.toFixed(2)}<br>
-              <button onclick="removerItem(${i})" style="background:#dc3545; font-size:12px; padding:4px 8px;">Remover</button>
+              <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
+              <button onclick="removerItem(${index})" style="margin-top:6px;background:#ff1744;color:white;border:none;padding:6px 12px;border-radius:8px;font-size:13px;">
+                Remover
+              </button>
             </div>
-          </li>`;
+          </div>`;
       });
 
       document.getElementById('total').textContent = total.toFixed(2);
