@@ -3,229 +3,230 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Super Lista Pro + Scanner</title>
+  <title>🛒 Super Lista - Carteira Inteligente</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { --primary: #0066ff; --success: #00c853; --danger: #ff1744; --bg: #f5f7fa; }
+    :root { 
+        --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; 
+        --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; 
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: #f0f2f5; padding: 15px; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 100px; }
     .container { max-width: 500px; margin: 0 auto; }
     
-    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .saldo-card { background: #e3f2fd; border-left: 6px solid var(--primary); }
+    .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .titulo-secao { font-weight: bold; margin-bottom: 10px; display: block; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px; }
     
-    label { font-weight: 600; font-size: 14px; color: #555; display: block; margin-bottom: 5px; }
-    input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
+    label { font-weight: 600; font-size: 13px; color: #666; display: block; margin-bottom: 3px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
     
-    button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+    .grid-saldos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .mini-card { padding: 8px; border-radius: 8px; text-align: center; font-size: 11px; font-weight: bold; color: white; }
+    
+    button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-scanner { background: #673ab7; color: white; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-success { background: var(--success); color: white; margin-top: 10px; }
+    .btn-success { background: #2e7d32; color: white; }
     .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
 
     #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
-    #status_msg { padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; display: none; text-align: center; }
     
-    .item { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
-    .total-container { background: white; border-radius: 16px; padding: 15px; text-align: center; margin-top: 10px; border: 2px solid #eee; }
+    .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; }
+    .item-refeicao { border-left-color: var(--refeicao); }
+    .item-alimentacao { border-left-color: var(--alimentacao); }
+    .item-debito { border-left-color: var(--debito); }
+
+    .tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
+    
+    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-around; z-index: 100; }
+    .resumo-box { text-align: center; font-size: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1 style="text-align:center; margin-bottom:15px;">🛒 Lista de Compras</h1>
+    <h1 style="text-align:center; margin-bottom:15px;">🛒 Carteira de Compras</h1>
 
-    <div class="card saldo-card">
-      <label>💰 Quanto quer gastar hoje?</label>
-      <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="R$ 0,00" oninput="atualizarCalculos()">
-      <div id="status_saldo" style="font-weight:bold; text-align:right;">Restante: R$ 0,00</div>
+    <div class="card">
+      <span class="titulo-secao">💰 Meus Saldos Disponíveis</span>
+      <div class="grid-saldos">
+        <div>
+          <label>VR</label>
+          <input type="number" id="saldo_vr" placeholder="0,00" oninput="atualizarCalculos()" style="border-color: var(--refeicao)">
+        </div>
+        <div>
+          <label>VA</label>
+          <input type="number" id="saldo_va" placeholder="0,00" oninput="atualizarCalculos()" style="border-color: var(--alimentacao)">
+        </div>
+        <div>
+          <label>Débito</label>
+          <input type="number" id="saldo_deb" placeholder="0,00" oninput="atualizarCalculos()" style="border-color: var(--debito)">
+        </div>
+      </div>
     </div>
 
     <div class="card">
       <div id="reader"></div>
-      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ABRIR CÂMERA / LER CÓDIGO</button>
+      <button class="btn-scanner" id="btnScan" onclick="alternarScanner()">📷 ESCANEAR PRODUTO</button>
       
-      <hr style="margin: 15px 0; opacity: 0.2;">
-
-      <label>Código de Barras</label>
-      <input type="text" id="codigo" placeholder="EAN ou Digite aqui..." oninput="buscaAutomaticaAoDigitar()">
-      
-      <div id="status_msg"></div>
-
-      <label>Nome do Produto</label>
-      <input type="text" id="nome" placeholder="Ex: Feijão Carioca">
+      <label style="margin-top:10px;">Código / Nome</label>
+      <div style="display: flex; gap: 5px;">
+        <input type="text" id="codigo" placeholder="EAN" oninput="buscaAutomaticaAoDigitar()" style="flex: 1;">
+        <input type="text" id="nome" placeholder="Nome do item" style="flex: 2;">
+      </div>
       
       <div style="display: flex; gap: 8px;">
-        <div style="flex: 2;">
-          <label>Preço (R$)</label>
+        <div style="flex: 1;">
+          <label>Preço</label>
           <input type="number" id="valor" step="0.01" inputmode="decimal" placeholder="0,00">
         </div>
         <div style="flex: 1;">
-          <label>Qtd.</label>
-          <input type="number" id="quantidade" value="1">
+          <label>Pagar com:</label>
+          <select id="modalidade">
+            <option value="refeicao">Vale Refeição</option>
+            <option value="alimentacao">Vale Alimentação</option>
+            <option value="debito">Débito / Dinheiro</option>
+          </select>
         </div>
       </div>
 
-      <button class="btn-success" onclick="adicionarItem()">➕ ADICIONAR NA LISTA</button>
+      <button class="btn-success" onclick="adicionarItem()">➕ ADICIONAR À LISTA</button>
     </div>
 
     <div id="lista"></div>
 
-    <div class="total-container">
-      <span style="color: #777; font-size: 12px;">TOTAL GERAL</span><br>
-      <strong style="font-size: 28px;">R$ <span id="total">0,00</span></strong>
-    </div>
+    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista</button>
+  </div>
 
-    <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Tudo</button>
+  <div class="resumo-fixo" id="resumo_footer">
+    <div class="resumo-box" style="color: var(--refeicao)">VR<br><span id="res_vr">0,00</span></div>
+    <div class="resumo-box" style="color: var(--alimentacao)">VA<br><span id="res_va">0,00</span></div>
+    <div class="resumo-box" style="color: var(--debito)">DÉB<br><span id="res_deb">0,00</span></div>
+    <div class="resumo-box" style="border-left: 1px solid #ddd; padding-left: 10px;">TOTAL<br><span id="res_total">0,00</span></div>
   </div>
 
   <script>
     let itens = [];
     let memoriaProdutos = {};
-    let scannerHtml5;
+    let scanner;
 
-    // Iniciar carregando dados
     window.onload = () => {
-      if (localStorage.getItem('itens_v6')) itens = JSON.parse(localStorage.getItem('itens_v6'));
-      if (localStorage.getItem('saldo_v6')) document.getElementById('saldo_limite').value = localStorage.getItem('saldo_v6');
-      if (localStorage.getItem('memo_v6')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v6'));
+      if (localStorage.getItem('itens_v7')) itens = JSON.parse(localStorage.getItem('itens_v7'));
+      if (localStorage.getItem('memo_v7')) memoriaProdutos = JSON.parse(localStorage.getItem('memo_v7'));
+      
+      // Carregar saldos individualmente
+      document.getElementById('saldo_vr').value = localStorage.getItem('s_vr') || "";
+      document.getElementById('saldo_va').value = localStorage.getItem('s_va') || "";
+      document.getElementById('saldo_deb').value = localStorage.getItem('s_deb') || "";
+      
       renderizarLista();
     };
 
-    // FUNÇÕES DO SCANNER (CÂMERA)
     function alternarScanner() {
       const btn = document.getElementById('btnScan');
-      const readerDiv = document.getElementById('reader');
-
-      if (!scannerHtml5) {
-        readerDiv.style.display = 'block';
-        btn.innerHTML = "❌ FECHAR CÂMERA";
-        btn.style.background = "#555";
-        
-        scannerHtml5 = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-
-        scannerHtml5.start({ facingMode: "environment" }, config, (decodedText) => {
-            document.getElementById('codigo').value = decodedText;
-            pararScanner();
-            tentarBuscar(); // Busca automática após ler
-        }).catch(err => {
-            alert("Erro na Câmera: Verifique se deu permissão e se está usando HTTPS.");
-            pararScanner();
+      if (!scanner) {
+        document.getElementById('reader').style.display = 'block';
+        scanner = new Html5Qrcode("reader");
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+          document.getElementById('codigo').value = txt;
+          pararScanner();
+          tentarBuscar();
         });
-      } else {
-        pararScanner();
-      }
+        btn.innerHTML = "❌ PARAR";
+      } else { pararScanner(); }
     }
 
     function pararScanner() {
-      if (scannerHtml5) {
-        scannerHtml5.stop().then(() => {
-          scannerHtml5 = null;
+      if (scanner) {
+        scanner.stop().then(() => {
+          scanner = null;
           document.getElementById('reader').style.display = 'none';
-          document.getElementById('btnScan').innerHTML = "📷 ABRIR CÂMERA / LER CÓDIGO";
-          document.getElementById('btnScan').style.background = "#673ab7";
+          document.getElementById('btnScan').innerHTML = "📷 ESCANEAR PRODUTO";
         });
       }
     }
 
-    // BUSCA E LÓGICA
     function buscaAutomaticaAoDigitar() {
       const cod = document.getElementById('codigo').value.trim();
-      if (memoriaProdutos[cod]) {
-        document.getElementById('nome').value = memoriaProdutos[cod];
-        msgStatus("Produto já conhecido!", "green");
-      }
+      if (memoriaProdutos[cod]) document.getElementById('nome').value = memoriaProdutos[cod];
     }
 
     async function tentarBuscar() {
       const cod = document.getElementById('codigo').value.trim();
-      if (!cod) return;
-
       if (memoriaProdutos[cod]) {
         document.getElementById('nome').value = memoriaProdutos[cod];
         document.getElementById('valor').focus();
         return;
       }
-
-      msgStatus("Buscando na internet...", "blue");
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cod}.json`);
         const data = await res.json();
         if (data.status === 1) {
           document.getElementById('nome').value = data.product.product_name || "";
           document.getElementById('valor').focus();
-          msgStatus("Encontrado!", "green");
-        } else {
-          msgStatus("Não encontrado. Digite o nome.", "orange");
-          document.getElementById('nome').focus();
         }
-      } catch (e) {
-        msgStatus("Erro na busca.", "red");
-      }
-    }
-
-    function msgStatus(texto, cor) {
-      const st = document.getElementById('status_msg');
-      st.style.display = 'block';
-      st.innerHTML = texto;
-      st.style.color = cor;
+      } catch (e) {}
     }
 
     function adicionarItem() {
       const cod = document.getElementById('codigo').value.trim();
       const nome = document.getElementById('nome').value.trim();
       const valor = parseFloat(document.getElementById('valor').value) || 0;
-      const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
+      const mod = document.getElementById('modalidade').value;
 
-      if (!nome || valor <= 0) return alert("Preencha Nome e Preço!");
+      if (!nome || valor <= 0) return alert("Preencha os dados!");
 
       if (cod) {
         memoriaProdutos[cod] = nome;
-        localStorage.setItem('memo_v6', JSON.stringify(memoriaProdutos));
+        localStorage.setItem('memo_v7', JSON.stringify(memoriaProdutos));
       }
 
-      itens.push({ nome, valor, qtd, subtotal: valor * qtd });
+      itens.push({ nome, valor, mod, subtotal: valor });
       salvar();
       
       document.getElementById('codigo').value = '';
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
-      document.getElementById('status_msg').style.display = 'none';
     }
 
     function salvar() {
-      localStorage.setItem('itens_v6', JSON.stringify(itens));
+      localStorage.setItem('itens_v7', JSON.stringify(itens));
       renderizarLista();
     }
 
     function renderizarLista() {
       const listaDiv = document.getElementById('lista');
-      const saldoInput = document.getElementById('saldo_limite');
-      const totalSpan = document.getElementById('total');
-      const statusSaldo = document.getElementById('status_saldo');
-      
       listaDiv.innerHTML = '';
-      let total = 0;
+      
+      let gastos = { refeicao: 0, alimentacao: 0, debito: 0 };
 
       itens.forEach((item, index) => {
-        total += item.subtotal;
+        gastos[item.mod] += item.valor;
         listaDiv.innerHTML += `
-          <div class="item">
-            <div><strong>${item.nome}</strong><br><small>${item.qtd}x R$ ${item.valor.toFixed(2)}</small></div>
-            <div style="text-align:right;">
-              <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
-              <span onclick="removerItem(${index})" style="color:red; cursor:pointer; font-size:12px;">Remover</span>
+          <div class="item-lista item-${item.mod}">
+            <div>
+                <strong>${item.nome}</strong><br>
+                <span class="tag" style="background:var(--${item.mod})">${item.mod}</span>
+            </div>
+            <div style="text-align:right">
+                <strong>R$ ${item.valor.toFixed(2)}</strong><br>
+                <span onclick="removerItem(${index})" style="color:red; font-size:11px; cursor:pointer;">Remover</span>
             </div>
           </div>`;
       });
 
-      totalSpan.innerText = total.toFixed(2);
-      const saldo = parseFloat(saldoInput.value) || 0;
-      const resta = saldo - total;
-      statusSaldo.innerHTML = "Restante: R$ " + resta.toFixed(2);
-      statusSaldo.style.color = resta < 0 ? "red" : "green";
-      localStorage.setItem('saldo_v6', saldo);
+      // Lógica de Saldos Restantes
+      const sVR = parseFloat(document.getElementById('saldo_vr').value) || 0;
+      const sVA = parseFloat(document.getElementById('saldo_va').value) || 0;
+      const sDEB = parseFloat(document.getElementById('saldo_deb').value) || 0;
+
+      localStorage.setItem('s_vr', sVR);
+      localStorage.setItem('s_va', sVA);
+      localStorage.setItem('s_deb', sDEB);
+
+      document.getElementById('res_vr').innerText = (sVR - gastos.refeicao).toFixed(2);
+      document.getElementById('res_va').innerText = (sVA - gastos.alimentacao).toFixed(2);
+      document.getElementById('res_deb').innerText = (sDEB - gastos.debito).toFixed(2);
+      document.getElementById('res_total').innerText = (gastos.refeicao + gastos.alimentacao + gastos.debito).toFixed(2);
     }
 
     function removerItem(index) {
@@ -236,10 +237,7 @@
     function atualizarCalculos() { renderizarLista(); }
 
     function limparLista() {
-      if (confirm("Limpar lista?")) {
-        itens = [];
-        salvar();
-      }
+      if (confirm("Limpar lista?")) { itens = []; salvar(); }
     }
   </script>
 </body>
