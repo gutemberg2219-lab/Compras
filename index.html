@@ -3,18 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Lista de Compras</title>
+  <title>🛒 Super Lista de Compras</title>
   <style>
-    :root { --primary: #0066ff; --success: #00c853; --danger: #ff1744; }
+    :root { 
+      --primary: #0066ff; 
+      --success: #00c853; 
+      --danger: #ff1744; 
+      --warning: #ffc107;
+      --bg: #f5f7fa;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+      background: linear-gradient(135deg, var(--bg) 0%, #e4e9f2 100%);
       min-height: 100vh;
       padding: 15px;
+      color: #333;
     }
     .container { max-width: 620px; margin: 0 auto; }
-    h1 { font-size: 28px; text-align: center; margin-bottom: 25px; color: #1a1a1a; }
+    h1 { font-size: 28px; text-align: center; margin-bottom: 20px; color: #1a1a1a; }
+    
     .card {
       background: white;
       border-radius: 16px;
@@ -22,40 +30,65 @@
       margin-bottom: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
+
+    .saldo-card {
+      background: #e3f2fd;
+      border-left: 6px solid var(--primary);
+    }
+
+    label { font-weight: 600; font-size: 14px; color: #555; display: block; margin-bottom: 5px; }
+
     input {
       width: 100%;
       padding: 14px 16px;
       border: 2px solid #e0e0e0;
       border-radius: 12px;
       font-size: 16px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      transition: border-color 0.3s;
     }
     input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(0,102,255,0.15);
       outline: none;
     }
+
     button {
       width: 100%;
       padding: 16px;
-      margin: 8px 0;
+      margin: 5px 0;
       border: none;
       border-radius: 12px;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s;
     }
+    button:active { opacity: 0.8; }
     .btn-primary { background: var(--primary); color: white; }
     .btn-success { background: var(--success); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
+
     #status {
-      min-height: 90px;
-      padding: 15px;
-      border-radius: 12px;
-      margin: 15px 0;
-      font-size: 15px;
-      line-height: 1.5;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
     }
+
+    #status_saldo {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: right;
+      margin-top: 5px;
+    }
+
     .item {
       background: white;
       border-radius: 12px;
@@ -66,44 +99,60 @@
       justify-content: space-between;
       align-items: center;
     }
-    .total {
-      font-size: 26px;
-      font-weight: bold;
-      text-align: center;
-      color: var(--success);
-      margin: 25px 0;
-      padding: 18px;
+
+    .total-container {
       background: white;
       border-radius: 16px;
+      padding: 20px;
+      text-align: center;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      margin-top: 20px;
     }
+    .total-label { font-size: 14px; color: #777; text-transform: uppercase; }
+    .total-valor { font-size: 32px; font-weight: 800; color: #1a1a1a; }
   </style>
 </head>
 <body>
+
   <div class="container">
     <h1>🛒 Lista de Compras</h1>
 
+    <div class="card saldo-card">
+      <label>💰 Saldo Disponível (R$)</label>
+      <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="Quanto pretende gastar?" oninput="atualizarCalculos()">
+      <div id="status_saldo">Restante: R$ 0,00</div>
+    </div>
+
     <div class="card">
-      <input type="text" id="codigo" placeholder="Código de barras (opcional)">
-      <button class="btn-primary" onclick="tentarBuscar()">🔍 Tentar Buscar Automaticamente</button>
+      <label>Código de Barras</label>
+      <input type="text" id="codigo" placeholder="EAN / Código de barras">
+      <button class="btn-primary" onclick="tentarBuscar()">🔍 Buscar Produto</button>
 
-      <div id="status" style="background:#fff3cd; border: 2px solid #ffc107;">
-        A busca automática nem sempre encontra produtos brasileiros.<br>
-        <strong>Recomendação:</strong> Digite o nome do produto manualmente (mais rápido no supermercado).
+      <div id="status">Aguardando busca ou digitação...</div>
+
+      <label>Nome do Produto</label>
+      <input type="text" id="nome" placeholder="Ex: Arroz Tio João 5kg">
+      
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 2;">
+          <label>Preço Unitário (R$)</label>
+          <input type="number" id="valor" step="0.01" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div style="flex: 1;">
+          <label>Qtd.</label>
+          <input type="number" id="quantidade" value="1" inputmode="numeric">
+        </div>
       </div>
-
-      <input type="text" id="nome" placeholder="Nome completo do produto (ex: Álcool Gel 70° 450ml)" />
-      <input type="number" id="valor" step="0.01" placeholder="Valor pago (R$)" />
-      <input type="number" id="quantidade" value="1" placeholder="Quantidade" />
 
       <button class="btn-success" onclick="adicionarItem()">➕ Adicionar à Lista</button>
     </div>
 
-    <h2 style="margin: 15px 0 10px 5px;">Itens na lista</h2>
+    <h2 style="margin: 20px 0 10px 5px;">Itens na lista</h2>
     <div id="lista"></div>
 
-    <div class="total">
-      Total: R$ <span id="total">0.00</span>
+    <div class="total-container">
+      <div class="total-label">Total da Compra</div>
+      <div class="total-valor">R$ <span id="total">0,00</span></div>
     </div>
 
     <button class="btn-danger" onclick="limparLista()">🗑️ Limpar Lista</button>
@@ -112,47 +161,44 @@
   <script>
     let itens = [];
 
+    // Carregar dados ao abrir a página
+    window.onload = () => {
+      const listaSalva = localStorage.getItem('itens_compras');
+      const saldoSalvo = localStorage.getItem('saldo_compras');
+      if (listaSalva) itens = JSON.parse(listaSalva);
+      if (saldoSalvo) document.getElementById('saldo_limite').value = saldoSalvo;
+      renderizarLista();
+    };
+
     async function tentarBuscar() {
       const codigo = document.getElementById('codigo').value.trim();
       const status = document.getElementById('status');
 
       if (!codigo) {
-        status.innerHTML = "Digite o código de barras primeiro!";
+        status.innerHTML = "⚠️ Digite o código primeiro!";
         return;
       }
 
-      status.innerHTML = "🔄 Tentando buscar...";
+      status.innerHTML = "🔄 Buscando...";
       status.style.background = "#e3f2fd";
 
       let nomeEncontrado = "";
 
-      // Tentativa com Open Food Facts
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
         const data = await res.json();
         if (data.status === 1 && data.product) {
-          nomeEncontrado = data.product.product_name || data.product.generic_name;
+          nomeEncontrado = data.product.product_name || data.product.generic_name || "";
         }
       } catch (e) {}
 
-      // Tentativa com EAN Pictures (Brasil)
-      if (!nomeEncontrado) {
-        try {
-          const res = await fetch(`http://www.eanpictures.com.br:9000/api/gtin/${codigo}`);
-          if (res.ok) {
-            const data = await res.json();
-            nomeEncontrado = data.name || data.description;
-          }
-        } catch (e) {}
-      }
-
       if (nomeEncontrado) {
-        status.innerHTML = `✅ Encontrado: <strong>${nomeEncontrado}</strong>`;
+        status.innerHTML = `✅ <strong>${nomeEncontrado}</strong>`;
         status.style.background = "#e8f5e9";
         document.getElementById('nome').value = nomeEncontrado;
+        document.getElementById('valor').focus();
       } else {
-        status.innerHTML = `❌ Não encontrado automaticamente.<br>
-                            <strong>Digite o nome do produto abaixo.</strong>`;
+        status.innerHTML = "❌ Não encontrado. Digite manualmente.";
         status.style.background = "#fff3cd";
         document.getElementById('nome').focus();
       }
@@ -163,60 +209,81 @@
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
-      if (!nome) {
-        alert("Por favor, digite o nome do produto!");
-        return;
-      }
-      if (valor <= 0) {
-        alert("Informe o valor pago!");
+      if (!nome || valor <= 0) {
+        alert("Preencha nome e valor corretamente!");
         return;
       }
 
       itens.push({ nome, valor, qtd, subtotal: valor * qtd });
-      renderizarLista();
+      salvarEDesenhar();
 
-      // Limpar para próximo item
+      // Limpar campos
       document.getElementById('codigo').value = '';
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
-      document.getElementById('status').innerHTML = "Pronto para o próximo produto...";
+      document.getElementById('quantidade').value = '1';
+      document.getElementById('status').innerHTML = "Pronto para o próximo...";
       document.getElementById('status').style.background = "#f8f9fa";
-    }
-
-    function renderizarLista() {
-      const container = document.getElementById('lista');
-      container.innerHTML = '';
-      let total = 0;
-
-      itens.forEach((item, index) => {
-        total += item.subtotal;
-        container.innerHTML += `
-          <div class="item">
-            <div>
-              <strong>${item.nome}</strong><br>
-              ×${item.qtd} • R$ ${item.valor.toFixed(2)}
-            </div>
-            <div style="text-align:right;">
-              <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
-              <button onclick="removerItem(${index})" style="margin-top:6px; background:#ff1744; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:13px;">
-                Remover
-              </button>
-            </div>
-          </div>`;
-      });
-
-      document.getElementById('total').textContent = total.toFixed(2);
     }
 
     function removerItem(index) {
       itens.splice(index, 1);
+      salvarEDesenhar();
+    }
+
+    function atualizarCalculos() {
+      renderizarLista();
+      localStorage.setItem('saldo_compras', document.getElementById('saldo_limite').value);
+    }
+
+    function salvarEDesenhar() {
+      localStorage.setItem('itens_compras', JSON.stringify(itens));
       renderizarLista();
     }
 
+    function renderizarLista() {
+      const container = document.getElementById('lista');
+      const totalSpan = document.getElementById('total');
+      const statusSaldo = document.getElementById('status_saldo');
+      const saldoInput = document.getElementById('saldo_limite');
+      
+      container.innerHTML = '';
+      let totalGeral = 0;
+
+      itens.forEach((item, index) => {
+        totalGeral += item.subtotal;
+        container.innerHTML += `
+          <div class="item">
+            <div>
+              <strong>${item.nome}</strong><br>
+              <small>${item.qtd}x R$ ${item.valor.toFixed(2)}</small>
+            </div>
+            <div style="text-align:right;">
+              <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
+              <button onclick="removerItem(${index})" style="background:none; color:var(--danger); padding:0; font-size:12px; font-weight:bold; width:auto; display:inline;">Remover</button>
+            </div>
+          </div>`;
+      });
+
+      totalSpan.textContent = totalGeral.toFixed(2);
+
+      // Lógica do Saldo
+      const saldo = parseFloat(saldoInput.value) || 0;
+      if (saldo > 0) {
+        const restante = saldo - totalGeral;
+        statusSaldo.innerHTML = `Restante: R$ ${restante.toFixed(2)}`;
+        statusSaldo.style.color = restante < 0 ? "var(--danger)" : "var(--success)";
+        if (restante < 0) statusSaldo.innerHTML += " ⚠️";
+      } else {
+        statusSaldo.innerHTML = "Restante: R$ 0,00";
+        statusSaldo.style.color = "#333";
+      }
+    }
+
     function limparLista() {
-      if (confirm("Limpar toda a lista?")) {
+      if (confirm("Deseja apagar todos os itens da lista?")) {
         itens = [];
-        renderizarLista();
+        salvarEDesenhar();
       }
     }
   </script>
