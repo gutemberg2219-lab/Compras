@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Compras Família - V21 Final</title>
+  <title>🛒 Compras Família</title>
   <style>
     :root { --primary: #0066ff; --refeicao: #ff9800; --alimentacao: #4caf50; --debito: #9c27b0; --danger: #ff1744; --bg: #f0f2f5; --adm: #37474f; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 160px; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 160px; min-height: 100vh; }
     .container { max-width: 500px; margin: 0 auto; }
     .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
     button { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
     #tela-login, #tela-cadastro, #tela-troca-senha, #app-principal, #painel-adm { display: none; }
     .grid-saldos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .grid-saldos label { font-size: 10px; font-weight: bold; color: #666; display: block; text-align: center; }
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid #ccc; }
     .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 100; text-align: center; font-weight: bold; }
   </style>
@@ -32,16 +31,16 @@
 
     <div id="tela-cadastro" class="card">
         <h3>Novo Cadastro</h3>
-        <input type="text" id="cad_user" placeholder="Ex: Gutenberg">
+        <input type="text" id="cad_user" placeholder="Seu Nome">
         <button style="background: #2e7d32; color: white;" onclick="realizarCadastro()">CADASTRAR</button>
         <button style="background:none; color:var(--primary);" onclick="abrirTela('tela-login')">Voltar</button>
     </div>
 
     <div id="tela-troca-senha" class="card">
-        <h3 style="color:var(--danger)">Defina sua Senha</h3>
+        <h3 style="color:var(--danger)">Crie sua Senha Pessoal</h3>
         <input type="password" id="nova_senha" placeholder="Nova Senha">
         <input type="password" id="nova_senha_confirma" placeholder="Confirme a Senha">
-        <button style="background: var(--refeicao); color: white;" onclick="salvarNovaSenha()">SALVAR E ENTRAR</button>
+        <button style="background: var(--refeicao); color: white;" onclick="salvarNovaSenha()">SALVAR SENHA</button>
     </div>
 
     <div id="painel-adm">
@@ -50,50 +49,62 @@
             <button onclick="logout()" style="width: auto; padding: 5px; background: #ccc;">Sair</button>
         </div>
         <div class="card" id="lista-usuarios-adm"></div>
-        <button style="background: var(--primary); color: white;" onclick="iniciarApp()">ACESSAR APP</button>
+        <button style="background: var(--primary); color: white;" onclick="iniciarApp()">VOLTAR PRO APP</button>
     </div>
 
     <div id="app-principal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h2 id="boas_vindas"></h2>
-        <button onclick="logout()" style="width: auto; padding: 5px; font-size: 10px; background: #ccc;">Sair</button>
+        <button onclick="logout()" style="width: auto; padding: 5px; background: #ccc;">Sair</button>
       </div>
 
       <div class="card">
         <div class="grid-saldos">
-          <div><label>VR</label><input type="number" id="saldo_vr" oninput="salvarTudo()"></div>
-          <div><label>VA</label><input type="number" id="saldo_va" oninput="salvarTudo()"></div>
-          <div><label>DÉB</label><input type="number" id="saldo_deb" oninput="salvarTudo()"></div>
+          <div><label style="font-size:10px">VR</label><input type="number" id="saldo_vr" oninput="salvarDados()"></div>
+          <div><label style="font-size:10px">VA</label><input type="number" id="saldo_va" oninput="salvarDados()"></div>
+          <div><label style="font-size:10px">DÉB</label><input type="number" id="saldo_deb" oninput="salvarDados()"></div>
         </div>
       </div>
 
       <div class="card">
-          <input type="text" id="nome_prod" placeholder="O que comprou?">
-          <input type="number" id="valor_prod" placeholder="Valor R$" step="0.01">
+          <input type="text" id="nome_prod" placeholder="Produto">
+          <input type="number" id="valor_prod" placeholder="Preço" step="0.01">
           <button style="background: #2e7d32; color: white;" onclick="adicionarItem()">➕ ADICIONAR</button>
       </div>
       <div id="lista_itens"></div>
-      <div class="resumo-fixo">DISPONÍVEL: R$ <span id="res_total">0,00</span></div>
+      <div class="resumo-fixo">SALDO TOTAL: R$ <span id="res_total">0,00</span></div>
     </div>
   </div>
 
   <script>
-    const BANCO_CHAVE = "COMPRAS_FAMILIA_V21";
+    const KEY = "SISTEMA_V22_FINAL";
     const ADM_USER = "adm";
     const ADM_PASS = "Melissa@2016";
-    const SENHA_INIT = "Compras@2026";
 
-    let db = JSON.parse(localStorage.getItem(BANCO_CHAVE)) || { usuarios: {}, itens: [] };
-    let userAtivo = sessionStorage.getItem('user_ativo');
+    // Inicialização robusta para evitar tela em branco
+    let db;
+    try {
+        db = JSON.parse(localStorage.getItem(KEY)) || { usuarios: {}, itens: [] };
+    } catch (e) {
+        db = { usuarios: {}, itens: [] };
+    }
+
+    let userAtivo = sessionStorage.getItem('sessao');
 
     window.onload = () => {
         if (userAtivo) {
             if (userAtivo === ADM_USER) irParaAdm();
-            else if (db.usuarios[userAtivo] && db.usuarios[userAtivo].precisaTrocar) abrirTela('tela-troca-senha');
-            else if (db.usuarios[userAtivo]) iniciarApp();
-            else logout();
+            else if (db.usuarios[userAtivo]) {
+                db.usuarios[userAtivo].precisaTrocar ? abrirTela('tela-troca-senha') : iniciarApp();
+            } else { logout(); }
         } else { abrirTela('tela-login'); }
     };
+
+    function abrirTela(id) {
+        document.querySelectorAll('.container > div').forEach(d => d.style.display='none');
+        const tela = document.getElementById(id);
+        if(tela) tela.style.display='block';
+    }
 
     function tentarLogin() {
         const u = document.getElementById('login_user').value.trim().toLowerCase();
@@ -101,33 +112,27 @@
 
         if (u === ADM_USER && p === ADM_PASS) {
             userAtivo = ADM_USER;
-            sessionStorage.setItem('user_ativo', ADM_USER);
+            sessionStorage.setItem('sessao', ADM_USER);
             irParaAdm();
         } else if (db.usuarios[u] && db.usuarios[u].senha === p) {
             userAtivo = u;
-            sessionStorage.setItem('user_ativo', u);
+            sessionStorage.setItem('sessao', u);
             db.usuarios[u].precisaTrocar ? abrirTela('tela-troca-senha') : iniciarApp();
-        } else { alert("Acesso negado!"); }
+        } else { alert("Login inválido!"); }
     }
 
     function realizarCadastro() {
         const uRaw = document.getElementById('cad_user').value.trim();
         const u = uRaw.toLowerCase();
-        if (!u || u === ADM_USER) return alert("Nome inválido!");
-        if (db.usuarios[u]) return alert("Usuário já existe!");
+        if (!u || u === ADM_USER || db.usuarios[u]) return alert("Nome inválido ou já existe!");
 
-        db.usuarios[u] = { 
-            nome: uRaw, 
-            senha: SENHA_INIT, 
-            precisaTrocar: true, 
-            saldos: {vr:0, va:0, deb:0} 
-        };
-        localStorage.setItem(BANCO_CHAVE, JSON.stringify(db));
-        alert("Cadastrado! Use a senha: " + SENHA_INIT);
+        db.usuarios[u] = { nome: uRaw, senha: "Compras@2026", precisaTrocar: true, saldos: {vr:0, va:0, deb:0} };
+        salvarDados();
+        alert("Cadastrado! Senha: Compras@2026");
         abrirTela('tela-login');
     }
 
-    function salvarTudo() {
+    function salvarDados() {
         if (userAtivo && userAtivo !== ADM_USER) {
             db.usuarios[userAtivo].saldos = {
                 vr: parseFloat(document.getElementById('saldo_vr').value) || 0,
@@ -135,7 +140,7 @@
                 deb: parseFloat(document.getElementById('saldo_deb').value) || 0
             };
         }
-        localStorage.setItem(BANCO_CHAVE, JSON.stringify(db));
+        localStorage.setItem(KEY, JSON.stringify(db));
         renderizar();
     }
 
@@ -144,9 +149,9 @@
         document.getElementById('boas_vindas').innerText = "Oi, " + (userAtivo === ADM_USER ? "ADM" : db.usuarios[userAtivo].nome);
         if (userAtivo !== ADM_USER) {
             const s = db.usuarios[userAtivo].saldos;
-            document.getElementById('saldo_vr').value = s.vr;
-            document.getElementById('saldo_va').value = s.va;
-            document.getElementById('saldo_deb').value = s.deb;
+            document.getElementById('saldo_vr').value = s.vr || 0;
+            document.getElementById('saldo_va').value = s.va || 0;
+            document.getElementById('saldo_deb').value = s.deb || 0;
         }
         renderizar();
     }
@@ -158,11 +163,12 @@
         db.itens.push({ n, v, user: userAtivo });
         document.getElementById('nome_prod').value = "";
         document.getElementById('valor_prod').value = "";
-        salvarTudo();
+        salvarDados();
     }
 
     function renderizar() {
         const lista = document.getElementById('lista_itens');
+        if(!lista) return;
         lista.innerHTML = "";
         let gasto = 0;
         db.itens.forEach((it, i) => {
@@ -175,26 +181,29 @@
         }
     }
 
-    function remover(i) { db.itens.splice(i, 1); salvarTudo(); }
+    function remover(i) { db.itens.splice(i, 1); salvarDados(); }
+
     function irParaAdm() {
         abrirTela('painel-adm');
         const div = document.getElementById('lista-usuarios-adm');
-        div.innerHTML = "<strong>Resetar Usuários:</strong><br><br>";
+        div.innerHTML = "<strong>Usuários:</strong><br><br>";
         Object.keys(db.usuarios).forEach(u => {
-            div.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>${db.usuarios[u].nome}</span><button onclick="reset('${u}')" style="width:auto; padding:5px; background:red; color:white; font-size:10px;">Reset Senha</button></div>`;
+            div.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>${db.usuarios[u].nome}</span><button onclick="reset('${u}')" style="width:auto; padding:5px; background:red; color:white; font-size:10px;">Resetar</button></div>`;
         });
     }
-    function reset(u) { db.usuarios[u].senha = SENHA_INIT; db.usuarios[u].precisaTrocar = true; localStorage.setItem(BANCO_CHAVE, JSON.stringify(db)); alert("Resetado!"); irParaAdm(); }
+
+    function reset(u) { db.usuarios[u].senha = "Compras@2026"; db.usuarios[u].precisaTrocar = true; salvarDados(); alert("Resetado!"); irParaAdm(); }
+
     function salvarNovaSenha() {
         const s1 = document.getElementById('nova_senha').value;
         if (s1.length < 4 || s1 !== document.getElementById('nova_senha_confirma').value) return alert("Erro na senha!");
         db.usuarios[userAtivo].senha = s1;
         db.usuarios[userAtivo].precisaTrocar = false;
-        salvarTudo();
+        salvarDados();
         iniciarApp();
     }
-    function logout() { sessionStorage.removeItem('user_ativo'); location.reload(); }
-    function abrirTela(id) { document.querySelectorAll('.container > div').forEach(d => d.style.display='none'); document.getElementById(id).style.display='block'; }
+
+    function logout() { sessionStorage.removeItem('sessao'); location.reload(); }
   </script>
 </body>
 </html>
