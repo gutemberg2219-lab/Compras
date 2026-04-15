@@ -29,7 +29,6 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
 
-    /* ESTILO DO CARD DE SALDO */
     .saldo-card {
       background: #e3f2fd;
       border-left: 6px solid var(--primary);
@@ -45,10 +44,7 @@
       font-size: 16px;
       margin-bottom: 12px;
     }
-    input:focus {
-      border-color: var(--primary);
-      outline: none;
-    }
+    input:focus { border-color: var(--primary); outline: none; }
 
     button {
       width: 100%;
@@ -64,12 +60,21 @@
     .btn-success { background: var(--success); color: white; }
     .btn-danger { background: var(--danger); color: white; margin-top: 20px; }
 
+    #status_msg {
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border: 1px solid #eee;
+      display: none;
+    }
+
     #status_saldo {
       font-size: 20px;
       font-weight: bold;
       text-align: right;
       margin-top: 5px;
-      color: #333;
     }
 
     .item {
@@ -99,20 +104,20 @@
     <h1>🛒 Lista de Compras</h1>
 
     <div class="card saldo-card">
-      <label>💰 Quanto você pode gastar? (R$)</label>
+      <label>💰 Saldo Disponível (R$)</label>
       <input type="number" id="saldo_limite" step="0.01" inputmode="decimal" placeholder="Ex: 200,00" oninput="atualizarCalculos()">
       <div id="status_saldo">Restante: R$ 0,00</div>
     </div>
 
     <div class="card">
-      <label>Código de Barras (Opcional)</label>
-      <input type="text" id="codigo" placeholder="Digite ou cole o código">
-      <button class="btn-primary" onclick="tentarBuscar()">🔍 Buscar Produto</button>
+      <label>Código de Barras</label>
+      <input type="text" id="codigo" placeholder="Digite o EAN...">
+      <button class="btn-primary" id="btnBuscar" onclick="tentarBuscar()">🔍 Buscar Automático</button>
 
-      <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+      <div id="status_msg"></div>
 
       <label>Nome do Produto</label>
-      <input type="text" id="nome" placeholder="Ex: Arroz 5kg">
+      <input type="text" id="nome" placeholder="Nome do item">
       
       <div style="display: flex; gap: 10px;">
         <div style="flex: 2;">
@@ -125,14 +130,13 @@
         </div>
       </div>
 
-      <button class="btn-success" onclick="adicionarItem()">➕ Adicionar à Lista</button>
+      <button class="btn-success" onclick="adicionarItem()">➕ Adicionar</button>
     </div>
 
-    <h2 style="margin: 20px 0 10px 5px;">Itens na lista</h2>
     <div id="lista"></div>
 
     <div class="total-container">
-      <div style="color: #777; text-transform: uppercase; font-size: 12px;">Total acumulado</div>
+      <div style="color: #777; text-transform: uppercase; font-size: 12px;">Total das Compras</div>
       <div class="total-valor">R$ <span id="total">0,00</span></div>
     </div>
 
@@ -142,7 +146,6 @@
   <script>
     let itens = [];
 
-    // Carregar dados salvos ao abrir
     window.onload = () => {
       const listaSalva = localStorage.getItem('itens_compras');
       const saldoSalvo = localStorage.getItem('saldo_compras');
@@ -153,19 +156,43 @@
 
     async function tentarBuscar() {
       const codigo = document.getElementById('codigo').value.trim();
-      if (!codigo) return alert("Digite um código!");
+      const statusMsg = document.getElementById('status_msg');
+      const inputNome = document.getElementById('nome');
       
+      if (!codigo) return;
+
+      statusMsg.style.display = "block";
+      statusMsg.innerHTML = "🔄 Buscando nas bases...";
+      statusMsg.style.background = "#e3f2fd";
+
+      let nomeEncontrado = "";
+
+      // 1. Tenta base internacional
       try {
         const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${codigo}.json`);
         const data = await res.json();
-        if (data.status === 1) {
-          document.getElementById('nome').value = data.product.product_name || "";
-          document.getElementById('valor').focus();
-        } else {
-          alert("Produto não encontrado na base internacional.");
-        }
-      } catch (e) {
-        alert("Erro na busca.");
+        if (data.status === 1) nomeEncontrado = data.product.product_name || "";
+      } catch (e) {}
+
+      // 2. Tenta base brasileira (via proxy de imagem/nome se disponível)
+      if (!nomeEncontrado) {
+        try {
+          // Alternativa brasileira leve
+          const resBr = await fetch(`https://brasilapi.com.br/api/ean/v1/${codigo}`);
+          const dataBr = await resBr.json();
+          nomeEncontrado = dataBr.fullname || dataBr.name || "";
+        } catch (e) {}
+      }
+
+      if (nomeEncontrado) {
+        inputNome.value = nomeEncontrado;
+        statusMsg.innerHTML = "✅ Produto localizado!";
+        statusMsg.style.background = "#e8f5e9";
+        document.getElementById('valor').focus();
+      } else {
+        statusMsg.innerHTML = "❌ Não achamos. Por favor, digite o nome abaixo.";
+        statusMsg.style.background = "#fff3cd";
+        inputNome.focus();
       }
     }
 
@@ -174,16 +201,20 @@
       const valor = parseFloat(document.getElementById('valor').value) || 0;
       const qtd = parseFloat(document.getElementById('quantidade').value) || 1;
 
-      if (!nome || valor <= 0) return alert("Preencha os dados do produto!");
+      if (!nome || valor <= 0) {
+        alert("Digite o nome e o preço!");
+        return;
+      }
 
       itens.push({ nome, valor, qtd, subtotal: valor * qtd });
+      document.getElementById('status_msg').style.display = "none";
       salvar();
       
-      // Limpar campos
       document.getElementById('nome').value = '';
       document.getElementById('valor').value = '';
       document.getElementById('quantidade').value = '1';
       document.getElementById('codigo').value = '';
+      document.getElementById('codigo').focus();
     }
 
     function removerItem(index) {
@@ -214,10 +245,7 @@
         totalGeral += item.subtotal;
         container.innerHTML += `
           <div class="item">
-            <div>
-              <strong>${item.nome}</strong><br>
-              <small>${item.qtd}x R$ ${item.valor.toFixed(2)}</small>
-            </div>
+            <div><strong>${item.nome}</strong><br><small>${item.qtd}x R$ ${item.valor.toFixed(2)}</small></div>
             <div style="text-align:right;">
               <strong>R$ ${item.subtotal.toFixed(2)}</strong><br>
               <span onclick="removerItem(${index})" style="color:red; cursor:pointer; font-size:12px;">Remover</span>
@@ -227,7 +255,6 @@
 
       totalSpan.textContent = totalGeral.toFixed(2);
 
-      // Lógica do Saldo
       const saldoMax = parseFloat(saldoInput.value) || 0;
       if (saldoMax > 0) {
         const restante = saldoMax - totalGeral;
@@ -240,7 +267,7 @@
     }
 
     function limparLista() {
-      if (confirm("Apagar tudo?")) {
+      if (confirm("Limpar tudo?")) {
         itens = [];
         salvar();
       }
