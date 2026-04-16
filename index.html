@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Compras Família - V45 HISTORY FIX</title>
+  <title>🛒 Compras Família - V46 STABLE</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
@@ -19,7 +19,7 @@
     
     #tela-login, #tela-cadastro, #app-principal, #tela-trocar-senha { display: none; }
     
-    .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
+    .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); border-right: 1px solid #eee; border-top: 1px solid #eee; border-bottom: 1px solid #eee;}
     .metodo-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; margin-left: 5px; text-transform: uppercase; font-weight: bold; }
     .tag-saldo { background: var(--success); }
     .tag-outros { background: var(--purple); }
@@ -34,11 +34,12 @@
     .col-resumo { flex: 1; text-align: center; }
     .divisor-v { width: 1px; height: 40px; background: #eee; }
     .label-resumo { font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 2px; }
-    .valor-resumo { font-size: 20px; font-weight: 800; display: block; }
+    .valor-resumo { font-size: 18px; font-weight: 800; display: block; }
 
     .label-pequeno { font-size: 11px; font-weight: 800; color: #555; margin-bottom: 5px; display: block; text-transform: uppercase; }
-    button { width: 100%; height: 50px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
-    .hist-badge { font-size: 11px; color: var(--accent); font-weight: bold; display: none; margin-bottom: 10px; }
+    button { width: 100%; height: 50px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; transition: 0.2s; }
+    button:active { transform: scale(0.98); opacity: 0.9; }
+    .hist-badge { font-size: 11px; color: var(--accent); font-weight: bold; display: none; margin-bottom: 10px; text-align: center; }
   </style>
 </head>
 <body>
@@ -49,14 +50,15 @@
         <input type="text" id="login_user" placeholder="Seu Nome">
         <input type="password" id="login_pass" placeholder="Senha">
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
-        <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="abrirCadastro()">NOVO PERFIL</button>
+        <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="abrirCadastro()">CRIAR NOVO PERFIL</button>
     </div>
 
     <div id="tela-trocar-senha" class="card">
         <h2 style="text-align:center; color: var(--danger);">🔒 Segurança</h2>
+        <p style="text-align:center; font-size: 13px; margin-bottom: 15px;">Crie sua senha pessoal de acesso.</p>
         <input type="password" id="nova_senha_input" placeholder="Nova Senha">
         <input type="password" id="confirma_senha_input" placeholder="Confirme a Senha">
-        <button style="background: var(--success); color: white;" onclick="confirmarTrocaSenha()">SALVAR E ENTRAR</button>
+        <button style="background: var(--success); color: white;" onclick="confirmarTrocaSenha()">DEFINIR E ENTRAR</button>
     </div>
 
     <div id="tela-cadastro" class="card">
@@ -73,12 +75,12 @@
       </div>
 
       <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
-        <span class="label-pequeno" style="color: var(--accent);">💰 SALDO GERAL COMPARTILHADO</span>
+        <span class="label-pequeno" style="color: var(--accent);">💰 SALDO GERAL ( DINHEIRO EM MÃOS )</span>
         <input type="number" id="saldo_compartilhado" value="0" oninput="salvarSaldoGlobal()" style="font-size: 24px; font-weight: bold; color: var(--success); border-color: var(--accent); margin-bottom:0">
       </div>
 
       <div class="card">
-        <label class="label-pequeno">🏪 MERCADO E MÉTODO:</label>
+        <label class="label-pequeno">🏪 LOCAL E PAGAMENTO:</label>
         <div style="display:flex; gap:8px;">
             <input type="text" id="mercado_atual" placeholder="Mercado..." oninput="salvarTudo()" style="flex:1">
             <select id="metodo_pagamento" style="flex:0.8; background: #f9f9f9;">
@@ -94,7 +96,7 @@
         
         <div id="hist_info" class="hist-badge">✨ Item encontrado no seu histórico!</div>
 
-        <input type="text" id="codigo" placeholder="EAN / Código" oninput="buscaInteligente()">
+        <input type="text" id="codigo" placeholder="Código de Barras" oninput="buscaInteligente()">
         <input type="text" id="nome_prod" placeholder="Nome do Produto">
         
         <div style="display:flex; gap:8px;">
@@ -102,10 +104,257 @@
           <div style="flex:1"><label class="label-pequeno">R$ UNITÁRIO</label><input type="number" id="valor_prod" placeholder="0,00" step="0.01"></div>
         </div>
         
-        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR NA LISTA</button>
+        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
       </div>
 
       <div id="lista_itens"></div>
 
       <div class="card" style="text-align: center;">
-          <button style
+          <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
+          <button style="background: none; color: var(--danger); border: 1px solid var(--danger); font-size:12px;" onclick="limparListaAtual()">🗑️ LIMPAR MINHA LISTA</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="resumo-fixo" id="barra-resumo" style="display: none;">
+    <div class="col-resumo">
+        <span class="label-resumo">Custo da Lista</span>
+        <span class="valor-resumo" id="res_custo" style="color: var(--purple);">R$ 0,00</span>
+    </div>
+    <div class="divisor-v"></div>
+    <div class="col-resumo">
+        <span class="label-resumo">Saldo Restante</span>
+        <span class="valor-resumo" id="res_total" style="color: var(--success);">R$ 0,00</span>
+    </div>
+  </div>
+
+  <script>
+    const KEY_DATABASE = "DATABASE_FAMILIA_PROJETO_FINAL";
+    const SENHA_PADRAO = "Compras@2026";
+    
+    // Inicialização segura do banco
+    let db = JSON.parse(localStorage.getItem(KEY_DATABASE)) || { usuarios: {}, saldoGlobal: 0 };
+    let userAtivo = sessionStorage.getItem('sessao_user');
+    let scanner = null;
+
+    window.onload = () => { 
+        try {
+            if (userAtivo && db.usuarios[userAtivo]) {
+                verificarFluxo();
+            } else {
+                mostrarTela('tela-login');
+            }
+        } catch(e) { 
+            console.error("Erro no carregamento", e);
+            mostrarTela('tela-login');
+        }
+    };
+
+    function verificarFluxo() {
+        if (db.usuarios[userAtivo].senha === SENHA_PADRAO) {
+            mostrarTela('tela-trocar-senha');
+        } else {
+            iniciarApp();
+        }
+    }
+
+    // BUSCA DE HISTÓRICO
+    async function buscaInteligente() {
+        const cod = document.getElementById('codigo').value.trim();
+        const infoBadge = document.getElementById('hist_info');
+        const user = db.usuarios[userAtivo];
+        
+        if (!user.historicoPrivado) user.historicoPrivado = {};
+
+        // Busca Local
+        if (cod.length > 3 && user.historicoPrivado[cod]) {
+            const hist = user.historicoPrivado[cod];
+            document.getElementById('nome_prod').value = hist.nome || "";
+            document.getElementById('valor_prod').value = hist.valor ? hist.valor.toFixed(2) : "";
+            infoBadge.style.display = "block";
+            return; 
+        } else {
+            infoBadge.style.display = "none";
+        }
+
+        // Busca Internet
+        if (cod.length >= 8) {
+            try {
+                const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
+                const d = await r.json();
+                if (d.status === 1) {
+                    document.getElementById('nome_prod').value = d.product.product_name || "";
+                }
+            } catch (e) {}
+        }
+    }
+
+    function renderizar() {
+        const lista = document.getElementById('lista_itens');
+        if(!lista) return;
+        lista.innerHTML = ""; 
+        
+        let custoTotalDaLista = 0;
+        let custoApenasSaldo = 0;
+        
+        const u = db.usuarios[userAtivo];
+        if(!u.listaAtual) u.listaAtual = [];
+        
+        u.listaAtual.forEach((it, i) => {
+            custoTotalDaLista += (it.total || 0);
+            if (it.met === 'saldo') custoApenasSaldo += (it.total || 0);
+            
+            const tagClass = it.met === 'saldo' ? 'tag-saldo' : 'tag-outros';
+            lista.innerHTML += `
+                <div class="item-lista">
+                    <span><small style="background:#eee;padding:2px 5px;border-radius:4px;margin-right:5px;">${it.q}x</small><b>${it.n}</b>
+                    <span class="metodo-tag ${tagClass}">${it.met}</span><br>
+                    <small>R$ ${it.v.toFixed(2)} | Total: R$ ${it.total.toFixed(2)}</small></span>
+                    <button onclick="remover(${i})" style="width:auto; height:auto; color:red; background:none; font-size:24px; margin:0; padding:0 10px;">&times;</button>
+                </div>`;
+        });
+        
+        document.getElementById('res_custo').innerText = `R$ ${custoTotalDaLista.toFixed(2)}`;
+        const saldoFinal = (db.saldoGlobal || 0) - custoApenasSaldo;
+        const resEl = document.getElementById('res_total');
+        resEl.innerText = `R$ ${saldoFinal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        resEl.style.color = saldoFinal < 0 ? "var(--danger)" : "var(--success)";
+    }
+
+    function adicionarItem() {
+        const n = document.getElementById('nome_prod').value.trim();
+        const v = parseFloat(document.getElementById('valor_prod').value) || 0;
+        const q = parseInt(document.getElementById('qtd_prod').value) || 1;
+        const c = document.getElementById('codigo').value.trim();
+        const met = document.getElementById('metodo_pagamento').value;
+
+        if (!n || v <= 0) return alert("Por favor, informe o nome e o preço do produto.");
+        
+        if(!db.usuarios[userAtivo].listaAtual) db.usuarios[userAtivo].listaAtual = [];
+        
+        db.usuarios[userAtivo].listaAtual.push({
+            cod: c, n: n, v: v, q: q, total: (v * q), met: met
+        });
+
+        salvarTudo();
+        
+        // Limpa campos com segurança
+        document.getElementById('codigo').value = "";
+        document.getElementById('nome_prod').value = "";
+        document.getElementById('valor_prod').value = "";
+        document.getElementById('qtd_prod').value = "1";
+        document.getElementById('hist_info').style.display = "none";
+    }
+
+    function finalizarCompra() {
+        const u = db.usuarios[userAtivo];
+        if (!u.listaAtual || u.listaAtual.length === 0) return alert("Adicione itens na lista primeiro.");
+        
+        let totalSaldo = u.listaAtual.filter(it => it.met === 'saldo').reduce((acc, it) => acc + it.total, 0);
+        
+        if (confirm(`Deseja finalizar?\n\nCusto no Saldo: R$ ${totalSaldo.toFixed(2)}`)) {
+            db.saldoGlobal -= totalSaldo;
+
+            if (!u.historicoPrivado) u.historicoPrivado = {};
+            u.listaAtual.forEach(it => {
+                const chave = it.cod && it.cod !== "" ? it.cod : it.n.toLowerCase().trim();
+                u.historicoPrivado[chave] = { nome: it.n, valor: it.v };
+            });
+
+            u.listaAtual = [];
+            salvarTudo();
+            alert("Compra finalizada com sucesso!");
+        }
+    }
+
+    // AUXILIARES DE SISTEMA
+    function salvarTudo() { 
+        if(userAtivo && db.usuarios[userAtivo]) {
+            db.usuarios[userAtivo].mercadoAtual = document.getElementById('mercado_atual').value; 
+        }
+        localStorage.setItem(KEY_DATABASE, JSON.stringify(db)); 
+        renderizar(); 
+    }
+
+    function salvarSaldoGlobal() { 
+        db.saldoGlobal = parseFloat(document.getElementById('saldo_compartilhado').value) || 0; 
+        salvarTudo(); 
+    }
+
+    function iniciarApp() {
+        mostrarTela('app-principal');
+        const u = db.usuarios[userAtivo];
+        document.getElementById('barra-resumo').style.display = 'flex';
+        document.getElementById('boas_vindas').innerText = "Oi, " + u.nome;
+        document.getElementById('saldo_compartilhado').value = db.saldoGlobal || 0;
+        document.getElementById('mercado_atual').value = u.mercadoAtual || "";
+        renderizar();
+    }
+
+    function tentarLogin() {
+        const u = document.getElementById('login_user').value.trim().toLowerCase();
+        const p = document.getElementById('login_pass').value;
+        if (db.usuarios[u] && db.usuarios[u].senha === p) {
+            userAtivo = u; 
+            sessionStorage.setItem('sessao_user', u); 
+            verificarFluxo();
+        } else alert("Nome ou senha incorretos.");
+    }
+
+    function registrarUsuario() {
+        const nome = document.getElementById('novo_usuario').value.trim();
+        const id = nome.toLowerCase();
+        if(!id || db.usuarios[id]) return alert("Este nome não pode ser usado.");
+        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, mercadoAtual: "", listaAtual: [], historicoPrivado: {} };
+        localStorage.setItem(KEY_DATABASE, JSON.stringify(db));
+        alert("Criado! Senha inicial: " + SENHA_PADRAO); 
+        voltarLogin();
+    }
+
+    function confirmarTrocaSenha() {
+        const s1 = document.getElementById('nova_senha_input').value;
+        const s2 = document.getElementById('confirma_senha_input').value;
+        if (s1.length < 4 || s1 !== s2) return alert("As senhas devem ser iguais e ter 4+ dígitos.");
+        db.usuarios[userAtivo].senha = s1; 
+        salvarTudo(); 
+        iniciarApp();
+    }
+
+    function mostrarTela(id) { 
+        ['tela-login', 'tela-cadastro', 'app-principal', 'tela-trocar-senha'].forEach(t => {
+            const el = document.getElementById(t);
+            if(el) el.style.display='none';
+        });
+        const alvo = document.getElementById(id);
+        if(alvo) alvo.style.display='block'; 
+    }
+
+    function alternarScanner() {
+        if(!scanner) {
+            document.getElementById('reader').style.display='block';
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
+                document.getElementById('codigo').value = txt; 
+                buscaInteligente(); 
+                pararScanner();
+            }).catch(e => alert("Erro ao acessar a câmera."));
+            document.getElementById('btn-scan').innerText = "❌ CANCELAR LEITURA";
+        } else pararScanner();
+    }
+
+    function pararScanner() {
+        if(scanner) scanner.stop().then(() => {
+            scanner = null; 
+            document.getElementById('reader').style.display='none';
+            document.getElementById('btn-scan').innerText = "📷 LER CÓDIGO DE BARRAS";
+        });
+    }
+
+    function logout() { if(scanner) pararScanner(); sessionStorage.clear(); location.reload(); }
+    function voltarLogin() { mostrarTela('tela-login'); }
+    function abrirCadastro() { mostrarTela('tela-cadastro'); }
+    function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i, 1); salvarTudo(); }
+    function limparListaAtual() { if(confirm("Limpar sua lista atual?")) { db.usuarios[userAtivo].listaAtual = []; salvarTudo(); } }
+  </script>
+</body>
+</html>
