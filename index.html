@@ -3,35 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 Gestão Família - V64 MASTER ULTIMATE</title>
+  <title>🛒 Gestão Família - V65 SECURITY</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
         --primary: #0066ff; --danger: #ff1744; --success: #2e7d32; --bg: #f0f2f5; 
-        --accent: #ff9800; --purple: #673ab7; --dark: #1a1a1a;
+        --purple: #673ab7; --dark: #1a1a1a;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { background: var(--bg); padding: 15px; padding-bottom: 160px; min-height: 100vh; }
     .container { max-width: 500px; margin: 0 auto; }
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
     
+    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; margin-bottom: 12px; }
+    button { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+    
     .abas-master { display: flex; gap: 10px; margin-bottom: 20px; }
-    .aba { flex: 1; padding: 12px; text-align: center; background: #ddd; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; }
+    .aba { flex: 1; padding: 12px; text-align: center; background: #ddd; border-radius: 10px; font-weight: bold; cursor: pointer; }
     .aba.ativa { background: var(--dark); color: white; }
 
-    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; background-color: #fff; margin-bottom: 12px; }
-    
-    .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
     .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); z-index: 100; border-radius: 20px 20px 0 0; display: flex; justify-content: space-around; }
+    .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
     
-    button { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
-    .btn-small { height: 35px; font-size: 11px; margin: 0; width: auto; padding: 0 10px; }
-    .btn-danger { background: #ffebee; color: var(--danger); }
-    .btn-reset { background: #e3f2fd; color: var(--primary); }
-
-    #tela-login, #tela-cadastro, #app-principal, #painel-adm { display: none; }
     #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--purple); display: none; }
     .label-pequeno { font-size: 11px; font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
+    
+    #tela-login, #tela-cadastro, #tela-trocar-senha, #app-principal, #painel-adm { display: none; }
   </style>
 </head>
 <body>
@@ -45,8 +42,16 @@
         <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">NOVO MEMBRO</button>
     </div>
 
+    <div id="tela-trocar-senha" class="card">
+        <h2 style="text-align:center; color: var(--danger);">🔒 Segurança</h2>
+        <p style="text-align:center; margin-bottom:20px; font-size:14px;">Este é seu primeiro acesso. Por favor, crie uma senha segura.</p>
+        <input type="password" id="nova_senha_input" placeholder="Nova Senha">
+        <input type="password" id="nova_senha_confirma" placeholder="Confirme a Nova Senha">
+        <button style="background: var(--success); color: white;" onclick="processarTrocaSenha()">SALVAR NOVA SENHA</button>
+    </div>
+
     <div id="tela-cadastro" class="card">
-        <h2 style="text-align:center; margin-bottom:20px;">📝 Novo Membro</h2>
+        <h2 style="text-align:center; margin-bottom:20px;">📝 Cadastro</h2>
         <input type="text" id="novo_usuario_nome" placeholder="Seu Nome">
         <button style="background: var(--success); color: white;" onclick="registrarNovoUsuario()">CADASTRAR</button>
         <button style="background: none; border: 1px solid #ccc;" onclick="mostrarTela('tela-login')">VOLTAR</button>
@@ -56,7 +61,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 id="boas_vindas"></h3>
         <div style="display:flex; gap:5px;">
-            <button id="btn-gestao-master" onclick="abrirGestaoAdm()" style="display:none; width:auto; height:35px; background:var(--dark); color:#ffd700; font-size:10px; padding:0 10px;">🛡️ PAINEL MASTER</button>
+            <button id="btn-gestao-master" onclick="abrirGestaoAdm()" style="display:none; width:auto; height:35px; background:var(--dark); color:#ffd700; font-size:10px; padding:0 10px;">🛡️ MASTER</button>
             <button onclick="logout()" style="width:auto; height:35px; padding:0 10px; font-size:11px; background:#ccc; border-radius:8px;">SAIR</button>
         </div>
       </div>
@@ -71,21 +76,21 @@
       </div>
 
       <div class="card">
-        <input type="text" id="mercado_atual" placeholder="Mercado (Opcional)">
+        <input type="text" id="mercado_atual" placeholder="Mercado...">
         <select id="metodo_pagamento">
             <option value="saldo">📦 Descontar do Saldo</option>
-            <option value="cartao">💳 Cartão de Crédito</option>
-            <option value="pix">💎 PIX / Dinheiro</option>
+            <option value="cartao">💳 Cartão</option>
+            <option value="pix">💎 PIX</option>
         </select>
-        <button style="background:var(--purple); color:white;" onclick="alternarScanner()">📷 ESCANEAR PRODUTO</button>
+        <button style="background:var(--purple); color:white;" onclick="alternarScanner()">📷 ESCANEAR</button>
         <div id="reader"></div>
         <input type="text" id="codigo" placeholder="EAN" oninput="buscaInteligente()">
-        <input type="text" id="nome_prod" placeholder="Nome do Produto">
+        <input type="text" id="nome_prod" placeholder="Produto">
         <div style="display:flex; gap:10px;">
             <input type="number" id="qtd_prod" value="1" style="flex:1">
             <input type="number" id="valor_prod" placeholder="R$ Unit" step="0.01" style="flex:2">
         </div>
-        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR</button>
       </div>
       <div id="lista_itens"></div>
       <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
@@ -93,20 +98,12 @@
 
     <div id="painel-adm" class="card">
         <h2 style="text-align:center; margin-bottom: 10px;">🛡️ Painel Master</h2>
-        <div id="resumo-master" style="background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:15px; text-align:center; font-size:12px; font-weight:bold;"></div>
-        
         <div class="abas-master">
             <div id="aba-hist" class="aba ativa" onclick="mudarAba('hist')">HISTÓRICO</div>
             <div id="aba-users" class="aba" onclick="mudarAba('users')">MEMBROS</div>
         </div>
-
-        <div id="cont-hist" style="max-height: 400px; overflow-y: auto;"></div>
-
-        <div id="cont-users" style="display:none;">
-            <p style="font-size: 11px; color: #777; margin-bottom: 10px;">Senha padrão para Reset: <b>Compras@2026</b></p>
-            <div id="lista-membros"></div>
-        </div>
-
+        <div id="cont-hist"></div>
+        <div id="cont-users" style="display:none;"></div>
         <button style="background: var(--dark); color: white; margin-top:20px;" onclick="mostrarTela('app-principal')">VOLTAR</button>
     </div>
   </div>
@@ -117,40 +114,73 @@
   </div>
 
   <script>
-    const DB_NAME = "FAMILIA_DB_V64";
+    const DB_NAME = "FAMILIA_DB_V65";
     const SENHA_PADRAO = "Compras@2026";
-    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, historicoGeral: [], bancoPrecos: {} };
+    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, historicoGeral: [] };
     let userAtivo = sessionStorage.getItem('sessao_user');
     let scanner = null;
 
     function salvarBD() { localStorage.setItem(DB_NAME, JSON.stringify(db)); }
     function mostrarTela(id) { 
-        ['tela-login', 'tela-cadastro', 'app-principal', 'painel-adm'].forEach(t => document.getElementById(t).style.display = 'none');
+        ['tela-login','tela-cadastro','tela-trocar-senha','app-principal','painel-adm'].forEach(t => document.getElementById(t).style.display = 'none');
         document.getElementById(id).style.display = 'block';
     }
 
-    // LOGIN E CADASTRO
+    // GESTÃO DE ACESSO
+    function tentarLogin() {
+        const u = document.getElementById('login_user').value.toLowerCase().trim();
+        const p = document.getElementById('login_pass').value;
+        
+        // Login Master Especial
+        if(u === "master" && p === "Melissa@2016") {
+            if(!db.usuarios["master"]) db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[], trocarSenha:false};
+            userAtivo = "master";
+        } else if(db.usuarios[u] && db.usuarios[u].senha === p) {
+            userAtivo = u;
+        } else return alert("Usuário ou senha inválidos!");
+
+        sessionStorage.setItem('sessao_user', userAtivo);
+        
+        // Checar se precisa trocar senha
+        if(db.usuarios[userAtivo].trocarSenha) {
+            mostrarTela('tela-trocar-senha');
+        } else {
+            iniciarApp();
+        }
+    }
+
+    function processarTrocaSenha() {
+        const s1 = document.getElementById('nova_senha_input').value;
+        const s2 = document.getElementById('nova_senha_confirma').value;
+        if(s1.length < 4) return alert("A senha deve ter pelo menos 4 caracteres!");
+        if(s1 !== s2) return alert("As senhas não conferem!");
+
+        db.usuarios[userAtivo].senha = s1;
+        db.usuarios[userAtivo].trocarSenha = false;
+        salvarBD();
+        alert("Senha atualizada com sucesso!");
+        iniciarApp();
+    }
+
     function registrarNovoUsuario() {
         const nome = document.getElementById('novo_usuario_nome').value.trim();
         const id = nome.toLowerCase().replace(/\s/g, '');
         if(!id) return alert("Digite um nome!");
         if(db.usuarios[id]) return alert("Usuário já existe!");
-        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, role: "user", listaAtual: [] };
-        salvarBD(); alert("Sucesso! Senha: " + SENHA_PADRAO); mostrarTela('tela-login');
+        
+        db.usuarios[id] = { 
+            nome: nome, 
+            senha: SENHA_PADRAO, 
+            role: "user", 
+            listaAtual: [],
+            trocarSenha: true // OBRIGA A TROCAR NO PRIMEIRO ACESSO
+        };
+        salvarBD();
+        alert("Cadastrado! Na primeira entrada, use a senha: " + SENHA_PADRAO);
+        mostrarTela('tela-login');
     }
 
-    function tentarLogin() {
-        const u = document.getElementById('login_user').value.toLowerCase().trim();
-        const p = document.getElementById('login_pass').value;
-        if(u === "master" && p === "Melissa@2016") {
-            db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[]};
-            userAtivo = "master";
-        } else if(!db.usuarios[u] || db.usuarios[u].senha !== p) return alert("Acesso negado!");
-        else userAtivo = u;
-        sessionStorage.setItem('sessao_user', userAtivo);
-        salvarBD(); iniciarApp();
-    }
-
+    // APP CORE
     function iniciarApp() {
         mostrarTela('app-principal');
         document.getElementById('barra-resumo').style.display = 'flex';
@@ -160,7 +190,6 @@
         renderizar();
     }
 
-    // LISTA DE COMPRAS
     function adicionarItem() {
         const n = document.getElementById('nome_prod').value, v = parseFloat(document.getElementById('valor_prod').value), q = parseInt(document.getElementById('qtd_prod').value);
         if(!n || isNaN(v)) return;
@@ -174,7 +203,7 @@
         lista.innerHTML = ""; let tL = 0, tS = 0;
         db.usuarios[userAtivo].listaAtual.forEach((it, i) => {
             tL += it.total; if(it.met === 'saldo') tS += it.total;
-            lista.innerHTML += `<div class="item-lista"><span><b>${it.n}</b> (${it.q}x)<br><small>R$ ${it.total.toFixed(2)}</small></span><button class="btn-danger btn-small" onclick="remover(${i})">&times;</button></div>`;
+            lista.innerHTML += `<div class="item-lista"><span><b>${it.n}</b> (${it.q}x)<br><small>R$ ${it.total.toFixed(2)}</small></span><button style="width:auto; color:red; background:none; font-size:20px;" onclick="remover(${i})">&times;</button></div>`;
         });
         document.getElementById('res_custo').innerText = `R$ ${tL.toFixed(2)}`;
         document.getElementById('res_total').innerText = `R$ ${(db.saldoGlobal - tS).toFixed(2)}`;
@@ -192,7 +221,7 @@
         }
     }
 
-    // PAINEL MASTER - LOGICA
+    // FUNÇÕES MASTER
     function mudarAba(aba) {
         document.getElementById('aba-hist').className = 'aba ' + (aba==='hist'?'ativa':'');
         document.getElementById('aba-users').className = 'aba ' + (aba==='users'?'ativa':'');
@@ -202,54 +231,31 @@
     }
 
     function renderRelatorio() {
-        const h = db.historicoGeral;
-        const totalHist = h.reduce((a,b)=>a+b.valor,0);
-        document.getElementById('resumo-master').innerText = `Saldo Global: R$ ${db.saldoGlobal.toFixed(2)} | Gasto Total Histórico: R$ ${totalHist.toFixed(2)}`;
-        document.getElementById('cont-hist').innerHTML = h.slice().reverse().map((c, i) => `
+        document.getElementById('cont-hist').innerHTML = db.historicoGeral.slice().reverse().map((c, i) => `
             <div class="item-lista">
-                <span><b>${c.mercado}</b> - R$ ${c.valor.toFixed(2)}<br><small>${c.data} | Por: ${c.quem}</small></span>
-                <button class="btn-danger btn-small" onclick="excluirHist(${h.length-1-i})">🗑️</button>
+                <span><b>${c.mercado}</b> - R$ ${c.valor.toFixed(2)}<br><small>${c.data} | ${c.quem}</small></span>
+                <button style="width:40px; background:#ffebee; color:red; border-radius:8px;" onclick="excluirHist(${db.historicoGeral.length-1-i})">🗑️</button>
             </div>`).join('');
     }
 
     function renderMembros() {
-        const div = document.getElementById('lista-membros');
-        div.innerHTML = Object.keys(db.usuarios).map(id => {
-            const user = db.usuarios[id];
-            return `
-            <div class="card" style="padding:10px; margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b>${user.nome} ${id === 'master' ? '⭐' : ''}</b>
-                    <small>${user.role}</small>
-                </div>
-                <div style="display:flex; gap:5px; margin-top:10px;">
+        document.getElementById('cont-users').innerHTML = Object.keys(db.usuarios).map(id => `
+            <div class="card" style="padding:10px; margin-bottom:10px; font-size:13px;">
+                <b>${db.usuarios[id].nome}</b><br>
+                <div style="display:flex; gap:5px; margin-top:8px;">
                     ${id !== 'master' ? `
-                        <button class="btn-reset btn-small" onclick="resetSenha('${id}')">🔄 Reset Senha</button>
-                        <button class="btn-danger btn-small" onclick="excluirUser('${id}')">🗑️ Excluir</button>
-                    ` : '<small>Administrador Principal</small>'}
+                        <button style="background:#e3f2fd; color:#0066ff; height:30px; font-size:10px;" onclick="resetSenha('${id}')">RESET SENHA</button>
+                        <button style="background:#ffebee; color:red; height:30px; font-size:10px;" onclick="excluirUser('${id}')">EXCLUIR</button>
+                    ` : '<i>Administrador</i>'}
                 </div>
-            </div>`;
-        }).join('');
+            </div>`).join('');
     }
 
-    // AÇÕES MASTER
-    function resetSenha(id) {
-        if(confirm(`Resetar a senha de ${db.usuarios[id].nome} para ${SENHA_PADRAO}?`)) {
-            db.usuarios[id].senha = SENHA_PADRAO;
-            salvarBD(); alert("Senha resetada!");
-        }
-    }
+    function resetSenha(id) { if(confirm("Resetar senha?")) { db.usuarios[id].senha = SENHA_PADRAO; db.usuarios[id].trocarSenha = true; salvarBD(); alert("Resetada!"); } }
+    function excluirUser(id) { if(confirm("Excluir?")) { delete db.usuarios[id]; salvarBD(); renderMembros(); } }
+    function excluirHist(i) { if(confirm("Apagar histórico?")) { db.historicoGeral.splice(i,1); salvarBD(); renderRelatorio(); } }
 
-    function excluirUser(id) {
-        if(confirm(`AVISO: Deseja realmente excluir ${db.usuarios[id].nome}? Esta ação não pode ser desfeita.`)) {
-            delete db.usuarios[id];
-            salvarBD(); renderMembros();
-        }
-    }
-
-    function excluirHist(i) { if(confirm("Apagar registro de compra?")) { db.historicoGeral.splice(i,1); salvarBD(); renderRelatorio(); } }
-    
-    // SCANNER E ÚTEIS
+    // AUXILIARES
     async function buscaInteligente() {
         const cod = document.getElementById('codigo').value;
         if(cod.length < 8) return;
@@ -270,7 +276,7 @@
         } else pararScanner();
     }
     function pararScanner() { if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display='none'; }); }
-    function salvarSaldoGlobal() { db.saldoGlobal = parseFloat(document.getElementById('saldo_compartilhado').value) || 0; salvarBD(); renderizar(); alert("Saldo Salvo!"); }
+    function salvarSaldoGlobal() { db.saldoGlobal = parseFloat(document.getElementById('saldo_compartilhado').value) || 0; salvarBD(); renderizar(); alert("Salvo!"); }
     function logout() { sessionStorage.clear(); location.reload(); }
     function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i,1); salvarBD(); renderizar(); }
     function abrirGestaoAdm() { mostrarTela('painel-adm'); mudarAba('hist'); }
