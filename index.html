@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Compras Família - V41 MULTIPAY</title>
+  <title>🛒 Compras Família - V42 STABLE</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
@@ -22,7 +22,7 @@
     #tela-login, #tela-cadastro, #app-principal, #tela-trocar-senha { display: none; }
     
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
-    .metodo-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; margin-left: 5px; text-transform: uppercase; }
+    .metodo-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: white; margin-left: 5px; text-transform: uppercase; font-weight: bold; }
     .tag-saldo { background: var(--success); }
     .tag-outros { background: var(--purple); }
 
@@ -45,6 +45,7 @@
 
     <div id="tela-trocar-senha" class="card">
         <h2 style="text-align:center; color: var(--danger);">🔒 Segurança</h2>
+        <p style="text-align:center; font-size: 13px; margin-bottom: 10px;">Defina sua senha pessoal.</p>
         <input type="password" id="nova_senha_input" placeholder="Nova Senha Pessoal">
         <input type="password" id="confirma_senha_input" placeholder="Confirme a Senha">
         <button style="background: var(--primary); color: white;" onclick="confirmarTrocaSenha()">SALVAR E ACESSAR</button>
@@ -64,36 +65,37 @@
       </div>
 
       <div class="card" style="background: #fff8e1; border: 1px solid #ffe082;">
-        <span style="font-size: 10px; font-weight: 800; color: var(--accent);">💰 SALDO GERAL (DINHEIRO EM CAIXA)</span>
+        <span style="font-size: 10px; font-weight: 800; color: var(--accent);">💰 SALDO GERAL ( DINHEIRO EM CAIXA )</span>
         <input type="number" id="saldo_compartilhado" value="0" oninput="salvarSaldoGlobal()" style="font-size: 24px; font-weight: bold; color: var(--success); border-color: var(--accent);">
       </div>
 
       <div class="card">
         <label class="label-pequeno">🏪 MERCADO E MÉTODO:</label>
         <div style="display:flex; gap:8px;">
-            <input type="text" id="mercado_atual" placeholder="Assaí, Pix..." oninput="salvarTudo()" style="flex:1">
+            <input type="text" id="mercado_atual" placeholder="Onde você está?" oninput="salvarTudo()" style="flex:1">
             <select id="metodo_pagamento" style="flex:0.8; background: #f9f9f9;">
                 <option value="saldo">📦 Saldo</option>
                 <option value="cartao">💳 Cartão</option>
                 <option value="pix">💎 PIX</option>
+                <option value="debito">💳 Débito</option>
             </select>
         </div>
         
         <div id="reader" style="width:100%; display:none; margin-bottom:15px; border-radius:12px; overflow:hidden; border: 2px solid var(--primary);"></div>
-        <button style="background:var(--purple); color:white;" id="btn-scan" onclick="alternarScanner()">📷 ESCANEAR CÓDIGO</button>
+        <button style="background:var(--purple); color:white;" id="btn-scan" onclick="alternarScanner()">📷 LER CÓDIGO DE BARRAS</button>
         
-        <div id="loading_api" style="display:none; text-align:center; font-size:12px; color:var(--primary); margin-bottom:10px;">🔍 Buscando na internet...</div>
+        <div id="loading_api" style="display:none; text-align:center; font-size:12px; color:var(--primary); margin-bottom:10px;">🔍 Consultando internet...</div>
         <div id="status_preco" class="alerta-preco"></div>
         
-        <input type="text" id="codigo" placeholder="Código de Barras" oninput="buscaInteligente()">
-        <input type="text" id="nome_prod" placeholder="Nome do Item">
+        <input type="text" id="codigo" placeholder="Código EAN" oninput="buscaInteligente()">
+        <input type="text" id="nome_prod" placeholder="Produto">
         
         <div style="display:flex; gap:8px;">
           <div style="flex:0.4"><label class="label-pequeno">QTD</label><input type="number" id="qtd_prod" value="1"></div>
           <div style="flex:1"><label class="label-pequeno">R$ UNITÁRIO</label><input type="number" id="valor_prod" placeholder="0,00" step="0.01"></div>
         </div>
         
-        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR À LISTA</button>
+        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR NA LISTA</button>
       </div>
 
       <div id="lista_itens"></div>
@@ -111,7 +113,8 @@
   </div>
 
   <script>
-    const KEY_DATABASE = "SISTEMA_COMPRAS_V41_MULTIPAY";
+    // CHAVE UNIFICADA PARA NÃO PERDER DADOS AO ATUALIZAR VERSÃO
+    const KEY_DATABASE = "DATABASE_FAMILIA_PROJETO_FINAL";
     const SENHA_PADRAO = "Compras@2026";
     
     let db = JSON.parse(localStorage.getItem(KEY_DATABASE)) || { usuarios: {}, saldoGlobal: 0 };
@@ -139,7 +142,7 @@
             const info = user.historicoPrivado[cod];
             document.getElementById('nome_prod').value = info.nome;
             document.getElementById('status_preco').style.display = "block";
-            document.getElementById('status_preco').innerHTML = `📜 <b>Histórico:</b> R$ ${info.ultimoPreco.toFixed(2)}`;
+            document.getElementById('status_preco').innerHTML = `📜 <b>Seu Histórico:</b> R$ ${info.ultimoPreco.toFixed(2)}`;
             document.getElementById('valor_prod').focus();
         } else if (cod.length >= 8) {
             document.getElementById('loading_api').style.display = 'block';
@@ -187,7 +190,6 @@
                 </div>`;
         });
         
-        // No rodapé, só mostra o que sobra do SALDO se pagar com SALDO
         const saldoDinamico = (db.saldoGlobal || 0) - somaAbateSaldo;
         const resEl = document.getElementById('res_total');
         resEl.innerText = saldoDinamico.toLocaleString('pt-BR', {minimumFractionDigits: 2});
@@ -201,11 +203,10 @@
         let totalSaldo = u.listaAtual.filter(it => it.met === 'saldo').reduce((acc, it) => acc + it.total, 0);
         let totalOutros = u.listaAtual.filter(it => it.met !== 'saldo').reduce((acc, it) => acc + it.total, 0);
 
-        let msg = `Resumo da Compra:\n- Do Saldo: R$ ${totalSaldo.toFixed(2)}\n- Outras formas: R$ ${totalOutros.toFixed(2)}\n\nConfirmar?`;
+        let msg = `Resumo da Compra:\n- Do Saldo Família: R$ ${totalSaldo.toFixed(2)}\n- Outras formas (PIX/Cartão): R$ ${totalOutros.toFixed(2)}\n\nConfirmar fechamento?`;
 
         if (confirm(msg)) {
-            db.saldoGlobal -= totalSaldo; // Só tira do saldo o que foi marcado como 'saldo'
-            
+            db.saldoGlobal -= totalSaldo;
             u.listaAtual.forEach(it => {
                 const chave = it.cod || it.n.toLowerCase();
                 if (!u.historicoPrivado) u.historicoPrivado = {};
@@ -214,15 +215,13 @@
                     ultimoMercado: u.mercadoAtual, data: new Date().toLocaleDateString('pt-BR')
                 };
             });
-            
             u.listaAtual = [];
             document.getElementById('saldo_compartilhado').value = db.saldoGlobal.toFixed(2);
             salvarTudo();
-            alert("Compra finalizada!");
+            alert("Compra finalizada e histórico salvo!");
         }
     }
 
-    // --- ESSENCIAIS ---
     function salvarTudo() {
         if(userAtivo) db.usuarios[userAtivo].mercadoAtual = document.getElementById('mercado_atual').value;
         salvarNoStorage(); renderizar();
@@ -232,7 +231,7 @@
         mostrarTela('app-principal');
         const u = db.usuarios[userAtivo];
         document.getElementById('barra-resumo').style.display = 'block';
-        document.getElementById('boas_vindas').innerText = "Olá, " + u.nome;
+        document.getElementById('boas_vindas').innerText = "Oi, " + u.nome;
         document.getElementById('saldo_compartilhado').value = db.saldoGlobal || 0;
         document.getElementById('mercado_atual').value = u.mercadoAtual || "";
         renderizar();
@@ -240,21 +239,21 @@
     function registrarUsuario() {
         const nome = document.getElementById('novo_usuario').value.trim();
         const id = nome.toLowerCase();
-        if(!id || db.usuarios[id]) return alert("Indisponível");
+        if(!id || db.usuarios[id]) return alert("Usuário já existe ou nome inválido");
         db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, mercadoAtual: "", listaAtual: [], historicoPrivado: {} };
-        salvarNoStorage(); alert("Criado! Senha: " + SENHA_PADRAO); voltarLogin();
+        salvarNoStorage(); alert("Perfil criado com sucesso!"); voltarLogin();
     }
     function tentarLogin() {
         const u = document.getElementById('login_user').value.trim().toLowerCase();
         const p = document.getElementById('login_pass').value;
         if (db.usuarios[u] && db.usuarios[u].senha === p) {
             userAtivo = u; sessionStorage.setItem('sessao_user', u); verificarFluxo();
-        } else alert("Acesso negado.");
+        } else alert("Nome ou senha incorretos.");
     }
     function confirmarTrocaSenha() {
         const s1 = document.getElementById('nova_senha_input').value;
         const s2 = document.getElementById('confirma_senha_input').value;
-        if (s1.length < 4 || s1 !== s2) return alert("Erro nas senhas.");
+        if (s1.length < 4 || s1 !== s2) return alert("As senhas devem ser iguais e ter 4+ caracteres.");
         db.usuarios[userAtivo].senha = s1; salvarNoStorage(); iniciarApp();
     }
     function alternarScanner() {
@@ -263,14 +262,14 @@
             scanner = new Html5Qrcode("reader");
             scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
                 document.getElementById('codigo').value = txt; buscaInteligente(); pararScanner();
-            }).catch(e => alert("Câmera erro"));
+            }).catch(e => alert("Erro ao abrir câmera. Verifique as permissões."));
             document.getElementById('btn-scan').innerText = "❌ CANCELAR";
         } else pararScanner();
     }
     function pararScanner() {
         if(scanner) scanner.stop().then(() => {
             scanner = null; document.getElementById('reader').style.display='none';
-            document.getElementById('btn-scan').innerText = "📷 ESCANEAR";
+            document.getElementById('btn-scan').innerText = "📷 LER CÓDIGO DE BARRAS";
         });
     }
     function mostrarTela(id) { 
@@ -281,7 +280,7 @@
     function voltarLogin() { mostrarTela('tela-login'); }
     function abrirCadastro() { mostrarTela('tela-cadastro'); }
     function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i, 1); salvarTudo(); }
-    function limparListaAtual() { if(confirm("Limpar lista?")) { db.usuarios[userAtivo].listaAtual = []; salvarTudo(); } }
+    function limparListaAtual() { if(confirm("Limpar sua lista?")) { db.usuarios[userAtivo].listaAtual = []; salvarTudo(); } }
   </script>
 </body>
 </html>
