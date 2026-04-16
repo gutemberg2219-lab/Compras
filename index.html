@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛒 Compras do Mês - V44 DASHBOARD</title>
+  <title>🛒 Compras Família - V45 HISTORY FIX</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
@@ -15,6 +15,7 @@
     .container { max-width: 500px; margin: 0 auto; }
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 12px; outline: none; background-color: #fff; }
+    input:focus { border-color: var(--primary); border-width: 3px; }
     
     #tela-login, #tela-cadastro, #app-principal, #tela-trocar-senha { display: none; }
     
@@ -23,7 +24,6 @@
     .tag-saldo { background: var(--success); }
     .tag-outros { background: var(--purple); }
 
-    /* NOVO RODAPÉ DIVIDIDO */
     .resumo-fixo { 
         position: fixed; bottom: 0; left: 0; width: 100%; 
         background: white; padding: 15px; 
@@ -38,13 +38,14 @@
 
     .label-pequeno { font-size: 11px; font-weight: 800; color: #555; margin-bottom: 5px; display: block; text-transform: uppercase; }
     button { width: 100%; height: 50px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
+    .hist-badge { font-size: 11px; color: var(--accent); font-weight: bold; display: none; margin-bottom: 10px; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div id="tela-login" class="card">
-        <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
+        <h2 style="text-align:center; margin-bottom:20px;">🛒 Compras Família</h2>
         <input type="text" id="login_user" placeholder="Seu Nome">
         <input type="password" id="login_pass" placeholder="Senha">
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
@@ -53,7 +54,6 @@
 
     <div id="tela-trocar-senha" class="card">
         <h2 style="text-align:center; color: var(--danger);">🔒 Segurança</h2>
-        <p style="text-align:center; font-size: 13px; margin-bottom: 15px;">Crie sua senha definitiva.</p>
         <input type="password" id="nova_senha_input" placeholder="Nova Senha">
         <input type="password" id="confirma_senha_input" placeholder="Confirme a Senha">
         <button style="background: var(--success); color: white;" onclick="confirmarTrocaSenha()">SALVAR E ENTRAR</button>
@@ -78,7 +78,7 @@
       </div>
 
       <div class="card">
-        <label class="label-pequeno">🏪 ONDE ESTOU / COMO VOU PAGAR:</label>
+        <label class="label-pequeno">🏪 MERCADO E MÉTODO:</label>
         <div style="display:flex; gap:8px;">
             <input type="text" id="mercado_atual" placeholder="Mercado..." oninput="salvarTudo()" style="flex:1">
             <select id="metodo_pagamento" style="flex:0.8; background: #f9f9f9;">
@@ -92,8 +92,10 @@
         <div id="reader" style="width:100%; display:none; margin-bottom:15px; border-radius:12px; overflow:hidden; border: 2px solid var(--primary);"></div>
         <button style="background:var(--purple); color:white;" id="btn-scan" onclick="alternarScanner()">📷 LER CÓDIGO DE BARRAS</button>
         
+        <div id="hist_info" class="hist-badge">✨ Item encontrado no seu histórico!</div>
+
         <input type="text" id="codigo" placeholder="EAN / Código" oninput="buscaInteligente()">
-        <input type="text" id="nome_prod" placeholder="Produto">
+        <input type="text" id="nome_prod" placeholder="Nome do Produto">
         
         <div style="display:flex; gap:8px;">
           <div style="flex:0.4"><label class="label-pequeno">QTD</label><input type="number" id="qtd_prod" value="1"></div>
@@ -106,182 +108,4 @@
       <div id="lista_itens"></div>
 
       <div class="card" style="text-align: center;">
-          <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FECHAR COMPRA E SALVAR</button>
-          <button style="background: none; color: var(--danger); border: 1px solid var(--danger); font-size:12px;" onclick="limparListaAtual()">🗑️ LIMPAR MINHA LISTA</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="resumo-fixo" id="barra-resumo" style="display: none;">
-    <div class="col-resumo">
-        <span class="label-resumo">Custo da Lista</span>
-        <span class="valor-resumo" id="res_custo" style="color: var(--purple);">R$ 0,00</span>
-    </div>
-    <div class="divisor-v"></div>
-    <div class="col-resumo">
-        <span class="label-resumo">Saldo Caixa</span>
-        <span class="valor-resumo" id="res_total" style="color: var(--success);">R$ 0,00</span>
-    </div>
-  </div>
-
-  <script>
-    const KEY_DATABASE = "DATABASE_FAMILIA_PROJETO_FINAL";
-    const SENHA_PADRAO = "Compras@2026";
-    
-    let db = JSON.parse(localStorage.getItem(KEY_DATABASE)) || { usuarios: {}, saldoGlobal: 0 };
-    let userAtivo = sessionStorage.getItem('sessao_user');
-    let scanner = null;
-
-    window.onload = () => { if (userAtivo) verificarFluxo(); else mostrarTela('tela-login'); };
-
-    function verificarFluxo() {
-        if (!db.usuarios[userAtivo]) { logout(); return; }
-        if (db.usuarios[userAtivo].senha === SENHA_PADRAO) mostrarTela('tela-trocar-senha');
-        else iniciarApp();
-    }
-
-    function renderizar() {
-        const lista = document.getElementById('lista_itens');
-        lista.innerHTML = ""; 
-        let custoTotalDaLista = 0;
-        let custoApenasSaldo = 0;
-        const minhaLista = db.usuarios[userAtivo].listaAtual || [];
-        
-        minhaLista.forEach((it, i) => {
-            custoTotalDaLista += it.total;
-            if (it.met === 'saldo') custoApenasSaldo += it.total;
-            
-            const tagClass = it.met === 'saldo' ? 'tag-saldo' : 'tag-outros';
-            lista.innerHTML += `
-                <div class="item-lista">
-                    <span><small style="background:#eee;padding:2px 5px;border-radius:4px;margin-right:5px;">${it.q}x</small><b>${it.n}</b>
-                    <span class="metodo-tag ${tagClass}">${it.met}</span><br>
-                    <small>R$ ${it.v.toFixed(2)} | Total: R$ ${it.total.toFixed(2)}</small></span>
-                    <button onclick="remover(${i})" style="width:auto; height:auto; color:red; background:none; font-size:24px; margin:0; padding:0 10px;">&times;</button>
-                </div>`;
-        });
-        
-        // Atualiza Custo da Lista
-        document.getElementById('res_custo').innerText = `R$ ${custoTotalDaLista.toFixed(2)}`;
-        
-        // Atualiza Saldo Restante (Só abate o que for pago com Saldo)
-        const saldoFinal = (db.saldoGlobal || 0) - custoApenasSaldo;
-        const resEl = document.getElementById('res_total');
-        resEl.innerText = `R$ ${saldoFinal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        resEl.style.color = saldoFinal < 0 ? "var(--danger)" : "var(--success)";
-    }
-
-    // --- FUNÇÕES DE INTERFACE ---
-    function salvarSaldoGlobal() { db.saldoGlobal = parseFloat(document.getElementById('saldo_compartilhado').value) || 0; salvarNoStorage(); renderizar(); }
-    function salvarTudo() { if(userAtivo) db.usuarios[userAtivo].mercadoAtual = document.getElementById('mercado_atual').value; salvarNoStorage(); renderizar(); }
-    function salvarNoStorage() { localStorage.setItem(KEY_DATABASE, JSON.stringify(db)); }
-    
-    function adicionarItem() {
-        const n = document.getElementById('nome_prod').value.trim();
-        const v = parseFloat(document.getElementById('valor_prod').value) || 0;
-        const q = parseInt(document.getElementById('qtd_prod').value) || 1;
-        if (!n || v <= 0) return alert("Dados inválidos!");
-        db.usuarios[userAtivo].listaAtual.push({
-            cod: document.getElementById('codigo').value.trim(),
-            n, v, q, total: (v * q), met: document.getElementById('metodo_pagamento').value
-        });
-        salvarTudo();
-        ['codigo', 'nome_prod', 'valor_prod'].forEach(id => document.getElementById(id).value = "");
-    }
-
-    function finalizarCompra() {
-        const u = db.usuarios[userAtivo];
-        if (u.listaAtual.length === 0) return;
-        let totalSaldo = u.listaAtual.filter(it => it.met === 'saldo').reduce((acc, it) => acc + it.total, 0);
-        if (confirm(`Deseja fechar a compra? R$ ${totalSaldo.toFixed(2)} serão abatidos do saldo familiar.`)) {
-            db.saldoGlobal -= totalSaldo;
-            u.listaAtual.forEach(it => {
-                const chave = it.cod || it.n.toLowerCase();
-                if (!u.historicoPrivado) u.historicoPrivado = {};
-                u.historicoPrivado[chave] = { nome: it.n, ultimoPreco: it.v, data: new Date().toLocaleDateString('pt-BR') };
-            });
-            u.listaAtual = [];
-            document.getElementById('saldo_compartilhado').value = db.saldoGlobal.toFixed(2);
-            salvarTudo();
-            alert("Sucesso! Saldo atualizado.");
-        }
-    }
-
-    async function buscaInteligente() {
-        const cod = document.getElementById('codigo').value.trim();
-        const user = db.usuarios[userAtivo];
-        if (user.historicoPrivado && user.historicoPrivado[cod]) {
-            const info = user.historicoPrivado[cod];
-            document.getElementById('nome_prod').value = info.nome;
-            document.getElementById('valor_prod').focus();
-        } else if (cod.length >= 8) {
-            try {
-                const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
-                const d = await r.json();
-                if (d.status === 1) document.getElementById('nome_prod').value = d.product.product_name;
-            } catch (e) {}
-        }
-    }
-
-    function iniciarApp() {
-        mostrarTela('app-principal');
-        const u = db.usuarios[userAtivo];
-        document.getElementById('barra-resumo').style.display = 'flex';
-        document.getElementById('boas_vindas').innerText = "Oi, " + u.nome;
-        document.getElementById('saldo_compartilhado').value = db.saldoGlobal || 0;
-        document.getElementById('mercado_atual').value = u.mercadoAtual || "";
-        renderizar();
-    }
-
-    function tentarLogin() {
-        const u = document.getElementById('login_user').value.trim().toLowerCase();
-        const p = document.getElementById('login_pass').value;
-        if (db.usuarios[u] && db.usuarios[u].senha === p) {
-            userAtivo = u; sessionStorage.setItem('sessao_user', u); verificarFluxo();
-        } else alert("Erro no login.");
-    }
-
-    function confirmarTrocaSenha() {
-        const s1 = document.getElementById('nova_senha_input').value;
-        const s2 = document.getElementById('confirma_senha_input').value;
-        if (s1.length < 4 || s1 !== s2) return alert("Erro na senha!");
-        db.usuarios[userAtivo].senha = s1; salvarNoStorage(); iniciarApp();
-    }
-
-    function registrarUsuario() {
-        const nome = document.getElementById('novo_usuario').value.trim();
-        const id = nome.toLowerCase();
-        if(!id || db.usuarios[id]) return alert("Indisponível.");
-        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, mercadoAtual: "", listaAtual: [], historicoPrivado: {} };
-        salvarNoStorage(); alert("Cadastrado! Use a senha: " + SENHA_PADRAO); voltarLogin();
-    }
-
-    function mostrarTela(id) { 
-        ['tela-login', 'tela-cadastro', 'app-principal', 'tela-trocar-senha'].forEach(t => document.getElementById(t).style.display='none');
-        document.getElementById(id).style.display='block'; 
-    }
-    function logout() { sessionStorage.clear(); location.reload(); }
-    function voltarLogin() { mostrarTela('tela-login'); }
-    function abrirCadastro() { mostrarTela('tela-cadastro'); }
-    function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i, 1); salvarTudo(); }
-    function limparListaAtual() { if(confirm("Limpar lista?")) { db.usuarios[userAtivo].listaAtual = []; salvarTudo(); } }
-    
-    function alternarScanner() {
-        if(!scanner) {
-            document.getElementById('reader').style.display='block';
-            scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt; buscaInteligente(); pararScanner();
-            }).catch(e => alert("Erro câmera"));
-            document.getElementById('btn-scan').innerText = "❌ CANCELAR";
-        } else pararScanner();
-    }
-    function pararScanner() {
-        if(scanner) scanner.stop().then(() => {
-            scanner = null; document.getElementById('reader').style.display='none';
-            document.getElementById('btn-scan').innerText = "📷 LER CÓDIGO DE BARRAS";
-        });
-    }
-  </script>
-</body>
-</html>
+          <button style
