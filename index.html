@@ -3,93 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 Gestão Família - V67 SNAP & SAVE</title>
+  <title>🛒 Gestão Família - V69 SMART MEMORY</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    :root { 
-        --primary: #0066ff; --danger: #ff1744; --success: #2e7d32; --bg: #f0f2f5; 
-        --purple: #673ab7; --dark: #1a1a1a;
-    }
+    :root { --primary: #0066ff; --purple: #673ab7; --success: #2e7d32; --bg: #f0f2f5; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 160px; min-height: 100vh; }
-    .container { max-width: 500px; margin: 0 auto; }
-    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
-    
-    .input-group { position: relative; width: 100%; margin-bottom: 12px; }
-    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; }
-    
-    .toggle-pass { position: absolute; right: 15px; top: 17px; background: none; border: none; font-size: 18px; cursor: pointer; color: #777; width: auto !important; }
-
-    button { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
-    
-    .btn-camera { background: #e8f0fe; color: var(--primary); border: 1px dashed var(--primary); margin-bottom: 15px; }
-    
-    .preview-foto { width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; display: none; border: 2px solid #eee; }
-    .thumb-lista { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; margin-right: 10px; border: 1px solid #ddd; }
-
-    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); z-index: 100; border-radius: 20px 20px 0 0; display: flex; justify-content: space-around; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 160px; }
+    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; margin-bottom: 10px; font-size: 16px; outline: none; }
+    button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .status-busca { font-size: 12px; color: var(--purple); font-weight: bold; margin-bottom: 10px; display: none; text-align: center; }
     .item-lista { background: white; border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; border: 1px solid #eee; }
-    .info-item { flex: 1; }
-    
-    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--purple); display: none; }
-    #camera-input { display: none; }
-
-    #tela-login, #tela-cadastro, #tela-trocar-senha, #app-principal, #painel-adm { display: none; }
+    .thumb-lista { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-right: 10px; background: #f9f9f9; }
+    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); display: flex; justify-content: space-around; border-radius: 20px 20px 0 0; }
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
+    #tela-login, #app-principal { display: none; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div id="tela-login" class="card">
-        <h2 style="text-align:center; margin-bottom:20px;">🛒 Gestão Família</h2>
-        <input type="text" id="login_user" placeholder="Usuário" style="margin-bottom:12px;">
-        <div class="input-group">
-            <input type="password" id="login_pass" placeholder="Senha">
-            <button type="button" class="toggle-pass" onclick="togglePassword('login_pass')">👁️</button>
-        </div>
-        <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
-        <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">NOVO MEMBRO</button>
-    </div>
+  <div id="tela-login" class="card" style="max-width:400px; margin: 50px auto;">
+    <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
+    <input type="text" id="login_user" placeholder="Usuário">
+    <input type="password" id="login_pass" placeholder="Senha">
+    <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
+  </div>
 
-    <div id="app-principal">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+  <div id="app-principal" style="max-width:500px; margin: auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 id="boas_vindas"></h3>
-        <button onclick="logout()" style="width:auto; height:35px; padding:0 10px; font-size:11px; background:#ccc; border-radius:8px;">SAIR</button>
-      </div>
-
-      <div class="card">
-        <select id="metodo_pagamento" style="margin-bottom:12px;">
-            <option value="saldo">📦 Saldo</option>
-            <option value="cartao">💳 Cartão</option>
-        </select>
-        
-        <div style="display: flex; gap: 8px;">
-            <button style="background:var(--purple); color:white; flex: 1;" onclick="alternarScanner()">📷 ESCANEAR EAN</button>
-            <button class="btn-camera" style="flex: 1;" onclick="document.getElementById('camera-input').click()">🖼️ FOTO PRODUTO</button>
-        </div>
-        
-        <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="capturarFoto(event)">
-        <img id="img-preview" class="preview-foto">
-        
-        <div id="reader"></div>
-        <input type="text" id="codigo" placeholder="EAN" oninput="buscaInteligente()" style="margin-bottom:12px;">
-        <input type="text" id="nome_prod" placeholder="Produto" style="margin-bottom:12px;">
-        <div style="display:flex; gap:10px; margin-bottom:12px;">
-            <input type="number" id="qtd_prod" value="1" style="flex:1">
-            <input type="number" id="valor_prod" placeholder="R$ Unit" step="0.01" style="flex:2">
-        </div>
-        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR</button>
-      </div>
-
-      <div id="lista_itens"></div>
-      <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
+        <button onclick="logout()" style="width:auto; height:35px; padding:0 10px; background:#ccc;">SAIR</button>
     </div>
 
-    <div id="tela-trocar-senha" class="card">
-        <h2 style="text-align:center;">🔒 Nova Senha</h2>
-        <input type="password" id="nova_senha_input" placeholder="Nova Senha">
-        <button style="background: var(--success); color: white; margin-top:10px;" onclick="processarTrocaSenha()">SALVAR</button>
+    <div class="card">
+      <div id="status-busca" class="status-busca"></div>
+      
+      <div style="display: flex; gap: 8px;">
+          <button style="background:var(--purple); color:white;" onclick="alternarScanner()">📷 LER EAN</button>
+          <button style="background:#e8f0fe; color:var(--primary);" onclick="document.getElementById('camera-input').click()">🖼️ FOTO</button>
+      </div>
+      <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="capturarFoto(event)">
+      <img id="img-preview" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px; display:none">
+
+      <div id="reader"></div>
+      
+      <input type="text" id="codigo" placeholder="Código de Barras" oninput="buscaInteligente()">
+      <input type="text" id="nome_prod" placeholder="Nome do Produto">
+      
+      <div style="display:flex; gap:10px;">
+          <input type="number" id="qtd_prod" value="1" style="flex:1">
+          <input type="number" id="valor_prod" placeholder="R$ Unit" step="0.01" style="flex:2">
+      </div>
+      <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR</button>
     </div>
+
+    <div id="lista_itens"></div>
+    <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
   </div>
 
   <div class="resumo-fixo" id="barra-resumo" style="display: none;">
@@ -98,78 +67,133 @@
   </div>
 
   <script>
-    const DB_NAME = "FAMILIA_DB_V67";
-    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, historicoGeral: [] };
+    const DB_NAME = "FAMILIA_DB_V69";
+    // Estrutura do Banco: adicionado 'bancoPrecos' para memória local
+    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { 
+        usuarios: {}, 
+        saldoGlobal: 0, 
+        historicoGeral: [],
+        bancoPrecos: {} // { "EAN": {nome: "", valor: 0, foto: ""} }
+    };
+    
     let userAtivo = sessionStorage.getItem('sessao_user');
     let scanner = null;
-    let fotoBase64 = null; // Armazena a foto atual
+    let fotoBase64 = null;
 
     function salvarBD() { localStorage.setItem(DB_NAME, JSON.stringify(db)); }
 
-    function capturarFoto(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                fotoBase64 = e.target.result;
-                const img = document.getElementById('img-preview');
-                img.src = fotoBase64;
-                img.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+    // --- BUSCA INTELIGENTE (LOCAL + WEB) ---
+    async function buscaInteligente() {
+        const cod = document.getElementById('codigo').value.trim();
+        const status = document.getElementById('status-busca');
+        if(cod.length < 8) return;
+
+        // 1. Tenta buscar na MEMÓRIA LOCAL primeiro
+        if(db.bancoPrecos[cod]) {
+            const local = db.bancoPrecos[cod];
+            document.getElementById('nome_prod').value = local.nome;
+            document.getElementById('valor_prod').value = local.valor || "";
+            if(local.foto) {
+                fotoBase64 = local.foto;
+                document.getElementById('img-preview').src = local.foto;
+                document.getElementById('img-preview').style.display = 'block';
+            }
+            status.innerText = "✅ Encontrado na memória local!";
+            status.style.display = 'block';
+            setTimeout(() => status.style.display = 'none', 2000);
+            return; 
         }
+
+        // 2. Se não achou local, busca na INTERNET
+        status.innerText = "🔍 Buscando na nuvem...";
+        status.style.display = 'block';
+        
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
+            const data = await res.json();
+            if(data.status === 1) {
+                const p = data.product;
+                const nome = p.product_name || "Produto Novo";
+                document.getElementById('nome_prod').value = nome + (p.brands ? ` (${p.brands})` : "");
+                if(p.image_url) {
+                    fotoBase64 = p.image_url;
+                    document.getElementById('img-preview').src = p.image_url;
+                    document.getElementById('img-preview').style.display = 'block';
+                }
+            }
+        } catch(e) { console.log("Erro web"); }
+        status.style.display = 'none';
     }
 
     function adicionarItem() {
         const n = document.getElementById('nome_prod').value, 
               v = parseFloat(document.getElementById('valor_prod').value), 
-              q = parseInt(document.getElementById('qtd_prod').value);
+              q = parseInt(document.getElementById('qtd_prod').value),
+              c = document.getElementById('codigo').value.trim();
         
-        if(!n || isNaN(v)) return;
+        if(!n || isNaN(v)) return alert("Dados incompletos!");
 
-        db.usuarios[userAtivo].listaAtual.push({ 
-            n, v, q, 
-            total: v*q, 
-            met: document.getElementById('metodo_pagamento').value,
-            foto: fotoBase64 // Salva a foto no item
-        });
+        // SALVA NA MEMÓRIA LOCAL PARA A PRÓXIMA VEZ
+        if(c) {
+            db.bancoPrecos[c] = { nome: n, valor: v, foto: fotoBase64 };
+        }
 
-        fotoBase64 = null; // Limpa a foto para o próximo
+        db.usuarios[userAtivo].listaAtual.push({ n, v, q, c, total: v*q, foto: fotoBase64 });
+        
+        // Reset campos
+        fotoBase64 = null;
         document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('nome_prod').value = ""; 
+        document.getElementById('valor_prod').value = "";
+        document.getElementById('codigo').value = "";
         salvarBD(); renderizar();
-        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
     }
 
     function renderizar() {
         const lista = document.getElementById('lista_itens');
-        lista.innerHTML = ""; let tL = 0, tS = 0;
+        lista.innerHTML = ""; let tL = 0;
         db.usuarios[userAtivo].listaAtual.forEach((it, i) => {
-            tL += it.total; if(it.met === 'saldo') tS += it.total;
-            const imgTag = it.foto ? `<img src="${it.foto}" class="thumb-lista">` : `<div class="thumb-lista" style="display:flex;align-items:center;justify-content:center;background:#eee;font-size:10px;">Sem foto</div>`;
-            
+            tL += it.total;
+            const img = it.foto ? `<img src="${it.foto}" class="thumb-lista">` : `<div class="thumb-lista"></div>`;
             lista.innerHTML += `
                 <div class="item-lista">
-                    ${imgTag}
-                    <div class="info-item">
-                        <b>${it.n}</b> (${it.q}x)<br>
-                        <small>R$ ${it.total.toFixed(2)}</small>
-                    </div>
-                    <button style="width:auto; color:red; background:none; font-size:20px;" onclick="remover(${i})">&times;</button>
+                    ${img}
+                    <div style="flex:1"><b>${it.n}</b><br><small>${it.q}x R$ ${it.v.toFixed(2)}</small></div>
+                    <button style="width:auto; color:red; background:none; font-size:24px;" onclick="remover(${i})">&times;</button>
                 </div>`;
         });
         document.getElementById('res_custo').innerText = `R$ ${tL.toFixed(2)}`;
-        document.getElementById('res_total').innerText = `R$ ${(db.saldoGlobal - tS).toFixed(2)}`;
+        document.getElementById('res_total').innerText = `R$ ${(db.saldoGlobal - tL).toFixed(2)}`;
     }
 
-    // --- FUNÇÕES DE LOGIN E SISTEMA ---
-    function mostrarTela(id) { 
-        ['tela-login','app-principal','tela-trocar-senha'].forEach(t => {
-            const el = document.getElementById(t);
-            if(el) el.style.display = 'none';
-        });
-        document.getElementById(id).style.display = 'block';
+    // --- CÂMERA E SCANNER ---
+    function capturarFoto(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                fotoBase64 = e.target.result;
+                document.getElementById('img-preview').src = fotoBase64;
+                document.getElementById('img-preview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
     }
 
+    function alternarScanner() {
+        if(!scanner) {
+            document.getElementById('reader').style.display='block';
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('codigo').value = txt;
+                buscaInteligente();
+                pararScanner();
+            });
+        } else pararScanner();
+    }
+    function pararScanner() { if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); }
+
+    // --- LOGIN ---
     function tentarLogin() {
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
@@ -183,37 +207,23 @@
     }
 
     function iniciarApp() {
-        mostrarTela('app-principal');
+        document.getElementById('tela-login').style.display = 'none';
+        document.getElementById('app-principal').style.display = 'block';
         document.getElementById('barra-resumo').style.display = 'flex';
         document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userAtivo].nome;
         renderizar();
     }
 
-    async function buscaInteligente() {
-        const cod = document.getElementById('codigo').value;
-        if(cod.length < 8) return;
-        try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
-            const data = await res.json();
-            if(data.status === 1) document.getElementById('nome_prod').value = data.product.product_name || "";
-        } catch(e) {}
-    }
-
-    function alternarScanner() {
-        if(!scanner) {
-            document.getElementById('reader').style.display='block';
-            scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt; buscaInteligente(); pararScanner();
-            });
-        } else pararScanner();
-    }
-    function pararScanner() { if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display='none'; }); }
     function logout() { sessionStorage.clear(); location.reload(); }
     function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i,1); salvarBD(); renderizar(); }
-    function togglePassword(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
+    function finalizarCompra() { 
+        if(confirm("Finalizar?")) {
+            db.usuarios[userAtivo].listaAtual = [];
+            salvarBD(); renderizar();
+        }
+    }
 
-    if (userAtivo && db.usuarios[userAtivo]) iniciarApp(); else mostrarTela('tela-login');
+    if (userAtivo) iniciarApp(); else document.getElementById('tela-login').style.display = 'block';
   </script>
 </body>
 </html>
