@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 Gestão Família - V70 COMPLETE</title>
+  <title>🛒 Gestão Família - V71 FINANCE</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { --primary: #0066ff; --purple: #673ab7; --success: #2e7d32; --danger: #ff1744; --bg: #f0f2f5; }
@@ -15,6 +15,7 @@
     .item-lista { background: white; border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; border: 1px solid #eee; }
     .thumb-lista { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-right: 10px; background: #f9f9f9; }
     .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); display: flex; justify-content: space-around; border-radius: 20px 20px 0 0; z-index: 1000; }
+    .label-mini { font-size: 11px; font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
     #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
     #tela-login, #tela-cadastro, #tela-trocar-senha, #app-principal { display: none; }
     .status-busca { font-size: 12px; color: var(--purple); font-weight: bold; margin-bottom: 10px; display: none; text-align: center; }
@@ -41,7 +42,7 @@
 
     <div id="tela-trocar-senha" class="card" style="margin-top: 50px;">
         <h2 style="text-align:center; color: var(--danger);">🔒 Segurança</h2>
-        <p style="text-align:center; margin-bottom:15px; font-size:14px;">Crie uma nova senha para seu primeiro acesso.</p>
+        <p style="text-align:center; margin-bottom:15px; font-size:14px;">Crie uma senha pessoal segura.</p>
         <input type="password" id="nova_senha" placeholder="Nova Senha">
         <button style="background: var(--success); color: white;" onclick="salvarNovaSenha()">DEFINIR SENHA</button>
     </div>
@@ -50,6 +51,14 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 id="boas_vindas"></h3>
         <button onclick="logout()" style="width:auto; height:35px; padding:0 10px; background:#ccc; border-radius:8px; font-size:11px;">SAIR</button>
+      </div>
+
+      <div class="card" style="border-left: 5px solid var(--success);">
+        <span class="label-mini">💰 SALDO DISPONÍVEL (COMPARTILHADO)</span>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="input_saldo_global" step="0.01" placeholder="R$ 0,00" style="margin:0; font-size:20px; font-weight:bold; color:var(--success);">
+            <button onclick="atualizarSaldoGlobal()" style="width:60px; height:50px; margin:0; background:var(--success); color:white;">✅</button>
+        </div>
       </div>
 
       <div class="card">
@@ -79,12 +88,12 @@
   </div>
 
   <div class="resumo-fixo" id="barra-resumo" style="display: none;">
-    <div style="text-align:center"><small>Lista</small><br><b id="res_custo" style="color:var(--purple)">R$ 0,00</b></div>
-    <div style="text-align:center"><small>Saldo</small><br><b id="res_total" style="color:var(--success)">R$ 0,00</b></div>
+    <div style="text-align:center"><small>Total Lista</small><br><b id="res_custo" style="color:var(--purple)">R$ 0,00</b></div>
+    <div style="text-align:center"><small>Saldo Restante</small><br><b id="res_total" style="color:var(--success)">R$ 0,00</b></div>
   </div>
 
   <script>
-    const DB_NAME = "FAMILIA_DB_V70";
+    const DB_NAME = "FAMILIA_DB_V71";
     const SENHA_PADRAO = "Compras@2026";
     let db = JSON.parse(localStorage.getItem(DB_NAME)) || { 
         usuarios: {}, 
@@ -100,72 +109,64 @@
 
     function mostrarTela(id) {
         ['tela-login', 'tela-cadastro', 'tela-trocar-senha', 'app-principal'].forEach(t => {
-            document.getElementById(t).style.display = 'none';
+            const el = document.getElementById(t);
+            if(el) el.style.display = 'none';
         });
         document.getElementById(id).style.display = 'block';
     }
 
-    // --- CADASTRO ---
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
         const id = nome.toLowerCase().replace(/\s/g, '');
         if(!id) return alert("Digite um nome!");
-        if(db.usuarios[id]) return alert("Este nome já está em uso!");
-
-        db.usuarios[id] = { 
-            nome: nome, 
-            senha: SENHA_PADRAO, 
-            role: "user", 
-            listaAtual: [], 
-            precisaTrocar: true 
-        };
+        if(db.usuarios[id]) return alert("Usuário já existe!");
+        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, role: "user", listaAtual: [], precisaTrocar: true };
         salvarBD();
-        alert("Cadastrado! Use a senha: " + SENHA_PADRAO);
+        alert("Cadastrado! Senha padrão: " + SENHA_PADRAO);
         mostrarTela('tela-login');
     }
 
-    // --- LOGIN ---
     function tentarLogin() {
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
-
         if(u === "master" && p === "Melissa@2016") {
             if(!db.usuarios["master"]) db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[], precisaTrocar:false};
             userAtivo = "master";
-        } else if(db.usuarios[u] && db.usuarios[u].senha === p) {
-            userAtivo = u;
-        } else return alert("Usuário ou senha incorretos!");
+        } else if(db.usuarios[u] && db.usuarios[u].senha === p) userAtivo = u;
+        else return alert("Acesso negado!");
 
         sessionStorage.setItem('sessao_user', userAtivo);
-        
-        if(db.usuarios[userAtivo].precisaTrocar) {
-            mostrarTela('tela-trocar-senha');
-        } else {
-            iniciarApp();
-        }
+        if(db.usuarios[userAtivo].precisaTrocar) mostrarTela('tela-trocar-senha');
+        else iniciarApp();
     }
 
     function salvarNovaSenha() {
         const nova = document.getElementById('nova_senha').value;
-        if(nova.length < 4) return alert("Senha muito curta!");
+        if(nova.length < 4) return alert("Senha curta!");
         db.usuarios[userAtivo].senha = nova;
         db.usuarios[userAtivo].precisaTrocar = false;
-        salvarBD();
-        iniciarApp();
+        salvarBD(); iniciarApp();
     }
 
-    // --- APP CORE ---
+    function atualizarSaldoGlobal() {
+        const novoSaldo = parseFloat(document.getElementById('input_saldo_global').value) || 0;
+        db.saldoGlobal = novoSaldo;
+        salvarBD();
+        renderizar();
+        alert("Saldo atualizado!");
+    }
+
     function iniciarApp() {
         mostrarTela('app-principal');
         document.getElementById('barra-resumo').style.display = 'flex';
         document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userAtivo].nome;
+        document.getElementById('input_saldo_global').value = db.saldoGlobal;
         renderizar();
     }
 
     async function buscaInteligente() {
         const cod = document.getElementById('codigo').value.trim();
         if(cod.length < 8) return;
-
         if(db.bancoPrecos[cod]) {
             const mem = db.bancoPrecos[cod];
             document.getElementById('nome_prod').value = mem.nome;
@@ -177,16 +178,13 @@
             }
             return;
         }
-
         const status = document.getElementById('status-busca');
-        status.innerText = "🔍 Buscando na internet...";
+        status.innerText = "🔍 Buscando na web...";
         status.style.display = 'block';
         try {
             const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
             const data = await res.json();
-            if(data.status === 1) {
-                document.getElementById('nome_prod').value = data.product.product_name || "";
-            }
+            if(data.status === 1) document.getElementById('nome_prod').value = data.product.product_name || "";
         } catch(e) {}
         status.style.display = 'none';
     }
@@ -196,18 +194,12 @@
               v = parseFloat(document.getElementById('valor_prod').value), 
               q = parseInt(document.getElementById('qtd_prod').value),
               c = document.getElementById('codigo').value.trim();
-        
-        if(!n || isNaN(v)) return alert("Preencha Nome e Valor!");
-
+        if(!n || isNaN(v)) return;
         if(c) db.bancoPrecos[c] = { nome: n, valor: v, foto: fotoBase64 };
-
         db.usuarios[userAtivo].listaAtual.push({ n, v, q, c, total: v*q, foto: fotoBase64 });
-        
         fotoBase64 = null;
         document.getElementById('img-preview').style.display = 'none';
-        document.getElementById('nome_prod').value = ""; 
-        document.getElementById('valor_prod').value = "";
-        document.getElementById('codigo').value = "";
+        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = ""; document.getElementById('codigo').value = "";
         salvarBD(); renderizar();
     }
 
@@ -228,7 +220,6 @@
         document.getElementById('res_total').innerText = `R$ ${(db.saldoGlobal - tL).toFixed(2)}`;
     }
 
-    // --- CÂMERA ---
     function capturarFoto(event) {
         const file = event.target.files[0];
         if (file) {
@@ -247,16 +238,14 @@
             document.getElementById('reader').style.display='block';
             scanner = new Html5Qrcode("reader");
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt;
-                buscaInteligente();
-                pararScanner();
+                document.getElementById('codigo').value = txt; buscaInteligente(); pararScanner();
             });
         } else pararScanner();
     }
     function pararScanner() { if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); }
     function logout() { sessionStorage.clear(); location.reload(); }
     function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i,1); salvarBD(); renderizar(); }
-    function finalizarCompra() { if(confirm("Finalizar lista?")) { db.usuarios[userAtivo].listaAtual = []; salvarBD(); renderizar(); } }
+    function finalizarCompra() { if(confirm("Finalizar lista?")) { db.saldoGlobal -= db.usuarios[userAtivo].listaAtual.reduce((a,b)=>a+b.total,0); db.usuarios[userAtivo].listaAtual = []; salvarBD(); iniciarApp(); } }
 
     if (userAtivo && db.usuarios[userAtivo]) iniciarApp(); else mostrarTela('tela-login');
   </script>
