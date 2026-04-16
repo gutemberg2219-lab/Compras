@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 Compras Família - V59 ADMIN CONTROL</title>
+  <title>🛒 Compras Família - V61 WEB SEARCH</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
@@ -18,30 +18,16 @@
     .saldo-container { display: flex; align-items: center; gap: 10px; background: #fff8e1; border: 2px solid #ffe082; border-radius: 12px; padding: 10px; }
     #saldo_compartilhado { flex: 1; border: none; background: transparent; font-size: 28px; font-weight: 800; color: var(--success); outline: none; width: 100%; }
 
-    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; background-color: #fff; margin-bottom: 15px; }
+    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; background-color: #fff; margin-bottom: 12px; }
     
     .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
     .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); z-index: 100; border-radius: 20px 20px 0 0; display: flex; justify-content: space-around; }
     .valor-resumo { font-size: 18px; font-weight: 800; display: block; }
     button { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
     
-    .aba-container { display: flex; gap: 5px; margin-bottom: 15px; }
-    .aba { flex: 1; padding: 10px; background: #eee; border-radius: 8px; text-align: center; font-size: 11px; font-weight: bold; cursor: pointer; }
-    .aba.ativa { background: var(--dark); color: white; }
+    .status-busca { font-size: 12px; color: var(--primary); font-weight: bold; margin-bottom: 10px; display: none; }
     
-    /* ESTILO DO HISTÓRICO COM EXCLUSÃO */
-    .relatorio-item { 
-        border-bottom: 1px solid #eee; padding: 15px 0; 
-        display: flex; justify-content: space-between; align-items: center; 
-    }
-    .relatorio-info { flex: 1; }
-    .relatorio-valor { color: var(--danger); font-weight: bold; display: block; font-size: 16px; }
-    .btn-excluir-compra { 
-        background: #ffebee; color: var(--danger); width: 40px; height: 40px; 
-        border-radius: 10px; margin: 0; font-size: 18px; 
-    }
-
-    #tela-login, #tela-cadastro, #app-principal, #painel-adm { display: none; }
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--purple); display: none; }
     .label-pequeno { font-size: 11px; font-weight: bold; color: #777; margin-bottom: 5px; display: block; }
     .row { display: flex; gap: 10px; } .col { flex: 1; }
   </style>
@@ -54,7 +40,6 @@
         <input type="text" id="login_user" placeholder="Usuário">
         <input type="password" id="login_pass" placeholder="Senha">
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
-        <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="abrirCadastro()">NOVO MEMBRO</button>
     </div>
 
     <div id="app-principal">
@@ -67,7 +52,7 @@
       </div>
 
       <div class="card">
-        <span class="label-pequeno">💰 SALDO DISPONÍVEL</span>
+        <span class="label-pequeno">💰 SALDO ATUAL</span>
         <div class="saldo-container">
             <span style="font-size: 20px; font-weight: bold; color: var(--success);">R$</span>
             <input type="number" id="saldo_compartilhado" step="0.01">
@@ -82,10 +67,19 @@
             <option value="cartao">💳 Cartão de Crédito</option>
             <option value="pix">💎 PIX / Dinheiro</option>
         </select>
-        <input type="text" id="nome_prod" placeholder="Produto">
+
+        <button style="background:var(--purple); color:white;" onclick="alternarScanner()">📷 LER CÓDIGO DE BARRAS</button>
+        <div id="reader"></div>
+        
+        <div id="status-busca" class="status-busca">🔍 Procurando na internet...</div>
+
+        <span class="label-pequeno">DADOS DO PRODUTO</span>
+        <input type="text" id="codigo" placeholder="EAN / Código" oninput="buscaInteligente()">
+        <input type="text" id="nome_prod" placeholder="Nome do Produto">
+        
         <div class="row">
-          <div class="col"><input type="number" id="qtd_prod" value="1"></div>
-          <div class="col"><input type="number" id="valor_prod" placeholder="R$ 0,00" step="0.01"></div>
+          <div class="col"><span class="label-pequeno">QTD</span><input type="number" id="qtd_prod" value="1"></div>
+          <div class="col"><span class="label-pequeno">R$ UNIT.</span><input type="number" id="valor_prod" placeholder="0,00" step="0.01"></div>
         </div>
         <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
       </div>
@@ -96,24 +90,8 @@
 
     <div id="painel-adm" class="card">
         <h2 style="text-align:center; margin-bottom: 15px;">🛡️ Painel Master</h2>
-        <div class="aba-container">
-            <div id="aba-usuarios" class="aba ativa" onclick="mudarAba('usuarios')">MEMBROS</div>
-            <div id="aba-historico" class="aba" onclick="mudarAba('historico')">HISTÓRICO</div>
-        </div>
-        
-        <div id="conteudo-usuarios"></div>
-        
-        <div id="conteudo-historico" style="display:none; max-height: 450px; overflow-y: auto; padding-right: 5px;">
-            </div>
-
+        <div id="conteudo-historico" style="max-height: 450px; overflow-y: auto;"></div>
         <button style="background: var(--dark); color: white; margin-top:15px;" onclick="mostrarTela('app-principal')">VOLTAR</button>
-    </div>
-
-    <div id="tela-cadastro" class="card">
-        <h2 style="text-align:center;">📝 Novo Membro</h2>
-        <input type="text" id="novo_usuario" placeholder="Nome">
-        <button style="background: var(--primary); color: white;" onclick="registrarUsuario()">CADASTRAR</button>
-        <button style="background: none;" onclick="voltarLogin()">VOLTAR</button>
     </div>
   </div>
 
@@ -123,36 +101,88 @@
   </div>
 
   <script>
-    const KEY_DATABASE = "FAMILIA_DATABASE_FINAL_STABLE";
-    const USER_MASTER = "master";
-    const PASS_MASTER = "Melissa@2016";
-    const SENHA_PADRAO = "Compras@2026";
-    
-    let db = JSON.parse(localStorage.getItem(KEY_DATABASE)) || { usuarios: {}, saldoGlobal: 0, historicoGeral: [] };
+    const KEY_DATABASE = "FAMILIA_DB_V61";
+    let db = JSON.parse(localStorage.getItem(KEY_DATABASE)) || { usuarios: {}, saldoGlobal: 0, historicoGeral: [], bancoPrecos: {} };
     let userAtivo = sessionStorage.getItem('sessao_user');
+    let scanner = null;
 
     function salvarBD() { localStorage.setItem(KEY_DATABASE, JSON.stringify(db)); }
 
+    async function buscaInteligente() {
+        const cod = document.getElementById('codigo').value;
+        if(cod.length < 8) return;
+
+        // 1. Tenta no Banco Local primeiro (mais rápido)
+        if(db.bancoPrecos[cod]) {
+            document.getElementById('nome_prod').value = db.bancoPrecos[cod].nome;
+            return;
+        }
+
+        // 2. Se não achou, busca na INTERNET (Open Food Facts API)
+        const status = document.getElementById('status-busca');
+        status.style.display = 'block';
+
+        try {
+            const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
+            const data = await response.json();
+            
+            if(data.status === 1) {
+                const nomeWeb = data.product.product_name || data.product.generic_name || "Produto Desconhecido";
+                const marca = data.product.brands ? ` (${data.product.brands})` : "";
+                document.getElementById('nome_prod').value = nomeWeb + marca;
+            }
+        } catch (e) {
+            console.log("Erro na busca web");
+        } finally {
+            status.style.display = 'none';
+        }
+    }
+
+    function alternarScanner() {
+        const readerDiv = document.getElementById('reader');
+        if(!scanner) {
+            readerDiv.style.display = 'block';
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('codigo').value = txt;
+                buscaInteligente();
+                pararScanner();
+            }).catch(() => readerDiv.style.display = 'none');
+        } else pararScanner();
+    }
+
+    function pararScanner() {
+        if(scanner) {
+            scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; });
+        }
+    }
+
     function tentarLogin() {
-        const u = document.getElementById('login_user').value.toLowerCase().trim(), p = document.getElementById('login_pass').value;
-        if(db.usuarios[u] && db.usuarios[u].senha === p) { userAtivo = u; sessionStorage.setItem('sessao_user', u); iniciarApp(); } else alert("Erro!");
+        const u = document.getElementById('login_user').value.toLowerCase().trim();
+        const p = document.getElementById('login_pass').value;
+        if(db.usuarios[u] && db.usuarios[u].senha === p) {
+            userAtivo = u; sessionStorage.setItem('sessao_user', u); iniciarApp();
+        } else if(u === "master" && p === "Melissa@2016") {
+            db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[]};
+            userAtivo = "master"; sessionStorage.setItem('sessao_user', u); salvarBD(); iniciarApp();
+        } else alert("Acesso Negado!");
     }
 
     function iniciarApp() {
         mostrarTela('app-principal');
         document.getElementById('barra-resumo').style.display = 'flex';
-        document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userAtivo].nome;
+        document.getElementById('boas_vindas').innerText = "Olá, " + db.usuarios[userAtivo].nome;
         document.getElementById('saldo_compartilhado').value = db.saldoGlobal;
         document.getElementById('btn-gestao-master').style.display = (db.usuarios[userAtivo].role === 'master') ? 'block' : 'none';
         renderizar();
     }
 
     function adicionarItem() {
-        const n = document.getElementById('nome_prod').value, v = parseFloat(document.getElementById('valor_prod').value), q = parseInt(document.getElementById('qtd_prod').value);
+        const n = document.getElementById('nome_prod').value, v = parseFloat(document.getElementById('valor_prod').value), q = parseInt(document.getElementById('qtd_prod').value), cod = document.getElementById('codigo').value;
         if(!n || isNaN(v)) return;
-        db.usuarios[userAtivo].listaAtual.push({ n, v, q, total: v*q, met: document.getElementById('metodo_pagamento').value });
+        db.usuarios[userAtivo].listaAtual.push({ cod, n, v, q, total: v*q, met: document.getElementById('metodo_pagamento').value });
         salvarBD(); renderizar();
-        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
+        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = ""; document.getElementById('codigo').value = "";
     }
 
     function renderizar() {
@@ -161,7 +191,7 @@
         const u = db.usuarios[userAtivo];
         (u.listaAtual || []).forEach((it, i) => {
             tL += it.total; if (it.met === 'saldo') tS += it.total;
-            lista.innerHTML += `<div class="item-lista"><span><b>${it.n}</b> (${it.q}x)<br><small>R$ ${it.total.toFixed(2)}</small></span><button onclick="remover(${i})" style="width:auto; background:none; color:red; font-size:20px; margin:0;">&times;</button></div>`;
+            lista.innerHTML += `<div class="item-lista"><span><b>${it.n}</b><br><small>R$ ${it.total.toFixed(2)} | ${it.met}</small></span><button onclick="remover(${i})" style="width:auto; background:none; color:red; font-size:20px; margin:0;">&times;</button></div>`;
         });
         document.getElementById('res_custo').innerText = `R$ ${tL.toFixed(2)}`;
         document.getElementById('res_total').innerText = `R$ ${(db.saldoGlobal - tS).toFixed(2)}`;
@@ -170,91 +200,24 @@
     function finalizarCompra() {
         const u = db.usuarios[userAtivo];
         if(!u.listaAtual.length) return;
-        const totalCompra = u.listaAtual.reduce((a, b) => a + b.total, 0);
         const totalSaldo = u.listaAtual.filter(it => it.met === 'saldo').reduce((a, b) => a + b.total, 0);
-        const mercado = document.getElementById('mercado_atual').value || "Geral";
-
-        if(confirm(`Finalizar compra de R$ ${totalCompra.toFixed(2)}?`)) {
-            db.historicoGeral.push({
-                id: Date.now(), // ID único para exclusão
-                data: new Date().toLocaleDateString('pt-BR'),
-                mercado: mercado,
-                valor: totalCompra,
-                quem: u.nome
-            });
-            db.saldoGlobal -= totalSaldo;
-            u.listaAtual = [];
-            salvarBD();
-            iniciarApp();
+        if(confirm("Finalizar lista?")) {
+            u.listaAtual.forEach(it => { if(it.cod) db.bancoPrecos[it.cod] = {nome: it.n}; });
+            db.historicoGeral.push({ data: new Date().toLocaleDateString('pt-BR'), valor: u.listaAtual.reduce((a,b)=>a+b.total,0), quem: u.nome });
+            db.saldoGlobal -= totalSaldo; u.listaAtual = [];
+            salvarBD(); iniciarApp();
         }
     }
 
-    function mudarAba(aba) {
-        document.getElementById('aba-usuarios').classList.toggle('ativa', aba === 'usuarios');
-        document.getElementById('aba-historico').classList.toggle('ativa', aba === 'historico');
-        document.getElementById('conteudo-usuarios').style.display = aba === 'usuarios' ? 'block' : 'none';
-        document.getElementById('conteudo-historico').style.display = aba === 'historico' ? 'block' : 'none';
-        if(aba === 'historico') renderHistorico();
-        if(aba === 'usuarios') renderUsuarios();
-    }
-
+    function mostrarTela(id) { ['tela-login','app-principal','painel-adm'].forEach(t => document.getElementById(t).style.display='none'); document.getElementById(id).style.display='block'; }
+    function salvarSaldoGlobal() { db.saldoGlobal = parseFloat(document.getElementById('saldo_compartilhado').value) || 0; salvarBD(); renderizar(); alert("Saldo atualizado!"); }
+    function logout() { sessionStorage.clear(); location.reload(); }
+    function abrirGestaoAdm() { mostrarTela('painel-adm'); renderHistorico(); }
     function renderHistorico() {
         const div = document.getElementById('conteudo-historico');
-        div.innerHTML = db.historicoGeral.length ? "" : "<p style='text-align:center; padding:20px;'>Vazio.</p>";
-        
-        db.historicoGeral.slice().reverse().forEach((compra, index) => {
-            // Pegamos o index real no array original (reverso)
-            const realIndex = db.historicoGeral.length - 1 - index;
-            div.innerHTML += `
-                <div class="relatorio-item">
-                    <div class="relatorio-info">
-                        <span class="relatorio-valor">R$ ${compra.valor.toFixed(2)}</span>
-                        <b>${compra.mercado}</b><br>
-                        <small>${compra.data} | Por: ${compra.quem}</small>
-                    </div>
-                    <button class="btn-excluir-compra" onclick="excluirHistorico(${realIndex})">🗑️</button>
-                </div>`;
-        });
+        div.innerHTML = db.historicoGeral.slice().reverse().map(c => `<div class="item-lista"><span>${c.data} - R$ ${c.valor.toFixed(2)}<br><small>Por: ${c.quem}</small></span></div>`).join('');
     }
 
-    function excluirHistorico(index) {
-        if(confirm("Deseja apagar este registro de compra do histórico?")) {
-            db.historicoGeral.splice(index, 1);
-            salvarBD();
-            renderHistorico();
-        }
-    }
-
-    function renderUsuarios() {
-        const div = document.getElementById('conteudo-usuarios');
-        div.innerHTML = "";
-        Object.keys(db.usuarios).forEach(id => {
-            if(db.usuarios[id].role === 'master') return;
-            div.innerHTML += `<div class="item-lista"><span><b>${db.usuarios[id].nome}</b></span><button onclick="excluirUser('${id}')" style="width:auto; height:32px; font-size:10px; background: red; color:white; margin:0;">Excluir</button></div>`;
-        });
-    }
-
-    function excluirUser(id) { if(confirm("Excluir membro?")) { delete db.usuarios[id]; salvarBD(); renderUsuarios(); } }
-    function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i,1); salvarBD(); renderizar(); }
-    function salvarSaldoGlobal() { db.saldoGlobal = parseFloat(document.getElementById('saldo_compartilhado').value) || 0; salvarBD(); renderizar(); alert("Saldo Salvo!"); }
-    function logout() { sessionStorage.clear(); location.reload(); }
-    function mostrarTela(id) { ['tela-login','tela-cadastro','app-principal','painel-adm'].forEach(t => document.getElementById(t).style.display='none'); document.getElementById(id).style.display='block'; }
-    function voltarLogin() { mostrarTela('tela-login'); }
-    function abrirCadastro() { mostrarTela('tela-cadastro'); }
-    function abrirGestaoAdm() { mostrarTela('painel-adm'); mudarAba('usuarios'); }
-    function registrarUsuario() {
-        const n = document.getElementById('novo_usuario').value.trim();
-        const id = n.toLowerCase();
-        if(!id || db.usuarios[id]) return;
-        db.usuarios[id] = { nome: n, senha: SENHA_PADRAO, role: "user", listaAtual: [] };
-        salvarBD(); alert("Cadastrado!"); voltarLogin();
-    }
-
-    // Garante o Master inicial
-    if(!db.usuarios[USER_MASTER]) {
-        db.usuarios[USER_MASTER] = { nome: "Master", senha: PASS_MASTER, role: "master", listaAtual: [] };
-        salvarBD();
-    }
     if (userAtivo) iniciarApp(); else mostrarTela('tela-login');
   </script>
 </body>
