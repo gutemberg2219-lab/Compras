@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 Gestão Família - V65 SECURITY</title>
+  <title>🛒 Gestão Família - V66 CLARITY</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { 
@@ -15,7 +15,11 @@
     .container { max-width: 500px; margin: 0 auto; }
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
     
-    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; margin-bottom: 12px; }
+    .input-group { position: relative; width: 100%; margin-bottom: 12px; }
+    input, select { width: 100%; height: 55px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; }
+    
+    .toggle-pass { position: absolute; right: 15px; top: 17px; background: none; border: none; font-size: 18px; cursor: pointer; color: #777; width: auto !important; height: auto !important; }
+
     button { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
     
     .abas-master { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -36,23 +40,32 @@
   <div class="container">
     <div id="tela-login" class="card">
         <h2 style="text-align:center; margin-bottom:20px;">🛒 Gestão Família</h2>
-        <input type="text" id="login_user" placeholder="Usuário">
-        <input type="password" id="login_pass" placeholder="Senha">
+        <input type="text" id="login_user" placeholder="Usuário" style="margin-bottom:12px;">
+        <div class="input-group">
+            <input type="password" id="login_pass" placeholder="Senha">
+            <button type="button" class="toggle-pass" onclick="togglePassword('login_pass')">👁️</button>
+        </div>
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
         <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">NOVO MEMBRO</button>
     </div>
 
     <div id="tela-trocar-senha" class="card">
-        <h2 style="text-align:center; color: var(--danger);">🔒 Segurança</h2>
-        <p style="text-align:center; margin-bottom:20px; font-size:14px;">Este é seu primeiro acesso. Por favor, crie uma senha segura.</p>
-        <input type="password" id="nova_senha_input" placeholder="Nova Senha">
-        <input type="password" id="nova_senha_confirma" placeholder="Confirme a Nova Senha">
-        <button style="background: var(--success); color: white;" onclick="processarTrocaSenha()">SALVAR NOVA SENHA</button>
+        <h2 style="text-align:center; color: var(--danger);">🔒 Nova Senha</h2>
+        <p style="text-align:center; margin-bottom:20px; font-size:14px;">Defina uma senha pessoal para continuar.</p>
+        <div class="input-group">
+            <input type="password" id="nova_senha_input" placeholder="Nova Senha">
+            <button type="button" class="toggle-pass" onclick="togglePassword('nova_senha_input')">👁️</button>
+        </div>
+        <div class="input-group">
+            <input type="password" id="nova_senha_confirma" placeholder="Confirme a Nova Senha">
+            <button type="button" class="toggle-pass" onclick="togglePassword('nova_senha_confirma')">👁️</button>
+        </div>
+        <button style="background: var(--success); color: white;" onclick="processarTrocaSenha()">SALVAR SENHA</button>
     </div>
 
     <div id="tela-cadastro" class="card">
         <h2 style="text-align:center; margin-bottom:20px;">📝 Cadastro</h2>
-        <input type="text" id="novo_usuario_nome" placeholder="Seu Nome">
+        <input type="text" id="novo_usuario_nome" placeholder="Seu Nome" style="margin-bottom:12px;">
         <button style="background: var(--success); color: white;" onclick="registrarNovoUsuario()">CADASTRAR</button>
         <button style="background: none; border: 1px solid #ccc;" onclick="mostrarTela('tela-login')">VOLTAR</button>
     </div>
@@ -76,17 +89,17 @@
       </div>
 
       <div class="card">
-        <input type="text" id="mercado_atual" placeholder="Mercado...">
-        <select id="metodo_pagamento">
+        <input type="text" id="mercado_atual" placeholder="Mercado..." style="margin-bottom:12px;">
+        <select id="metodo_pagamento" style="margin-bottom:12px;">
             <option value="saldo">📦 Descontar do Saldo</option>
             <option value="cartao">💳 Cartão</option>
             <option value="pix">💎 PIX</option>
         </select>
         <button style="background:var(--purple); color:white;" onclick="alternarScanner()">📷 ESCANEAR</button>
         <div id="reader"></div>
-        <input type="text" id="codigo" placeholder="EAN" oninput="buscaInteligente()">
-        <input type="text" id="nome_prod" placeholder="Produto">
-        <div style="display:flex; gap:10px;">
+        <input type="text" id="codigo" placeholder="EAN" oninput="buscaInteligente()" style="margin-bottom:12px;">
+        <input type="text" id="nome_prod" placeholder="Produto" style="margin-bottom:12px;">
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
             <input type="number" id="qtd_prod" value="1" style="flex:1">
             <input type="number" id="valor_prod" placeholder="R$ Unit" step="0.01" style="flex:2">
         </div>
@@ -114,73 +127,63 @@
   </div>
 
   <script>
-    const DB_NAME = "FAMILIA_DB_V65";
+    const DB_NAME = "FAMILIA_DB_V66";
     const SENHA_PADRAO = "Compras@2026";
     let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, historicoGeral: [] };
     let userAtivo = sessionStorage.getItem('sessao_user');
     let scanner = null;
 
     function salvarBD() { localStorage.setItem(DB_NAME, JSON.stringify(db)); }
+    
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        const btn = input.nextElementSibling;
+        if (input.type === "password") {
+            input.type = "text";
+            btn.innerText = "🔒";
+        } else {
+            input.type = "password";
+            btn.innerText = "👁️";
+        }
+    }
+
     function mostrarTela(id) { 
         ['tela-login','tela-cadastro','tela-trocar-senha','app-principal','painel-adm'].forEach(t => document.getElementById(t).style.display = 'none');
         document.getElementById(id).style.display = 'block';
     }
 
-    // GESTÃO DE ACESSO
     function tentarLogin() {
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
-        
-        // Login Master Especial
         if(u === "master" && p === "Melissa@2016") {
             if(!db.usuarios["master"]) db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[], trocarSenha:false};
             userAtivo = "master";
-        } else if(db.usuarios[u] && db.usuarios[u].senha === p) {
-            userAtivo = u;
-        } else return alert("Usuário ou senha inválidos!");
+        } else if(db.usuarios[u] && db.usuarios[u].senha === p) userAtivo = u;
+        else return alert("Acesso negado!");
 
         sessionStorage.setItem('sessao_user', userAtivo);
-        
-        // Checar se precisa trocar senha
-        if(db.usuarios[userAtivo].trocarSenha) {
-            mostrarTela('tela-trocar-senha');
-        } else {
-            iniciarApp();
-        }
+        if(db.usuarios[userAtivo].trocarSenha) mostrarTela('tela-trocar-senha');
+        else iniciarApp();
     }
 
     function processarTrocaSenha() {
         const s1 = document.getElementById('nova_senha_input').value;
         const s2 = document.getElementById('nova_senha_confirma').value;
-        if(s1.length < 4) return alert("A senha deve ter pelo menos 4 caracteres!");
-        if(s1 !== s2) return alert("As senhas não conferem!");
-
+        if(s1.length < 4) return alert("Senha muito curta!");
+        if(s1 !== s2) return alert("Senhas não conferem!");
         db.usuarios[userAtivo].senha = s1;
         db.usuarios[userAtivo].trocarSenha = false;
-        salvarBD();
-        alert("Senha atualizada com sucesso!");
-        iniciarApp();
+        salvarBD(); iniciarApp();
     }
 
     function registrarNovoUsuario() {
         const nome = document.getElementById('novo_usuario_nome').value.trim();
         const id = nome.toLowerCase().replace(/\s/g, '');
-        if(!id) return alert("Digite um nome!");
-        if(db.usuarios[id]) return alert("Usuário já existe!");
-        
-        db.usuarios[id] = { 
-            nome: nome, 
-            senha: SENHA_PADRAO, 
-            role: "user", 
-            listaAtual: [],
-            trocarSenha: true // OBRIGA A TROCAR NO PRIMEIRO ACESSO
-        };
-        salvarBD();
-        alert("Cadastrado! Na primeira entrada, use a senha: " + SENHA_PADRAO);
-        mostrarTela('tela-login');
+        if(!id || db.usuarios[id]) return alert("Erro no nome!");
+        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, role: "user", listaAtual: [], trocarSenha: true };
+        salvarBD(); alert("Cadastrado! Use: " + SENHA_PADRAO); mostrarTela('tela-login');
     }
 
-    // APP CORE
     function iniciarApp() {
         mostrarTela('app-principal');
         document.getElementById('barra-resumo').style.display = 'flex';
@@ -214,14 +217,13 @@
         if(!u.listaAtual.length) return;
         const totalS = u.listaAtual.filter(it => it.met === 'saldo').reduce((a,b)=>a+b.total,0);
         const totalG = u.listaAtual.reduce((a,b)=>a+b.total,0);
-        if(confirm(`Finalizar compra de R$ ${totalG.toFixed(2)}?`)) {
+        if(confirm(`Finalizar R$ ${totalG.toFixed(2)}?`)) {
             db.historicoGeral.push({ id: Date.now(), data: new Date().toLocaleDateString('pt-BR'), valor: totalG, quem: u.nome, mercado: document.getElementById('mercado_atual').value || "Geral" });
             db.saldoGlobal -= totalS; u.listaAtual = [];
             salvarBD(); iniciarApp();
         }
     }
 
-    // FUNÇÕES MASTER
     function mudarAba(aba) {
         document.getElementById('aba-hist').className = 'aba ' + (aba==='hist'?'ativa':'');
         document.getElementById('aba-users').className = 'aba ' + (aba==='users'?'ativa':'');
@@ -251,11 +253,10 @@
             </div>`).join('');
     }
 
-    function resetSenha(id) { if(confirm("Resetar senha?")) { db.usuarios[id].senha = SENHA_PADRAO; db.usuarios[id].trocarSenha = true; salvarBD(); alert("Resetada!"); } }
+    function resetSenha(id) { if(confirm("Resetar?")) { db.usuarios[id].senha = SENHA_PADRAO; db.usuarios[id].trocarSenha = true; salvarBD(); alert("Resetada!"); } }
     function excluirUser(id) { if(confirm("Excluir?")) { delete db.usuarios[id]; salvarBD(); renderMembros(); } }
     function excluirHist(i) { if(confirm("Apagar histórico?")) { db.historicoGeral.splice(i,1); salvarBD(); renderRelatorio(); } }
 
-    // AUXILIARES
     async function buscaInteligente() {
         const cod = document.getElementById('codigo').value;
         if(cod.length < 8) return;
