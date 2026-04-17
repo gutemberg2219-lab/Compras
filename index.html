@@ -3,30 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 Lista de Compras - V72 MASTER CONTROL</title>
+  <title>🛒 Gestão Família - V74 FINAL PRO</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     :root { --primary: #0066ff; --purple: #673ab7; --success: #2e7d32; --danger: #ff1744; --dark: #1a1a1a; --bg: #f0f2f5; }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 160px; min-height: 100vh; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 180px; min-height: 100vh; }
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
     
-    input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; margin-bottom: 10px; font-size: 16px; outline: none; }
+    .input-container { position: relative; width: 100%; }
+    input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; margin-bottom: 10px; font-size: 16px; outline: none; background: #fff; }
+    
+    .btn-olho { position: absolute; right: 12px; top: 13px; background: none; border: none; font-size: 20px; cursor: pointer; color: #777; z-index: 10; width: auto !important; height: auto !important; }
+
     button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     
-    .abas-master { display: flex; gap: 5px; margin-bottom: 15px; background: #eee; padding: 5px; border-radius: 12px; }
-    .aba { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; }
-    .aba.ativa { background: var(--dark); color: white; }
+    .container-foto { width: 100%; display: flex; justify-content: center; margin-bottom: 10px; }
+    #img-preview { max-width: 100%; max-height: 120px; border-radius: 12px; object-fit: contain; display: none; }
 
     .item-lista { background: white; border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; border: 1px solid #eee; }
-    .thumb-lista { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-right: 10px; background: #f9f9f9; }
+    .thumb-lista { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-right: 12px; }
     
-    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); display: flex; justify-content: space-around; border-radius: 20px 20px 0 0; z-index: 1000; }
-    
+    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 8px; border-radius: 20px 20px 0 0; z-index: 1000; }
+    .resumo-colunas { display: flex; justify-content: space-around; }
+
     #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
     #tela-login, #tela-cadastro, #tela-trocar-senha, #app-principal, #painel-master { display: none; }
-    
-    .badge-preco { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #fff3e0; color: #e65100; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -34,9 +36,12 @@
   <div class="container" style="max-width:500px; margin: auto;">
     
     <div id="tela-login" class="card" style="margin-top: 50px;">
-        <h2 style="text-align:center; margin-bottom:20px;">🛒 Lista de Compras</h2>
+        <h2 style="text-align:center; margin-bottom:20px;">🛒 Gestão Família</h2>
         <input type="text" id="login_user" placeholder="Usuário">
-        <input type="password" id="login_pass" placeholder="Senha">
+        <div class="input-container">
+            <input type="password" id="login_pass" placeholder="Senha">
+            <button class="btn-olho" onclick="toggleSenha('login_pass')">👁️</button>
+        </div>
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
         <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
     </div>
@@ -50,7 +55,10 @@
 
     <div id="tela-trocar-senha" class="card" style="margin-top: 50px;">
         <h2 style="text-align:center;">🔒 Nova Senha</h2>
-        <input type="password" id="nova_senha" placeholder="Nova Senha">
+        <div class="input-container">
+            <input type="password" id="nova_senha" placeholder="Crie sua senha">
+            <button class="btn-olho" onclick="toggleSenha('nova_senha')">👁️</button>
+        </div>
         <button style="background: var(--success); color: white;" onclick="salvarNovaSenha()">DEFINIR SENHA</button>
     </div>
 
@@ -64,7 +72,7 @@
       </div>
 
       <div class="card" style="border-left: 5px solid var(--success);">
-        <small>💰 SALDO ATUAL</small>
+        <small>💰 SALDO DISPONÍVEL</small>
         <div style="display:flex; gap:10px;">
             <input type="number" id="input_saldo" step="0.01" style="margin:0; font-size:20px; font-weight:bold;">
             <button onclick="atualizarSaldo()" style="width:50px; background:var(--success); color:white;">✅</button>
@@ -76,151 +84,75 @@
             <button style="background:var(--purple); color:white; flex:1;" onclick="alternarScanner()">📷 LER EAN</button>
             <button style="background:#e8f0fe; color:var(--primary); flex:1;" onclick="document.getElementById('camera-input').click()">🖼️ FOTO</button>
         </div>
-        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="capturarFoto(event)">
-        <img id="img-preview" style="width:100%; height:120px; object-fit:cover; border-radius:12px; display:none; margin-bottom:10px;">
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
         
+        <div class="container-foto"><img id="img-preview"></div>
         <div id="reader"></div>
+        
         <input type="text" id="codigo" placeholder="EAN" oninput="buscaInteligente()">
-        <input type="text" id="nome_prod" placeholder="Produto">
+        <input type="text" id="nome_prod" placeholder="Nome do Produto">
+        
         <div style="display:flex; gap:10px;">
             <input type="number" id="qtd_prod" value="1" style="flex:1">
             <input type="number" id="valor_prod" placeholder="R$ Unit" step="0.01" style="flex:2">
         </div>
+        
+        <select id="metodo_pagto">
+            <option value="saldo">Abater do Saldo</option>
+            <option value="extra">Extra (Cartão/Dinheiro)</option>
+        </select>
+
         <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR</button>
       </div>
+
       <div id="lista_itens"></div>
       <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
 
-    <div id="painel-master">
-        <div class="card">
-            <h2 style="text-align:center; margin-bottom:15px;">🛡️ Gestão Master</h2>
-            <div class="abas-master">
-                <div class="aba ativa" id="aba-users" onclick="mudarAbaMaster('users')">MEMBROS</div>
-                <div class="aba" id="aba-hist" onclick="mudarAbaMaster('hist')">COMPRAS</div>
-            </div>
-
-            <div id="conteudo-users"></div>
-            <div id="conteudo-hist" style="display:none;"></div>
-            
-            <button style="background: var(--dark); color: white; margin-top:15px;" onclick="mostrarTela('app-principal')">VOLTAR AO APP</button>
-        </div>
-    </div>
-
-  </div>
+    <div id="painel-master">...</div> </div>
 
   <div class="resumo-fixo" id="barra-resumo" style="display: none;">
-    <div style="text-align:center"><small>Lista</small><br><b id="res_custo" style="color:var(--purple)">R$ 0,00</b></div>
-    <div style="text-align:center"><small>Saldo</small><br><b id="res_total" style="color:var(--success)">R$ 0,00</b></div>
+    <div class="resumo-colunas">
+        <div style="text-align:center"><small>Do Saldo</small><br><b id="res_saldo_uso" style="color:var(--purple)">R$ 0,00</b></div>
+        <div style="text-align:center"><small>Saldo Restante</small><br><b id="res_saldo_sobra" style="color:var(--success)">R$ 0,00</b></div>
+        <div style="text-align:center"><small>Extra</small><br><b id="res_extra" style="color:var(--danger)">R$ 0,00</b></div>
+    </div>
   </div>
 
   <script>
-    const DB_NAME = "FAMILIA_DB_V72";
+    const DB_NAME = "FAMILIA_DB_V74";
     const SENHA_PADRAO = "Compras@2026";
-    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { 
-        usuarios: {}, 
-        saldoGlobal: 0, 
-        bancoPrecos: {}, 
-        historicoCompras: [] 
-    };
-    
+    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, bancoPrecos: {}, historicoCompras: [] };
     let userAtivo = sessionStorage.getItem('sessao_user');
     let scanner = null, fotoBase64 = null;
 
     function salvarBD() { localStorage.setItem(DB_NAME, JSON.stringify(db)); }
+    function mostrarTela(id) { document.querySelectorAll('.container > div').forEach(d => d.style.display='none'); document.getElementById(id).style.display='block'; }
+    function toggleSenha(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
 
-    function mostrarTela(id) {
-        ['tela-login', 'tela-cadastro', 'tela-trocar-senha', 'app-principal', 'painel-master'].forEach(t => {
-            const el = document.getElementById(t); if(el) el.style.display = 'none';
-        });
-        document.getElementById(id).style.display = 'block';
-    }
-
-    // --- SISTEMA MASTER ---
-    function abrirMaster() {
-        mostrarTela('painel-master');
-        renderMembros();
-    }
-
-    function mudarAbaMaster(aba) {
-        document.getElementById('aba-users').className = 'aba ' + (aba==='users'?'ativa':'');
-        document.getElementById('aba-hist').className = 'aba ' + (aba==='hist'?'ativa':'');
-        document.getElementById('conteudo-users').style.display = aba==='users'?'block':'none';
-        document.getElementById('conteudo-hist').style.display = aba==='hist'?'block':'none';
-        if(aba==='users') renderMembros(); else renderHistorico();
-    }
-
-    function renderMembros() {
-        const cont = document.getElementById('conteudo-users');
-        cont.innerHTML = Object.keys(db.usuarios).map(uid => {
-            const u = db.usuarios[uid];
-            if(u.role === 'master') return ''; 
-            return `
-                <div class="item-lista" style="justify-content:space-between;">
-                    <div><b>${u.nome}</b><br><small>${uid}</small></div>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="resetarSenha('${uid}')" style="background:#e3f2fd; color:#0066ff; font-size:10px; width:60px; height:30px;">RESET</button>
-                        <button onclick="excluirMembro('${uid}')" style="background:#ffebee; color:red; font-size:10px; width:60px; height:30px;">EXCLUIR</button>
-                    </div>
-                </div>`;
-        }).join('');
-    }
-
-    function renderHistorico() {
-        const cont = document.getElementById('conteudo-hist');
-        cont.innerHTML = db.historicoCompras.slice().reverse().map(compra => `
-            <div class="card" style="padding:10px; font-size:12px; margin-bottom:10px; border:1px solid #ddd;">
-                <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                    <span>${compra.data}</span>
-                    <span style="color:var(--success)">R$ ${compra.total.toFixed(2)}</span>
-                </div>
-                <div style="color:#666; margin-bottom:5px;">Por: ${compra.quem}</div>
-                <hr style="margin:5px 0;">
-                ${compra.itens.map(it => `<div>- ${it.n} (${it.q}x)</div>`).join('')}
-            </div>
-        `).join('') || '<p style="text-align:center; padding:20px;">Nenhuma compra registrada.</p>';
-    }
-
-    function resetarSenha(uid) {
-        if(confirm("Resetar senha para padrão?")) {
-            db.usuarios[uid].senha = SENHA_PADRAO;
-            db.usuarios[uid].precisaTrocar = true;
-            salvarBD(); alert("Senha resetada!");
-        }
-    }
-
-    function excluirMembro(uid) {
-        if(confirm("Excluir este membro permanentemente?")) {
-            delete db.usuarios[uid]; salvarBD(); renderMembros();
-        }
-    }
-
-    // --- CORE APP ---
-    function registrarUsuario() {
-        const n = document.getElementById('novo_nome').value.trim();
-        const id = n.toLowerCase().replace(/\s/g, '');
-        if(!id || db.usuarios[id]) return alert("Erro no nome ou já existe!");
-        db.usuarios[id] = { nome: n, senha: SENHA_PADRAO, role: "user", listaAtual: [], precisaTrocar: true };
-        salvarBD(); alert("Sucesso! Senha: " + SENHA_PADRAO); mostrarTela('tela-login');
-    }
-
-    function tentarLogin() {
-        const u = document.getElementById('login_user').value.toLowerCase().trim();
-        const p = document.getElementById('login_pass').value;
-        if(u === "master" && p === "Melissa@2016") {
-            if(!db.usuarios["master"]) db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[], precisaTrocar:false};
-            userAtivo = "master";
-        } else if(db.usuarios[u] && db.usuarios[u].senha === p) userAtivo = u;
-        else return alert("Acesso negado!");
-
-        sessionStorage.setItem('sessao_user', userAtivo);
-        if(db.usuarios[userAtivo].precisaTrocar) mostrarTela('tela-trocar-senha');
-        else iniciarApp();
+    function processarFoto(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX = 400; const scale = MAX / img.width;
+                canvas.width = MAX; canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                fotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                document.getElementById('img-preview').src = fotoBase64;
+                document.getElementById('img-preview').style.display = 'block';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 
     function iniciarApp() {
         mostrarTela('app-principal');
-        document.getElementById('barra-resumo').style.display = 'flex';
+        document.getElementById('barra-resumo').style.display = 'block';
         document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userAtivo].nome;
         document.getElementById('input_saldo').value = db.saldoGlobal;
         document.getElementById('btn-master').style.display = (db.usuarios[userAtivo].role === 'master') ? 'block' : 'none';
@@ -230,108 +162,66 @@
     async function buscaInteligente() {
         const cod = document.getElementById('codigo').value.trim();
         if(cod.length < 8) return;
-        
-        // Comparação de Preço (Memória Local)
         if(db.bancoPrecos[cod]) {
-            const mem = db.bancoPrecos[cod];
-            document.getElementById('nome_prod').value = mem.nome;
-            document.getElementById('valor_prod').placeholder = `Último: R$ ${mem.valor.toFixed(2)}`;
-            if(mem.foto) {
-                fotoBase64 = mem.foto;
-                document.getElementById('img-preview').src = mem.foto;
-                document.getElementById('img-preview').style.display = 'block';
-            }
+            const m = db.bancoPrecos[cod];
+            document.getElementById('nome_prod').value = m.nome;
+            document.getElementById('valor_prod').placeholder = `Último: R$ ${m.valor.toFixed(2)}`;
+            if(m.foto) { fotoBase64=m.foto; document.getElementById('img-preview').src=m.foto; document.getElementById('img-preview').style.display='block'; }
         }
-        
         try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
-            const data = await res.json();
-            if(data.status === 1) document.getElementById('nome_prod').value = data.product.product_name || "";
-        } catch(e) {}
+            const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
+            const d = await r.json();
+            if(d.status === 1) document.getElementById('nome_prod').value = d.product.product_name || "";
+        } catch(e){}
     }
 
     function adicionarItem() {
-        const n = document.getElementById('nome_prod').value, 
-              v = parseFloat(document.getElementById('valor_prod').value), 
-              q = parseInt(document.getElementById('qtd_prod').value),
-              c = document.getElementById('codigo').value.trim();
-        if(!n || isNaN(v)) return alert("Preencha Nome e Preço!");
-
+        const n = document.getElementById('nome_prod').value, v = parseFloat(document.getElementById('valor_prod').value), 
+              q = parseInt(document.getElementById('qtd_prod').value), c = document.getElementById('codigo').value.trim(),
+              m = document.getElementById('metodo_pagto').value;
+        if(!n || isNaN(v)) return alert("Preencha os campos!");
         if(c) db.bancoPrecos[c] = { nome: n, valor: v, foto: fotoBase64 };
-        db.usuarios[userAtivo].listaAtual.push({ n, v, q, c, total: v*q, foto: fotoBase64 });
-        
+        db.usuarios[userAtivo].listaAtual.push({ n, v, q, c, m, total: v*q, foto: fotoBase64 });
         fotoBase64 = null; document.getElementById('img-preview').style.display = 'none';
-        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = ""; 
-        document.getElementById('valor_prod').placeholder = "R$ Unit";
-        document.getElementById('codigo').value = "";
+        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
         salvarBD(); renderizar();
     }
 
     function renderizar() {
         const lista = document.getElementById('lista_itens');
-        lista.innerHTML = ""; let tL = 0;
+        lista.innerHTML = ""; let tSaldo = 0, tExtra = 0;
         db.usuarios[userAtivo].listaAtual.forEach((it, i) => {
-            tL += it.total;
-            const img = it.foto ? `<img src="${it.foto}" class="thumb-lista">` : `<div class="thumb-lista"></div>`;
-            lista.innerHTML += `
-                <div class="item-lista">
-                    ${img}
-                    <div style="flex:1">
-                        <b>${it.n}</b><br>
-                        <small>${it.q}x R$ ${it.v.toFixed(2)} = R$ ${it.total.toFixed(2)}</small>
-                    </div>
-                    <button style="width:auto; color:red; background:none; font-size:24px;" onclick="remover(${i})">&times;</button>
-                </div>`;
+            if(it.m === 'saldo') tSaldo += it.total; else tExtra += it.total;
+            const img = it.foto ? `<img src="${it.foto}" class="thumb-lista">` : `<div class="thumb-lista" style="background:#eee"></div>`;
+            lista.innerHTML += `<div class="item-lista">${img}
+                <div style="flex:1"><b>${it.n}</b><br><small>${it.q}x R$ ${it.v.toFixed(2)} (${it.m==='saldo'?'Saldo':'Extra'})</small></div>
+                <button style="width:auto; color:red; background:none; font-size:24px;" onclick="remover(${i})">&times;</button></div>`;
         });
-        document.getElementById('res_custo').innerText = `R$ ${tL.toFixed(2)}`;
-        document.getElementById('res_total').innerText = `R$ ${(db.saldoGlobal - tL).toFixed(2)}`;
+        document.getElementById('res_saldo_uso').innerText = `R$ ${tSaldo.toFixed(2)}`;
+        document.getElementById('res_saldo_sobra').innerText = `R$ ${(db.saldoGlobal - tSaldo).toFixed(2)}`;
+        document.getElementById('res_extra').innerText = `R$ ${tExtra.toFixed(2)}`;
     }
 
     function finalizarCompra() {
         const lista = db.usuarios[userAtivo].listaAtual;
         if(lista.length === 0) return;
-        if(confirm("Finalizar e abater do saldo?")) {
-            const total = lista.reduce((a,b)=>a+b.total,0);
-            db.historicoCompras.push({
-                data: new Date().toLocaleString('pt-BR'),
-                total: total,
-                quem: db.usuarios[userAtivo].nome,
-                itens: [...lista]
-            });
-            db.saldoGlobal -= total;
-            db.usuarios[userAtivo].listaAtual = [];
+        if(confirm("Finalizar compra? O que for 'Saldo' será abatido.")) {
+            const tSaldo = lista.filter(x=>x.m==='saldo').reduce((a,b)=>a+b.total, 0);
+            db.historicoCompras.push({ data: new Date().toLocaleString('pt-BR'), total: lista.reduce((a,b)=>a+b.total,0), quem: db.usuarios[userAtivo].nome, itens: [...lista] });
+            db.saldoGlobal -= tSaldo; db.usuarios[userAtivo].listaAtual = [];
             salvarBD(); iniciarApp();
         }
     }
 
-    function salvarNovaSenha() {
-        const nv = document.getElementById('nova_senha').value;
-        if(nv.length < 4) return alert("Muito curta!");
-        db.usuarios[userAtivo].senha = nv; db.usuarios[userAtivo].precisaTrocar = false;
-        salvarBD(); iniciarApp();
-    }
-
-    function atualizarSaldo() { db.saldoGlobal = parseFloat(document.getElementById('input_saldo').value) || 0; salvarBD(); renderizar(); alert("Saldo Salvo!"); }
-    function capturarFoto(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => { fotoBase64 = e.target.result; document.getElementById('img-preview').src = fotoBase64; document.getElementById('img-preview').style.display = 'block'; };
-            reader.readAsDataURL(file);
-        }
-    }
-    function alternarScanner() {
-        if(!scanner) {
-            document.getElementById('reader').style.display='block';
-            scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt; buscaInteligente(); pararScanner();
-            });
-        } else pararScanner();
-    }
-    function pararScanner() { if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); }
+    // Funções de login e sistema...
+    function registrarUsuario() { const n = document.getElementById('novo_nome').value.trim(); const id = n.toLowerCase().replace(/\s/g,''); db.usuarios[id] = { nome:n, senha:SENHA_PADRAO, role:"user", listaAtual:[], precisaTrocar:true }; salvarBD(); mostrarTela('tela-login'); }
+    function tentarLogin() { const u = document.getElementById('login_user').value.toLowerCase().trim(), p = document.getElementById('login_pass').value; if(u==="master" && p==="Melissa@2016"){ if(!db.usuarios["master"]) db.usuarios["master"]={nome:"Master", senha:p, role:"master", listaAtual:[], precisaTrocar:false}; userAtivo="master"; } else if(db.usuarios[u] && db.usuarios[u].senha === p) userAtivo=u; else return alert("Erro!"); sessionStorage.setItem('sessao_user', userAtivo); if(db.usuarios[userAtivo].precisaTrocar) mostrarTela('tela-trocar-senha'); else iniciarApp(); }
+    function salvarNovaSenha() { db.usuarios[userAtivo].senha = document.getElementById('nova_senha').value; db.usuarios[userAtivo].precisaTrocar = false; salvarBD(); iniciarApp(); }
+    function atualizarSaldo() { db.saldoGlobal = parseFloat(document.getElementById('input_saldo').value) || 0; salvarBD(); renderizar(); }
     function logout() { sessionStorage.clear(); location.reload(); }
     function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i,1); salvarBD(); renderizar(); }
+    function alternarScanner() { if(!scanner) { document.getElementById('reader').style.display='block'; scanner = new Html5Qrcode("reader"); scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => { document.getElementById('codigo').value = txt; buscaInteligente(); pararScanner(); }); } else pararScanner(); }
+    function pararScanner() { if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); }
 
     if (userAtivo && db.usuarios[userAtivo]) iniciarApp(); else mostrarTela('tela-login');
   </script>
