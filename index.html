@@ -32,6 +32,7 @@
 <body>
   <div class="container" style="max-width:500px; margin: auto;">
    
+    <!-- Telas de login, cadastro e senha (iguais) -->
     <div id="tela-login" class="card" style="margin-top: 50px;">
         <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
         <input type="text" id="login_user" placeholder="Usuário">
@@ -85,7 +86,6 @@
         <div style="text-align:center"><img id="img-preview" style="max-height:120px; border-radius:12px; display:none; margin-bottom:10px;"></div>
         <div id="reader"></div>
        
-        <!-- CAMPO AJUSTADO PARA BALANÇA -->
         <input type="text" id="codigo" placeholder="EAN ou Código da Balança" 
                oninput="processarCodigoBalanca(this.value)" style="font-size:17px; font-weight:500;">
         
@@ -141,45 +141,54 @@
     }
     function toggleSenha(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
 
-    // ==================== FUNÇÃO PRINCIPAL - LEITURA DE BALANÇA ====================
+    // ==================== MELHORADA PARA SUA BALANÇA ====================
     function processarCodigoBalanca(cod) {
-        cod = cod.trim();
+        cod = cod.trim().replace(/\s/g, ''); // remove espaços
         if (cod.length < 8) return;
 
         let plu = cod;
         let peso = 1;
-        let nomePadrao = "Produto Balança";
+        let valorTotal = 0;
+        let isPrecoEmb = false;
 
-        // Formato mais comum no Brasil (13 dígitos começando com 2)
+        // Formato comum da sua balança (13 dígitos começando com 2)
         if (cod.length === 13 && cod.startsWith('2')) {
-            plu = cod.substring(1, 6);                    // PLU de 5 dígitos
-            const pesoGramas = parseInt(cod.substring(6, 11));
-            peso = pesoGramas / 1000;
-            nomePadrao = `Item Balança ${plu}`;
-        }
-        // Outros formatos (14+ dígitos)
-        else if (cod.length >= 14) {
-            const possivelPeso = cod.slice(-5);
-            if (/^\d{5}$/.test(possivelPeso)) {
-                peso = parseInt(possivelPeso) / 1000;
-                if (peso > 0 && peso < 50) {
-                    plu = cod.substring(0, cod.length - 5);
-                    nomePadrao = `Item Balança ${plu}`;
-                }
+            plu = cod.substring(1, 6);           // PLU = 01230
+            const meio = cod.substring(6, 11);   // 00475
+
+            // Verifica se o meio parece preço (ex: 00475 = R$ 4,75)
+            if (parseInt(meio) > 0) {
+                valorTotal = parseInt(meio) / 100;   // R$ 4.75
+                isPrecoEmb = true;
+            }
+            // Se não for preço, tenta como peso em gramas
+            else {
+                peso = parseInt(meio) / 1000;
             }
         }
 
         document.getElementById('codigo').value = plu;
-        document.getElementById('qtd_prod').value = peso.toFixed(3);
 
         // Busca no banco de preços
         if (db.bancoPrecos[plu]) {
             const m = db.bancoPrecos[plu];
             document.getElementById('nome_prod').value = m.nome;
-            document.getElementById('valor_prod').value = (m.valor * peso).toFixed(2);
+            if (isPrecoEmb && valorTotal > 0) {
+                document.getElementById('valor_prod').value = valorTotal.toFixed(2); // valor total
+                document.getElementById('qtd_prod').value = "1"; // peso será ajustado manualmente
+            } else {
+                document.getElementById('valor_prod').value = m.valor.toFixed(2);
+                document.getElementById('qtd_prod').value = peso.toFixed(3);
+            }
         } else {
-            document.getElementById('nome_prod').value = nomePadrao;
-            document.getElementById('valor_prod').value = "";
+            document.getElementById('nome_prod').value = `Item Balança ${plu}`;
+            if (isPrecoEmb && valorTotal > 0) {
+                document.getElementById('valor_prod').value = valorTotal.toFixed(2);
+                document.getElementById('qtd_prod').value = "1";
+            } else {
+                document.getElementById('qtd_prod').value = peso.toFixed(3);
+                document.getElementById('valor_prod').value = "";
+            }
         }
 
         buscaInteligente();
@@ -188,12 +197,6 @@
     async function buscaInteligente() {
         const cod = document.getElementById('codigo').value.trim();
         if (cod.length < 4) return;
-
-        if (db.bancoPrecos[cod]) {
-            const m = db.bancoPrecos[cod];
-            document.getElementById('nome_prod').value = m.nome;
-        }
-
         try {
             const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
             const d = await r.json();
@@ -203,12 +206,21 @@
 
     function adicionarItem() {
         const n = document.getElementById('nome_prod').value.trim() || "Item sem nome";
-        const v = parseFloat(document.getElementById('valor_prod').value);
-        const q = parseFloat(document.getElementById('qtd_prod').value) || 1;
+        let v = parseFloat(document.getElementById('valor_prod').value);
+        let q = parseFloat(document.getElementById('qtd_prod').value) || 1;
         const c = document.getElementById('codigo').value.trim();
         const m = document.getElementById('metodo_pagto').value;
 
-        if (isNaN(v) || v <= 0) return alert("Informe o valor unitário!");
+        if (isNaN(v) || v <= 0) return alert("Informe o valor!");
+
+        // Se for valor total da balança, converte para unitário
+        if (q === 1 && v > 10) { // suspeita de valor total
+            const pesoManual = prompt("Digite o peso (kg) mostrado na etiqueta:", "0.866");
+            if (pesoManual) {
+                q = parseFloat(pesoManual);
+                v = v / q; // transforma em valor unitário por kg
+            }
+        }
 
         if (c) db.bancoPrecos[c] = { nome: n, valor: v, foto: fotoBase64 };
 
@@ -216,6 +228,7 @@
             n, v, q, c, m, total: v * q, foto: fotoBase64
         });
 
+        // Limpar
         fotoBase64 = null;
         document.getElementById('img-preview').style.display = 'none';
         document.getElementById('nome_prod').value = "";
@@ -234,7 +247,6 @@
 
         db.usuarios[userAtivo].listaAtual.forEach((it, i) => {
             if (it.m === 'saldo') tSaldo += it.total; else tExtra += it.total;
-            
             const pesoInfo = (it.q !== 1) ? ` (${it.q.toFixed(3)} kg)` : '';
             
             lista.innerHTML += `<div class="item-lista">
@@ -252,13 +264,12 @@
         document.getElementById('res_extra').innerText = `R$ ${tExtra.toFixed(2)}`;
     }
 
-    // ==================== RESTO DAS FUNÇÕES (mantidas originais) ====================
-    function registrarUsuario() {
+    // ==================== RESTO DO CÓDIGO (inalterado) ====================
+    function registrarUsuario() { /* ... mesmo código anterior ... */ 
         const n = document.getElementById('novo_nome').value.trim();
         if(!n) return alert("Digite um nome!");
         const id = n.toLowerCase().replace(/\s/g, '');
         if(db.usuarios[id]) return alert("Usuário já existe!");
-       
         db.usuarios[id] = { nome: n, senha: SENHA_PADRAO, role: "user", listaAtual: [], precisaTrocar: true };
         salvarBD();
         alert("Cadastrado com sucesso! Use a senha: " + SENHA_PADRAO);
@@ -266,7 +277,7 @@
         mostrarTela('tela-login');
     }
 
-    function tentarLogin() {
+    function tentarLogin() { /* ... mesmo ... */ 
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
         if(u === "master" && p === "Melissa@2016") {
@@ -275,7 +286,6 @@
         } else if(db.usuarios[u] && db.usuarios[u].senha === p) {
             userAtivo = u;
         } else return alert("Usuário ou senha inválidos!");
-       
         sessionStorage.setItem('sessao_user', userAtivo);
         if(db.usuarios[userAtivo].precisaTrocar) mostrarTela('tela-trocar-senha'); else iniciarApp();
     }
@@ -289,7 +299,7 @@
         renderizar();
     }
 
-    function processarFoto(event) {
+    function processarFoto(event) { /* ... mesmo ... */ 
         const file = event.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -324,11 +334,10 @@
     }
 
     function abrirMaster() { mostrarTela('painel-master'); mudarAbaMaster('users'); }
-    function mudarAbaMaster(aba) {
+    function mudarAbaMaster(aba) { /* ... mesmo código ... */ 
         document.getElementById('aba-users').className = 'aba ' + (aba==='users'?'ativa':'');
         document.getElementById('aba-hist').className = 'aba ' + (aba==='hist'?'ativa':'');
         const cont = document.getElementById('conteudo-master');
-       
         if(aba === 'users') {
             cont.innerHTML = Object.keys(db.usuarios).map(uid => {
                 if(db.usuarios[uid].role === 'master') return '';
