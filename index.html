@@ -17,7 +17,7 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 220px; min-height: 100vh; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 240px; min-height: 100vh; }
     .container { max-width: 500px; margin: auto; }
 
     .card {
@@ -42,16 +42,12 @@
 
     input:focus { border-color: var(--primary); }
 
-    /* OLHO DA SENHA - POSICIONADO CORRETAMENTE NO CELULAR */
+    /* Olho da senha corrigido para celular */
     .input-container {
       position: relative;
       margin-bottom: 14px;
     }
-
-    .input-container input {
-      padding-right: 62px !important;
-    }
-
+    .input-container input { padding-right: 62px !important; }
     .btn-olho {
       position: absolute;
       right: 12px;
@@ -81,26 +77,28 @@
       margin-bottom: 12px;
     }
 
-    .abas-master {
-      display: flex; gap: 6px; margin-bottom: 15px;
-      background: #eee; padding: 6px; border-radius: 12px;
-    }
-    .aba {
-      flex: 1; padding: 12px; text-align: center; border-radius: 10px;
-      font-weight: 600; cursor: pointer;
-    }
-    .aba.ativa { background: var(--dark); color: white; }
-
     .item-lista {
-      background: white; border-radius: 12px; padding: 12px; margin-bottom: 10px;
-      display: flex; align-items: center; gap: 12px; border: 1px solid #eee;
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #eee;
     }
     .thumb-lista { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
 
     .resumo-fixo {
-      position: fixed; bottom: 0; left: 0; width: 100%; background: white;
-      padding: 15px 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
-      border-radius: 20px 20px 0 0; z-index: 1000;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      padding: 15px 20px;
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
+      border-radius: 20px 20px 0 0;
+      z-index: 1000;
     }
 
     #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
@@ -110,7 +108,7 @@
 <body>
   <div class="container">
 
-    <!-- Tela Login -->
+    <!-- Login -->
     <div id="tela-login" class="card">
       <h2>🛒 Login Família</h2>
       <input type="text" id="login_user" placeholder="Usuário" value="master">
@@ -122,15 +120,15 @@
       <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
     </div>
 
-    <!-- Tela Cadastro -->
+    <!-- Cadastro -->
     <div id="tela-cadastro" class="card hidden">
       <h2>📝 Novo Membro</h2>
-      <input type="text" id="novo_nome" placeholder="Nome completo do membro">
+      <input type="text" id="novo_nome" placeholder="Nome do membro">
       <button style="background: var(--success); color: white;" onclick="registrarUsuario()">CONFIRMAR CADASTRO</button>
       <button style="background: none; border: 2px solid #ccc;" onclick="mostrarTela('tela-login')">VOLTAR</button>
     </div>
 
-    <!-- Tela Trocar Senha -->
+    <!-- Trocar Senha -->
     <div id="tela-trocar-senha" class="card hidden">
       <h2>🔒 Defina sua Senha</h2>
       <div class="input-container">
@@ -140,7 +138,7 @@
       <button style="background: var(--success); color: white;" onclick="salvarNovaSenha()">DEFINIR E ENTRAR</button>
     </div>
 
-    <!-- App Principal -->
+    <!-- ==================== APP PRINCIPAL ==================== -->
     <div id="app-principal" class="hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 id="boas_vindas"></h3>
@@ -150,14 +148,16 @@
         </div>
       </div>
 
+      <!-- Saldo -->
       <div class="card">
-        <small style="color:#555;">💰 SALDO FAMILIAR</small>
+        <small style="color:#555;">💰 SALDO FAMILIAR DISPONÍVEL</small>
         <div style="display:flex; gap:10px;">
           <input type="number" id="input_saldo" step="0.01" style="font-size:22px; font-weight:bold; flex:1;">
           <button onclick="atualizarSaldo()" style="width:70px; background:var(--success); color:white;">ATUALIZAR</button>
         </div>
       </div>
 
+      <!-- Adicionar Item -->
       <div class="card">
         <div style="display:flex; gap:8px; margin-bottom:12px;">
           <button style="background:var(--purple); color:white; flex:1;" onclick="alternarScanner()">📷 ESCANEAR EAN / BALANÇA</button>
@@ -181,31 +181,21 @@
 
         <select id="metodo_pagto">
           <option value="saldo">Abater do Saldo Familiar</option>
-          <option value="extra">Extra (Cartão / Dinheiro)</option>
+          <option value="extra">Pagamento Extra</option>
         </select>
 
         <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
       </div>
 
+      <!-- Lista de Itens -->
       <div id="lista_itens"></div>
-      <button style="background:var(--primary); color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
-    </div>
 
-    <!-- Painel Master -->
-    <div id="painel-master" class="hidden">
-      <div class="card">
-        <h2>🛡️ Painel Master</h2>
-        <div class="abas-master">
-          <div class="aba ativa" id="aba-users" onclick="mudarAbaMaster('users')">MEMBROS</div>
-          <div class="aba" id="aba-hist" onclick="mudarAbaMaster('hist')">HISTÓRICO</div>
-        </div>
-        <div id="conteudo-master"></div>
-        <button style="background:var(--dark); color:white; margin-top:15px;" onclick="mostrarTela('app-principal')">← VOLTAR AO APP</button>
-      </div>
+      <!-- Finalizar Compra -->
+      <button style="background:var(--primary); color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
   </div>
 
-  <!-- Barra Resumo Fixa -->
+  <!-- Barra de Resumo Fixa -->
   <div class="resumo-fixo hidden" id="barra-resumo">
     <div style="display:flex; justify-content:space-around; text-align:center;">
       <div><small>Do Saldo</small><br><b id="res_saldo_uso" style="color:var(--purple)">R$ 0,00</b></div>
@@ -273,7 +263,7 @@
 
     function salvarNovaSenha() {
       const senha = document.getElementById('nova_senha').value.trim();
-      if (senha.length < 4) return alert("Senha deve ter no mínimo 4 caracteres!");
+      if (senha.length < 4) return alert("Senha deve ter pelo menos 4 caracteres!");
       db.usuarios[userAtivo].senha = senha;
       db.usuarios[userAtivo].precisaTrocar = false;
       salvarBD();
@@ -283,7 +273,7 @@
     function iniciarApp() {
       mostrarTela('app-principal');
       document.getElementById('boas_vindas').innerText = `Oi, ${db.usuarios[userAtivo].nome}`;
-      document.getElementById('input_saldo').value = db.saldoGlobal.toFixed(2);
+      document.getElementById('input_saldo').value = (db.saldoGlobal || 0).toFixed(2);
       document.getElementById('btn-master').style.display = (db.usuarios[userAtivo].role === 'master') ? 'inline-block' : 'none';
       renderizar();
     }
@@ -291,7 +281,6 @@
     function processarCodigoBalanca() {
       const cod = document.getElementById('codigo').value.trim();
       if (cod.length < 12 || !cod.startsWith('2')) return;
-
       const preco = parseFloat(cod.substring(cod.length - 5)) / 100;
       if (preco > 0.5) {
         document.getElementById('nome_prod').value = "Produto da Balança";
@@ -316,7 +305,7 @@
           pararScanner();
         });
       } catch (e) {
-        alert("Não foi possível abrir a câmera.");
+        alert("Erro ao abrir a câmera");
         pararScanner();
       }
     }
@@ -344,6 +333,8 @@
       const valor = parseFloat(document.getElementById('valor_prod').value);
       if (!nome || isNaN(valor)) return alert("Preencha nome e valor do produto!");
 
+      if (!db.usuarios[userAtivo].listaAtual) db.usuarios[userAtivo].listaAtual = [];
+
       db.usuarios[userAtivo].listaAtual.push({
         n: nome,
         v: valor,
@@ -369,7 +360,9 @@
       listaDiv.innerHTML = '';
       let tSaldo = 0, tExtra = 0;
 
-      db.usuarios[userAtivo].listaAtual.forEach((item, i) => {
+      const lista = db.usuarios[userAtivo].listaAtual || [];
+
+      lista.forEach((item, i) => {
         if (item.m === 'saldo') tSaldo += item.total;
         else tExtra += item.total;
 
@@ -392,7 +385,7 @@
     }
 
     function removerItem(i) {
-      if (confirm("Remover item?")) {
+      if (confirm("Remover este item?")) {
         db.usuarios[userAtivo].listaAtual.splice(i, 1);
         salvarBD();
         renderizar();
@@ -400,18 +393,20 @@
     }
 
     function finalizarCompra() {
-      if (db.usuarios[userAtivo].listaAtual.length === 0) return alert("Adicione itens primeiro!");
+      const lista = db.usuarios[userAtivo].listaAtual || [];
+      if (lista.length === 0) return alert("Adicione pelo menos um item!");
+
       if (confirm("Finalizar compra?")) {
-        const gastoSaldo = db.usuarios[userAtivo].listaAtual.filter(x => x.m === 'saldo').reduce((a,b)=>a+b.total,0);
+        const gastoSaldo = lista.filter(x => x.m === 'saldo').reduce((a,b) => a + b.total, 0);
         db.saldoGlobal -= gastoSaldo;
         db.historicoCompras.push({
           data: new Date().toLocaleString('pt-BR'),
-          total: db.usuarios[userAtivo].listaAtual.reduce((a,b)=>a+b.total,0),
+          total: lista.reduce((a,b) => a + b.total, 0),
           quem: db.usuarios[userAtivo].nome
         });
         db.usuarios[userAtivo].listaAtual = [];
         salvarBD();
-        alert("Compra finalizada com sucesso!");
+        alert("✅ Compra finalizada com sucesso!");
         iniciarApp();
       }
     }
@@ -423,14 +418,7 @@
     }
 
     function abrirMaster() {
-      mostrarTela('painel-master');
-      mudarAbaMaster('users');
-    }
-
-    function mudarAbaMaster(aba) {
-      document.getElementById('aba-users').classList.toggle('ativa', aba === 'users');
-      document.getElementById('aba-hist').classList.toggle('ativa', aba === 'hist');
-      document.getElementById('conteudo-master').innerHTML = '<p style="text-align:center; color:#666; padding:30px;">Funcionalidade em desenvolvimento...</p>';
+      alert("Painel Master em desenvolvimento");
     }
 
     function logout() {
