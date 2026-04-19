@@ -17,7 +17,7 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 260px; min-height: 100vh; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 280px; min-height: 100vh; }
     .container { max-width: 500px; margin: auto; }
 
     .card {
@@ -28,7 +28,7 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
 
-    h2, h3 { text-align: center; margin-bottom: 20px; }
+    h2, h3 { text-align: center; margin-bottom: 20px; font-size: 22px; }
 
     input, select {
       width: 100%;
@@ -107,7 +107,7 @@
 <body>
   <div class="container">
 
-    <!-- Login -->
+    <!-- Tela Login -->
     <div id="tela-login" class="card">
       <h2>🛒 Login Família</h2>
       <input type="text" id="login_user" placeholder="Usuário" value="master">
@@ -137,7 +137,7 @@
       <button style="background: var(--success); color: white;" onclick="salvarNovaSenha()">DEFINIR E ENTRAR</button>
     </div>
 
-    <!-- ==================== APP PRINCIPAL ==================== -->
+    <!-- ==================== APP PRINCIPAL - VERSÃO REFORÇADA ==================== -->
     <div id="app-principal" class="hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 id="boas_vindas"></h3>
@@ -156,7 +156,7 @@
         </div>
       </div>
 
-      <!-- Área de Adicionar Produto -->
+      <!-- Adicionar Produto -->
       <div class="card">
         <div style="display:flex; gap:8px; margin-bottom:12px;">
           <button style="background:var(--purple); color:white; flex:1;" onclick="alternarScanner()">📷 ESCANEAR EAN / BALANÇA</button>
@@ -187,14 +187,14 @@
       </div>
 
       <!-- Lista de Itens -->
-      <div id="lista_itens" style="margin-bottom: 80px;"></div>
+      <div id="lista_itens"></div>
 
       <!-- Finalizar Compra -->
       <button style="background:var(--primary); color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
   </div>
 
-  <!-- Barra Resumo Fixa -->
+  <!-- Barra de Resumo Fixa -->
   <div class="resumo-fixo hidden" id="barra-resumo">
     <div style="display:flex; justify-content:space-around; text-align:center;">
       <div><small>Do Saldo</small><br><b id="res_saldo_uso" style="color:var(--purple)">R$ 0,00</b></div>
@@ -216,8 +216,7 @@
 
     function mostrarTela(id) {
       document.querySelectorAll('.card').forEach(t => t.classList.add('hidden'));
-      const tela = document.getElementById(id);
-      if (tela) tela.classList.remove('hidden');
+      document.getElementById(id).classList.remove('hidden');
       document.getElementById('barra-resumo').classList.toggle('hidden', id !== 'app-principal');
     }
 
@@ -426,12 +425,15 @@
       }
     }
 
-    // Inicialização
-    if (userAtivo && db.usuarios[userAtivo]) {
-      iniciarApp();
-    } else {
-      mostrarTela('tela-login');
-    }
+    // Inicialização reforçada
+    window.onload = function() {
+      userAtivo = sessionStorage.getItem('sessao_user');
+      if (userAtivo && db.usuarios[userAtivo]) {
+        iniciarApp();
+      } else {
+        mostrarTela('tela-login');
+      }
+    };
   </script>
 </body>
 </html>
