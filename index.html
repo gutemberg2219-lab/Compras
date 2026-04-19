@@ -17,13 +17,13 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 260px; min-height: 100vh; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 280px; min-height: 100vh; }
     .container { max-width: 500px; margin: auto; }
 
     .card {
       background: white;
       border-radius: 20px;
-      padding: 25px;
+      padding: 20px;
       margin-bottom: 15px;
       box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
@@ -102,7 +102,7 @@
 
     #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
     .hidden { display: none !important; }
-    .balanca-detect { animation: highlight 1.5s; }
+    .balanca-detect { animation: highlight 1.8s; }
     @keyframes highlight { 0% { background: #e8f5e9; } 100% { background: white; } }
   </style>
 </head>
@@ -158,7 +158,7 @@
         </div>
       </div>
 
-      <!-- Scanner + Produto -->
+      <!-- Área de Escanear e Adicionar -->
       <div class="card">
         <div style="display:flex; gap:8px; margin-bottom:12px;">
           <button style="background:var(--purple); color:white; flex:1;" onclick="alternarScanner()">📷 LER EAN / BALANÇA</button>
@@ -172,12 +172,12 @@
 
         <div id="reader"></div>
 
-        <input type="text" id="codigo" placeholder="Código de barras (EAN ou Balança)" oninput="processarCodigoBalanca()">
-        <input type="text" id="nome_prod" placeholder="Nome do produto">
+        <input type="text" id="codigo" placeholder="EAN ou Código Balança" oninput="processarCodigoBalanca()">
+        <input type="text" id="nome_prod" placeholder="Produto">
         
         <div style="display:flex; gap:10px;">
           <input type="number" id="qtd_prod" value="1" min="1" style="flex:1;">
-          <input type="number" id="valor_prod" placeholder="R$ unitário" step="0.01" style="flex:2;">
+          <input type="number" id="valor_prod" placeholder="R$ Unit" step="0.01" style="flex:2;">
         </div>
 
         <select id="metodo_pagto">
@@ -190,19 +190,6 @@
 
       <div id="lista_itens"></div>
       <button style="background: var(--primary); color: white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
-    </div>
-
-    <!-- Painel Master -->
-    <div id="painel-master" class="hidden">
-      <div class="card">
-        <h2>🛡️ Gestão Master</h2>
-        <div class="abas-master">
-          <div class="aba ativa" id="aba-users" onclick="mudarAbaMaster('users')">MEMBROS</div>
-          <div class="aba" id="aba-hist" onclick="mudarAbaMaster('hist')">HISTÓRICO</div>
-        </div>
-        <div id="conteudo-master"></div>
-        <button style="background: var(--dark); color: white; margin-top:15px;" onclick="mostrarTela('app-principal')">VOLTAR AO APP</button>
-      </div>
     </div>
   </div>
 
@@ -239,7 +226,7 @@
 
     function registrarUsuario() {
       const nome = document.getElementById('novo_nome').value.trim();
-      if (!nome) return alert("Digite o nome do membro!");
+      if (!nome) return alert("Digite o nome!");
       const id = nome.toLowerCase().replace(/\s+/g, '');
       if (db.usuarios[id]) return alert("Usuário já existe!");
 
@@ -272,7 +259,7 @@
 
     function salvarNovaSenha() {
       const senha = document.getElementById('nova_senha').value.trim();
-      if (senha.length < 4) return alert("Senha deve ter pelo menos 4 caracteres!");
+      if (senha.length < 4) return alert("Senha muito curta!");
       db.usuarios[userAtivo].senha = senha;
       db.usuarios[userAtivo].precisaTrocar = false;
       salvarBD();
@@ -287,7 +274,7 @@
       renderizar();
     }
 
-    // ==================== DETECÇÃO DE CÓDIGO DE BALANÇA ====================
+    // ==================== CÓDIGO DE BALANÇA ====================
     function processarCodigoBalanca() {
       const cod = document.getElementById('codigo').value.trim();
       if (cod.length < 12 || !cod.startsWith('2')) return;
@@ -295,18 +282,16 @@
       // Destaque visual
       const card = document.querySelector('#app-principal .card:nth-child(3)');
       if (card) card.classList.add('balanca-detect');
-      setTimeout(() => card && card.classList.remove('balanca-detect'), 1500);
+      setTimeout(() => card && card.classList.remove('balanca-detect'), 1800);
 
-      // Tentativa de extrair preço (últimos 5 dígitos comuns em balanças)
+      // Extrai preço dos últimos 5 dígitos (formato mais comum em balanças brasileiras)
       const partePreco = cod.substring(cod.length - 5);
-      const precoExtraido = parseFloat(partePreco) / 100;
+      const preco = parseFloat(partePreco) / 100;
 
-      if (precoExtraido > 0.5 && precoExtraido < 9999) {
+      if (preco > 0.5) {
         document.getElementById('nome_prod').value = "Produto da Balança";
-        document.getElementById('valor_prod').value = precoExtraido.toFixed(2);
-        alert(`✅ Código de balança detectado!\nPreço extraído: R$ ${precoExtraido.toFixed(2)}\nVocê pode editar o nome se quiser.`);
-      } else {
-        alert(`✅ Código de balança detectado (inicia com 2)\nInforme o valor manualmente.`);
+        document.getElementById('valor_prod').value = preco.toFixed(2);
+        alert(`✅ Código de balança detectado!\nPreço extraído automaticamente: R$ ${preco.toFixed(2)}`);
       }
     }
 
@@ -333,17 +318,15 @@
           }
         );
       } catch (e) {
-        alert("Erro ao abrir câmera: " + e.message);
+        alert("Erro ao abrir a câmera");
         pararScanner();
       }
     }
 
     function pararScanner() {
-      if (scanner) {
-        scanner.stop().catch(() => {});
-        scanner = null;
-        document.getElementById('reader').style.display = 'none';
-      }
+      if (scanner) scanner.stop().catch(() => {});
+      scanner = null;
+      document.getElementById('reader').style.display = 'none';
     }
 
     function processarFoto(event) {
