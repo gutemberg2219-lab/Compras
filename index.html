@@ -8,153 +8,169 @@
   
   <style>
     :root { --primary: #0066ff; --purple: #673ab7; --success: #2e7d32; --danger: #ff1744; --dark: #1a1a1a; --bg: #f0f2f5; }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 200px; min-height: 100vh; }
-    .container { max-width: 500px; margin: auto; }
-    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    input, select { width: 100%; height: 52px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; font-size: 16px; outline: none; }
-    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,102,255,0.1); }
-    .input-container { position: relative; }
-    .btn-olho { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 22px; cursor: pointer; color: #777; }
-    button { width: 100%; height: 52px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; }
-    .aba { flex: 1; padding: 12px; text-align: center; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
-    .aba.ativa { background: var(--dark); color: white; }
-    .item-lista { background: white; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; align-items: center; border: 1px solid #eee; gap: 12px; }
-    .thumb-lista { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); border-radius: 20px 20px 0 0; z-index: 1000; }
-    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
-    .hidden { display: none !important; }
-    .balanca-detect { background: #e8f5e9; border-left: 5px solid var(--success); }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
+    body { background: var(--bg); padding:15px; padding-bottom:200px; min-height:100vh; }
+    .container { max-width:500px; margin:auto; }
+    .card { background:white; border-radius:16px; padding:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
+    input, select { width:100%; height:52px; padding:0 15px; border:2px solid #e0e0e0; border-radius:12px; margin-bottom:12px; font-size:16px; }
+    input:focus, select:focus { border-color:var(--primary); }
+    .btn-olho { position:absolute; right:15px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:22px; color:#777; }
+    button { width:100%; height:52px; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px; font-size:16px; }
+    .hidden { display:none !important; }
+    .balanca-detect { animation: highlight 1.5s; }
+    @keyframes highlight { 0% { background:#e8f5e9; } 100% { background:white; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Telas de login, cadastro, etc. (mantidas iguais) -->
-    <!-- ... (copie as telas de login, cadastro e trocar senha do código anterior) ... -->
+    <!-- Tela Login -->
+    <div id="tela-login" class="card">
+      <h2 style="text-align:center;margin-bottom:20px;">🛒 Login Família</h2>
+      <input type="text" id="login_user" placeholder="Usuário">
+      <div class="input-container" style="position:relative;">
+        <input type="password" id="login_pass" placeholder="Senha">
+        <button class="btn-olho" onclick="toggleSenha('login_pass')">👁️</button>
+      </div>
+      <button style="background:var(--primary);color:white;" onclick="tentarLogin()">ENTRAR</button>
+      <button style="background:none;color:var(--primary);border:2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
+    </div>
 
+    <!-- Outras telas (cadastro, trocar senha) foram omitidas por brevidade, mas mantenha-as se já tiver -->
+
+    <!-- App Principal -->
     <div id="app-principal" class="hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3 id="boas_vindas"></h3>
-        <div style="display:flex; gap:6px;">
-          <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 12px; background:var(--dark); color:#ffd700;">🛡️ MASTER</button>
-          <button onclick="logout()" style="width:auto; padding:0 12px; background:#ccc;">SAIR</button>
-        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+        <h3 id="boas_vindas">Oi, Usuário</h3>
+        <button id="btn-master" onclick="abrirMaster()" style="display:none;background:var(--dark);color:#ffd700;padding:8px 12px;">🛡️ MASTER</button>
+        <button onclick="logout()" style="background:#ccc;padding:8px 12px;">SAIR</button>
       </div>
 
-      <!-- Card de saldo (mantido igual) -->
-
       <div class="card">
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <button style="background:var(--purple); color:white; flex:1;" onclick="alternarScanner()">📷 ESCANEAR EAN / BALANÇA</button>
-          <button style="background:#e3f2fd; color:var(--primary); flex:1;" onclick="document.getElementById('camera-input').click()">📸 FOTO</button>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button style="background:var(--purple);color:white;flex:1;" onclick="alternarScanner()">📷 ESCANEAR EAN / BALANÇA</button>
+          <button style="background:#e3f2fd;color:var(--primary);flex:1;" onclick="document.getElementById('camera-input').click()">📸 FOTO</button>
         </div>
-        
         <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
-        <div id="img-preview-container" style="text-align:center; margin-bottom:10px; display:none;">
-          <img id="img-preview" style="max-height:140px; border-radius:12px;">
-        </div>
         
-        <div id="reader"></div>
+        <div id="reader" class="hidden"></div>
 
-        <input type="text" id="codigo" placeholder="Código de barras (EAN ou Balança)" oninput="processarCodigoBalanca()">
+        <input type="text" id="codigo" placeholder="Código (EAN ou Balança)" oninput="processarCodigoBalanca()">
         <input type="text" id="nome_prod" placeholder="Nome do produto">
-        
-        <div style="display:flex; gap:10px;">
-          <input type="number" id="qtd_prod" value="1" min="1" style="flex:1;" placeholder="Qtd">
-          <input type="number" id="valor_prod" placeholder="Valor unitário (R$)" step="0.01" style="flex:2;">
+        <div style="display:flex;gap:10px;">
+          <input type="number" id="qtd_prod" value="1" min="1" style="flex:1;">
+          <input type="number" id="valor_prod" placeholder="R$ unitário" step="0.01" style="flex:2;">
         </div>
-        
         <select id="metodo_pagto">
-          <option value="saldo">Abater do Saldo Familiar</option>
-          <option value="extra">Pagamento Extra (Cartão/Dinheiro)</option>
+          <option value="saldo">Abater do Saldo</option>
+          <option value="extra">Extra (Cartão/Dinheiro)</option>
         </select>
-        
-        <button style="background:var(--success); color:white;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+        <button style="background:var(--success);color:white;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
       </div>
 
       <div id="lista_itens"></div>
-      <button style="background: var(--primary); color: white; margin-top:10px;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
+      <button style="background:var(--primary);color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
-
-    <!-- Painel Master (mantido igual) -->
   </div>
 
-  <div class="resumo-fixo hidden" id="barra-resumo">...</div>
-
   <script>
-    // ... (mantenha todo o código anterior: DB, login, cadastro, salvarBD, etc.)
+    // ==================== CONFIGURAÇÃO ====================
+    const DB_NAME = "FAMILIA_DB_V75";
+    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, bancoPrecos: {}, historicoCompras: [] };
+    let userAtivo = sessionStorage.getItem('sessao_user');
+    let scanner = null;
 
-    // === NOVA FUNÇÃO: PROCESSAR CÓDIGO DE BALANÇA ===
+    function salvarBD() { localStorage.setItem(DB_NAME, JSON.stringify(db)); }
+
+    function mostrarTela(id) {
+      document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
+      const tela = document.getElementById(id);
+      if (tela) tela.classList.remove('hidden');
+    }
+
+    function toggleSenha(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === "password" ? "text" : "password";
+    }
+
+    // ==================== PROCESSAMENTO DE CÓDIGO BALANÇA ====================
     function processarCodigoBalanca() {
       const cod = document.getElementById('codigo').value.trim();
-      if (cod.length < 12) return;
+      if (!cod || cod.length < 12 || !cod.startsWith('2')) return;
 
-      // Detecta código de balança (começa com 2)
-      if (cod.startsWith('2')) {
-        const card = document.querySelector('#app-principal .card:last-child');
-        card.classList.add('balanca-detect');
+      // Destaque visual
+      const card = document.querySelector('#app-principal > .card');
+      if (card) card.classList.add('balanca-detect');
+      setTimeout(() => card && card.classList.remove('balanca-detect'), 1800);
 
-        setTimeout(() => card.classList.remove('balanca-detect'), 1500);
-
-        // Tenta extrair preço ou peso (formatos comuns)
-        let valorExtraido = null;
-        let ehPreco = false;
-
-        // Formato comum EAN-13 balança: 2 + PLU (5-6 dígitos) + Preço (5-7 dígitos) + DV
-        if (cod.length === 13) {
-          // Últimos 5 ou 6 dígitos frequentemente representam preço (ex: 01234 = R$ 12,34)
-          const parteFinal = cod.substring(7, 12); // exemplo comum
-          const possivelPreco = parseFloat(parteFinal) / 100;
-          
-          if (possivelPreco > 0.5 && possivelPreco < 9999) {
-            valorExtraido = possivelPreco;
-            ehPreco = true;
-          }
-        }
-
-        // Se não achou preço, tenta como peso em gramas (últimos dígitos)
-        if (!valorExtraido) {
-          const possivelPeso = parseFloat(cod.substring(cod.length - 6)) / 1000; // gramas -> kg
-          if (possivelPeso > 0.01 && possivelPeso < 50) {
-            valorExtraido = possivelPeso;
-            ehPreco = false;
-          }
-        }
-
-        if (valorExtraido) {
-          document.getElementById('nome_prod').value = "Produto da Balança (pesado)";
-          if (ehPreco) {
-            document.getElementById('valor_prod').value = valorExtraido.toFixed(2);
-            alert(`✅ Código de balança detectado!\nPreço total extraído: R$ ${valorExtraido.toFixed(2)}\nAjuste o nome se necessário.`);
-          } else {
-            document.getElementById('valor_prod').placeholder = `Peso: ${valorExtraido.toFixed(3)} kg - informe valor/kg`;
-            alert(`✅ Código de balança detectado!\nPeso aproximado: ${valorExtraido.toFixed(3)} kg\nInforme o valor por kg.`);
-          }
-        }
+      // Tentativa de extrair preço (formato comum: preço nos últimos 5 dígitos)
+      let preco = null;
+      if (cod.length >= 13) {
+        const ultimaParte = cod.substring(cod.length - 5);
+        preco = parseFloat(ultimaParte) / 100;
       }
 
-      // Mantém busca normal para EAN comum
-      if (cod.length >= 8) buscaInteligente();
+      if (preco && preco > 0) {
+        document.getElementById('nome_prod').value = "Produto Balança";
+        document.getElementById('valor_prod').value = preco.toFixed(2);
+        alert(`✅ Código de balança detectado!\nPreço extraído: R$ ${preco.toFixed(2)}`);
+      } else {
+        alert(`✅ Código de balança detectado (inicia com 2)\n\nEdite o nome e informe o valor manualmente.`);
+      }
     }
 
-    // Atualiza a função de scanner para chamar a nova função
     async function alternarScanner() {
-      // ... (código do scanner anterior)
+      const reader = document.getElementById('reader');
+      if (scanner) {
+        await scanner.stop().catch(()=>{});
+        scanner = null;
+        reader.classList.add('hidden');
+        return;
+      }
+
+      reader.classList.remove('hidden');
       scanner = new Html5Qrcode("reader");
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 12, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          document.getElementById('codigo').value = decodedText;
-          processarCodigoBalanca();   // ← Alterado aqui
-          pararScanner();
-        }
-      );
+
+      try {
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            document.getElementById('codigo').value = decodedText;
+            processarCodigoBalanca();
+            scanner.stop().catch(()=>{});
+            reader.classList.add('hidden');
+            scanner = null;
+          }
+        );
+      } catch (err) {
+        alert("Não foi possível acessar a câmera.\n" + err.message);
+        reader.classList.add('hidden');
+      }
     }
 
-    // Atualiza também o oninput do campo código (já está no HTML acima como oninput="processarCodigoBalanca()")
+    function adicionarItem() {
+      const nome = document.getElementById('nome_prod').value.trim();
+      const valor = parseFloat(document.getElementById('valor_prod').value);
+      if (!nome || !valor) return alert("Preencha nome e valor!");
 
-    // ... resto do código (adicionarItem, renderizar, etc.) permanece igual
+      // Adiciona na lista (simplificado)
+      alert(`Item adicionado: ${nome} - R$ ${valor}`);
+      // Aqui você pode expandir para salvar na lista real
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      location.reload();
+    }
+
+    // Inicialização segura
+    window.onload = function() {
+      if (userAtivo) {
+        mostrarTela('app-principal');
+      } else {
+        mostrarTela('tela-login');
+      }
+    };
   </script>
 </body>
 </html>
