@@ -17,7 +17,7 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-    body { background: var(--bg); padding: 15px; padding-bottom: 240px; min-height: 100vh; }
+    body { background: var(--bg); padding: 15px; padding-bottom: 260px; min-height: 100vh; }
     .container { max-width: 500px; margin: auto; }
 
     .card {
@@ -42,7 +42,6 @@
 
     input:focus { border-color: var(--primary); }
 
-    /* Olho da senha corrigido para celular */
     .input-container {
       position: relative;
       margin-bottom: 14px;
@@ -157,7 +156,7 @@
         </div>
       </div>
 
-      <!-- Adicionar Item -->
+      <!-- Área de Adicionar Produto -->
       <div class="card">
         <div style="display:flex; gap:8px; margin-bottom:12px;">
           <button style="background:var(--purple); color:white; flex:1;" onclick="alternarScanner()">📷 ESCANEAR EAN / BALANÇA</button>
@@ -188,14 +187,14 @@
       </div>
 
       <!-- Lista de Itens -->
-      <div id="lista_itens"></div>
+      <div id="lista_itens" style="margin-bottom: 80px;"></div>
 
       <!-- Finalizar Compra -->
       <button style="background:var(--primary); color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
   </div>
 
-  <!-- Barra de Resumo Fixa -->
+  <!-- Barra Resumo Fixa -->
   <div class="resumo-fixo hidden" id="barra-resumo">
     <div style="display:flex; justify-content:space-around; text-align:center;">
       <div><small>Do Saldo</small><br><b id="res_saldo_uso" style="color:var(--purple)">R$ 0,00</b></div>
@@ -213,13 +212,12 @@
     let scanner = null;
     let fotoBase64 = null;
 
-    function salvarBD() {
-      localStorage.setItem(DB_NAME, JSON.stringify(db));
-    }
+    function salvarBD() { localStorage.setItem(DB_NAME, JSON.stringify(db)); }
 
     function mostrarTela(id) {
       document.querySelectorAll('.card').forEach(t => t.classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
+      const tela = document.getElementById(id);
+      if (tela) tela.classList.remove('hidden');
       document.getElementById('barra-resumo').classList.toggle('hidden', id !== 'app-principal');
     }
 
