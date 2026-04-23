@@ -14,29 +14,35 @@
 
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
     
-    /* AJUSTE DO CONTÊINER DO OLHINHO */
-    .input-container { position: relative; width: 100%; margin-bottom: 10px; }
+    /* FIX: CONTAINER DA SENHA */
+    .input-container { 
+        position: relative; 
+        width: 100%; 
+        display: block;
+        margin-bottom: 10px; 
+    }
     
     input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; background: #fff; }
     input:focus { border-color: var(--primary); }
 
-    /* POSICIONAMENTO DO BOTÃO DO OLHINHO */
+    /* FIX: OLHINHO NO CANTO DIREITO EXATO */
     .btn-olho { 
-        position: absolute; 
-        right: 15px; 
-        top: 50%; 
-        transform: translateY(-50%); 
-        background: none; 
-        border: none; 
-        font-size: 20px; 
-        cursor: pointer; 
-        color: #777; 
-        z-index: 10; 
-        height: auto; 
-        width: auto;
-        margin-bottom: 0;
-        display: flex;
-        align-items: center;
+        position: absolute !important; 
+        right: 15px !important; 
+        top: 50% !important; 
+        transform: translateY(-50%) !important; 
+        background: none !important; 
+        border: none !important; 
+        font-size: 20px !important; 
+        cursor: pointer !important; 
+        color: #777 !important; 
+        z-index: 100 !important; 
+        height: auto !important; 
+        width: auto !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        line-height: 1 !important;
     }
     
     button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
@@ -50,7 +56,7 @@
         background: white; padding: 15px; 
         box-shadow: 0 -5px 25px rgba(0,0,0,0.15); 
         display: none; flex-direction: column; gap: 8px; 
-        border-radius: 20px 20px 0 0; z-index: 9999; 
+        border-radius: 20px 20px 0 0; z-index: 999; 
     }
     .resumo-colunas { display: flex; justify-content: space-around; width: 100%; }
 
@@ -65,10 +71,12 @@
     <div id="tela-login" class="card" style="margin-top: 50px;">
         <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
         <input type="text" id="login_user" placeholder="Nome do Usuário" style="margin-bottom: 10px;">
+        
         <div class="input-container">
             <input type="password" id="login_pass" placeholder="Senha">
-            <button class="btn-olho" onclick="toggleSenha('login_pass')">👁️</button>
+            <button type="button" class="btn-olho" onclick="toggleSenha('login_pass')">👁️</button>
         </div>
+
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
         <button style="background: none; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
     </div>
@@ -84,7 +92,7 @@
         <h2 style="text-align:center;">🔒 Nova Senha</h2>
         <div class="input-container">
             <input type="password" id="nova_senha" placeholder="Crie sua nova senha">
-            <button class="btn-olho" onclick="toggleSenha('nova_senha')">👁️</button>
+            <button type="button" class="btn-olho" onclick="toggleSenha('nova_senha')">👁️</button>
         </div>
         <button style="background: var(--success); color: white;" onclick="salvarNovaSenha()">DEFINIR E ENTRAR</button>
     </div>
@@ -93,8 +101,8 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 id="boas_vindas">Olá!</h3>
         <div style="display:flex; gap:5px;">
-            <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; height:35px; background:var(--dark); color:#ffd700; padding:0 10px; font-size:10px;">🛡️ PAINEL</button>
-            <button onclick="logout()" style="width:auto; height:35px; padding:0 10px; background:#ccc; font-size:10px;">SAIR</button>
+            <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; height:35px; background:var(--dark); color:#ffd700; padding:0 10px; font-size:10px; margin-bottom:0;">🛡️ PAINEL</button>
+            <button onclick="logout()" style="width:auto; height:35px; padding:0 10px; background:#ccc; font-size:10px; margin-bottom:0;">SAIR</button>
         </div>
       </div>
 
@@ -102,7 +110,7 @@
         <small>💰 SALDO DISPONÍVEL</small>
         <div style="display:flex; gap:10px;">
             <input type="number" id="input_saldo" step="0.01" style="margin:0; font-size:20px; font-weight:bold;">
-            <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white; margin-bottom:0;">✅</button>
+            <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white; margin:0;">✅</button>
         </div>
       </div>
 
@@ -151,13 +159,7 @@
     const DB_NAME = "FAMILIA_DB_V75";
     const SENHA_PADRAO = "Compras@2026";
     
-    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { 
-        usuarios: {}, 
-        saldoGlobal: 0, 
-        bancoPrecos: {}, 
-        historicoCompras: [] 
-    };
-    
+    let db = JSON.parse(localStorage.getItem(DB_NAME)) || { usuarios: {}, saldoGlobal: 0, bancoPrecos: {}, historicoCompras: [] };
     let userAtivo = sessionStorage.getItem('sessao_user');
     let scanner = null, fotoBase64 = null;
 
@@ -169,7 +171,6 @@
             const el = document.getElementById(t);
             if(el) el.style.display = (t === id) ? 'block' : 'none';
         });
-
         const barra = document.getElementById('barra-resumo');
         if (id === 'app-principal') {
             barra.style.display = 'flex';
@@ -180,6 +181,11 @@
         }
     }
 
+    function toggleSenha(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
+    }
+
     function registrarUsuario() {
         const nomeInput = document.getElementById('novo_nome').value.trim();
         if(!nomeInput) return alert("Por favor, digite um nome!");
@@ -187,7 +193,7 @@
         if(db.usuarios[id]) return alert("Este usuário já existe!");
         db.usuarios[id] = { nome: nomeInput, senha: SENHA_PADRAO, role: "user", listaAtual: [], precisaTrocar: true };
         salvarBD();
-        alert(`Sucesso! Entre agora com o nome "${nomeInput}" e a senha: ${SENHA_PADRAO}`);
+        alert(`Sucesso! Nome: "${nomeInput}" | Senha: ${SENHA_PADRAO}`);
         mostrarTela('tela-login');
     }
 
@@ -200,7 +206,7 @@
         } else if(db.usuarios[u] && db.usuarios[u].senha === p) {
             userAtivo = u;
         } else {
-            return alert("Usuário não encontrado ou senha incorreta!");
+            return alert("Usuário ou senha inválidos!");
         }
         sessionStorage.setItem('sessao_user', userAtivo);
         if(db.usuarios[userAtivo].precisaTrocar) mostrarTela('tela-trocar-senha'); else iniciarApp();
@@ -258,11 +264,10 @@
 
     function atualizarSaldoGlobal() {
         db.saldoGlobal = parseFloat(document.getElementById('input_saldo').value) || 0;
-        salvarBD(); renderizar(); alert("Saldo Global atualizado!");
+        salvarBD(); renderizar();
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
-    function toggleSenha(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
 
     function processarFoto(event) {
         const file = event.target.files[0]; if(!file) return;
@@ -291,10 +296,9 @@
                 document.getElementById('codigo').value = txt;
                 processarCodigoBalanca(txt);
                 pararScanner();
-            }).catch(() => alert("Erro ao abrir câmera"));
+            }).catch(() => alert("Câmera não encontrada"));
         } else pararScanner();
     }
-    
     function pararScanner() { if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); }
 
     function processarCodigoBalanca(cod) {
