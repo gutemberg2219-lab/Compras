@@ -1,4 +1,4 @@
-=<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -14,10 +14,30 @@
 
     .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
     
-    .input-container { position: relative; width: 100%; }
-    input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; margin-bottom: 10px; font-size: 16px; outline: none; background: #fff; }
+    /* AJUSTE DO CONTÊINER DO OLHINHO */
+    .input-container { position: relative; width: 100%; margin-bottom: 10px; }
     
-    .btn-olho { position: absolute; right: 12px; top: 13px; background: none; border: none; font-size: 20px; cursor: pointer; color: #777; z-index: 10; }
+    input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; background: #fff; }
+    input:focus { border-color: var(--primary); }
+
+    /* POSICIONAMENTO DO BOTÃO DO OLHINHO */
+    .btn-olho { 
+        position: absolute; 
+        right: 15px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        background: none; 
+        border: none; 
+        font-size: 20px; 
+        cursor: pointer; 
+        color: #777; 
+        z-index: 10; 
+        height: auto; 
+        width: auto;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+    }
     
     button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
     button:active { transform: scale(0.98); }
@@ -44,7 +64,7 @@
     
     <div id="tela-login" class="card" style="margin-top: 50px;">
         <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
-        <input type="text" id="login_user" placeholder="Nome do Usuário">
+        <input type="text" id="login_user" placeholder="Nome do Usuário" style="margin-bottom: 10px;">
         <div class="input-container">
             <input type="password" id="login_pass" placeholder="Senha">
             <button class="btn-olho" onclick="toggleSenha('login_pass')">👁️</button>
@@ -55,7 +75,7 @@
 
     <div id="tela-cadastro" class="card" style="margin-top: 50px;">
         <h2 style="text-align:center; margin-bottom:20px;">📝 Novo Membro</h2>
-        <input type="text" id="novo_nome" placeholder="Seu Nome (ex: João)">
+        <input type="text" id="novo_nome" placeholder="Seu Nome (ex: João)" style="margin-bottom: 10px;">
         <button style="background: var(--success); color: white;" onclick="registrarUsuario()">CONFIRMAR CADASTRO</button>
         <button style="background: none; border: 1px solid #ccc;" onclick="mostrarTela('tela-login')">VOLTAR</button>
     </div>
@@ -82,7 +102,7 @@
         <small>💰 SALDO DISPONÍVEL</small>
         <div style="display:flex; gap:10px;">
             <input type="number" id="input_saldo" step="0.01" style="margin:0; font-size:20px; font-weight:bold;">
-            <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white;">✅</button>
+            <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white; margin-bottom:0;">✅</button>
         </div>
       </div>
 
@@ -95,13 +115,13 @@
         <div style="text-align:center"><img id="img-preview" style="max-height:120px; border-radius:12px; display:none; margin-bottom:10px;"></div>
         <div id="reader"></div>
         
-        <input type="text" id="codigo" placeholder="EAN ou Código da Balança" oninput="processarCodigoBalanca(this.value)">
-        <input type="text" id="nome_prod" placeholder="Nome do Produto">
+        <input type="text" id="codigo" placeholder="EAN ou Código da Balança" oninput="processarCodigoBalanca(this.value)" style="margin-bottom: 10px;">
+        <input type="text" id="nome_prod" placeholder="Nome do Produto" style="margin-bottom: 10px;">
         <div style="display:flex; gap:10px;">
-            <input type="number" id="qtd_prod" value="1" step="0.001" style="flex:1">
-            <input type="number" id="valor_prod" placeholder="R$ Valor" step="0.01" style="flex:2">
+            <input type="number" id="qtd_prod" value="1" step="0.001" style="flex:1; margin-bottom: 10px;">
+            <input type="number" id="valor_prod" placeholder="R$ Valor" step="0.01" style="flex:2; margin-bottom: 10px;">
         </div>
-        <select id="metodo_pagto">
+        <select id="metodo_pagto" style="margin-bottom: 10px;">
             <option value="saldo">Abater do Saldo</option>
             <option value="extra">Extra (Fora do Saldo)</option>
         </select>
@@ -131,7 +151,6 @@
     const DB_NAME = "FAMILIA_DB_V75";
     const SENHA_PADRAO = "Compras@2026";
     
-    // Inicialização robusta do Banco de Dados
     let db = JSON.parse(localStorage.getItem(DB_NAME)) || { 
         usuarios: {}, 
         saldoGlobal: 0, 
@@ -164,58 +183,31 @@
     function registrarUsuario() {
         const nomeInput = document.getElementById('novo_nome').value.trim();
         if(!nomeInput) return alert("Por favor, digite um nome!");
-        
         const id = nomeInput.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, '');
-        
         if(db.usuarios[id]) return alert("Este usuário já existe!");
-        
-        db.usuarios[id] = { 
-            nome: nomeInput, 
-            senha: SENHA_PADRAO, 
-            role: "user", 
-            listaAtual: [], 
-            precisaTrocar: true 
-        };
-        
+        db.usuarios[id] = { nome: nomeInput, senha: SENHA_PADRAO, role: "user", listaAtual: [], precisaTrocar: true };
         salvarBD();
         alert(`Sucesso! Entre agora com o nome "${nomeInput}" e a senha: ${SENHA_PADRAO}`);
-        document.getElementById('novo_nome').value = "";
         mostrarTela('tela-login');
     }
 
     function tentarLogin() {
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
-        
-        // Login Master
         if(u === "master" && p === "Melissa@2016") {
-            if(!db.usuarios["master"]) {
-                db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[], precisaTrocar:false};
-            }
+            if(!db.usuarios["master"]) db.usuarios["master"] = {nome:"Master", senha:p, role:"master", listaAtual:[], precisaTrocar:false};
             userAtivo = "master";
-        } 
-        // Login Normal
-        else if(db.usuarios[u] && db.usuarios[u].senha === p) {
+        } else if(db.usuarios[u] && db.usuarios[u].senha === p) {
             userAtivo = u;
         } else {
             return alert("Usuário não encontrado ou senha incorreta!");
         }
-        
         sessionStorage.setItem('sessao_user', userAtivo);
-        
-        if(db.usuarios[userAtivo].precisaTrocar) {
-            mostrarTela('tela-trocar-senha');
-        } else {
-            iniciarApp();
-        }
+        if(db.usuarios[userAtivo].precisaTrocar) mostrarTela('tela-trocar-senha'); else iniciarApp();
     }
 
     function iniciarApp() {
-        if(!userAtivo || !db.usuarios[userAtivo]) {
-            mostrarTela('tela-login');
-            return;
-        }
-        
+        if(!userAtivo || !db.usuarios[userAtivo]) { mostrarTela('tela-login'); return; }
         mostrarTela('app-principal');
         document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userAtivo].nome;
         document.getElementById('input_saldo').value = db.saldoGlobal;
@@ -227,26 +219,18 @@
         const lista = document.getElementById('lista_itens');
         lista.innerHTML = "";
         let tSaldo = 0, tExtra = 0;
-
         if(!db.usuarios[userAtivo].listaAtual) db.usuarios[userAtivo].listaAtual = [];
-
         db.usuarios[userAtivo].listaAtual.forEach((it, i) => {
             if (it.m === 'saldo') tSaldo += it.total; else tExtra += it.total;
             const det = it.q > 1 || (it.c && it.c.startsWith('2') && it.q !== 1) ? `${it.q.toFixed(3)}kg x R$ ${it.v.toFixed(2)}` : `${it.q}un x R$ ${it.v.toFixed(2)}`;
-
             lista.innerHTML += `
                 <div class="item-lista">
-                    <div class="thumb-lista">
-                        ${it.foto ? `<img src="${it.foto}" style="width:100%; height:100%; border-radius:8px; object-fit:cover;">` : '📦'}
-                    </div>
-                    <div style="flex:1">
-                        <b>${it.n}</b><br><small>${det}</small>
-                    </div>
+                    <div class="thumb-lista">${it.foto ? `<img src="${it.foto}" style="width:100%; height:100%; border-radius:8px; object-fit:cover;">` : '📦'}</div>
+                    <div style="flex:1"><b>${it.n}</b><br><small>${det}</small></div>
                     <div style="text-align:right; margin-right:10px;"><b>R$ ${it.total.toFixed(2)}</b></div>
                     <button style="width:auto; height:auto; color:red; background:none; font-size:24px; margin:0;" onclick="remover(${i})">&times;</button>
                 </div>`;
         });
-
         document.getElementById('res_saldo_uso').innerText = `R$ ${tSaldo.toFixed(2)}`;
         const sobra = db.saldoGlobal - tSaldo;
         const sEl = document.getElementById('res_saldo_sobra');
@@ -261,39 +245,27 @@
         let q = parseFloat(document.getElementById('qtd_prod').value) || 1;
         const c = document.getElementById('codigo').value.trim();
         const m = document.getElementById('metodo_pagto').value;
-
         if (isNaN(v) || v <= 0) return alert("Informe o valor!");
-
         let totalItem = (c.startsWith('2') && q === 1) ? v : (v * q);
-
         db.usuarios[userAtivo].listaAtual.push({ n, v, q, c, m, total: totalItem, foto: fotoBase64 });
-        
         if (c) db.bancoPrecos[c] = { nome: n };
-
-        // Reset
         fotoBase64 = null;
         document.getElementById('img-preview').style.display = 'none';
-        document.getElementById('nome_prod').value = "";
-        document.getElementById('valor_prod').value = "";
-        document.getElementById('codigo').value = "";
-        document.getElementById('qtd_prod').value = "1";
-        salvarBD();
-        renderizar();
+        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
+        document.getElementById('codigo').value = ""; document.getElementById('qtd_prod').value = "1";
+        salvarBD(); renderizar();
     }
 
     function atualizarSaldoGlobal() {
         db.saldoGlobal = parseFloat(document.getElementById('input_saldo').value) || 0;
-        salvarBD();
-        renderizar();
-        alert("Saldo Global atualizado!");
+        salvarBD(); renderizar(); alert("Saldo Global atualizado!");
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
     function toggleSenha(id) { const x = document.getElementById(id); x.type = x.type === "password" ? "text" : "password"; }
 
     function processarFoto(event) {
-        const file = event.target.files[0];
-        if(!file) return;
+        const file = event.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
@@ -323,9 +295,7 @@
         } else pararScanner();
     }
     
-    function pararScanner() { 
-        if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); 
-    }
+    function pararScanner() { if(scanner) scanner.stop().then(()=> { scanner=null; document.getElementById('reader').style.display='none'; }); }
 
     function processarCodigoBalanca(cod) {
         if (cod.length === 13 && cod.startsWith('2')) {
@@ -337,19 +307,14 @@
         }
     }
 
-    function remover(i) {
-        db.usuarios[userAtivo].listaAtual.splice(i, 1);
-        salvarBD();
-        renderizar();
-    }
+    function remover(i) { db.usuarios[userAtivo].listaAtual.splice(i, 1); salvarBD(); renderizar(); }
 
     function salvarNovaSenha() {
         const ns = document.getElementById('nova_senha').value;
         if(ns.length < 4) return alert("Senha muito curta!");
         db.usuarios[userAtivo].senha = ns;
         db.usuarios[userAtivo].precisaTrocar = false;
-        salvarBD();
-        iniciarApp();
+        salvarBD(); iniciarApp();
     }
 
     function abrirMaster() {
@@ -358,9 +323,7 @@
         container.innerHTML = "";
         Object.keys(db.usuarios).forEach(key => {
             const u = db.usuarios[key];
-            container.innerHTML += `<div class="item-lista">
-                <b>${u.nome}</b> (Senha: ${u.senha})
-            </div>`;
+            container.innerHTML += `<div class="item-lista"><b>${u.nome}</b> (Senha: ${u.senha})</div>`;
         });
     }
 
@@ -371,19 +334,12 @@
             db.usuarios[userAtivo].listaAtual.forEach(it => { if(it.m === 'saldo') tS += it.total; });
             db.saldoGlobal -= tS;
             db.usuarios[userAtivo].listaAtual = [];
-            salvarBD();
-            iniciarApp();
-            alert("Finalizado!");
+            salvarBD(); iniciarApp(); alert("Finalizado!");
         }
     }
 
-    // Inicialização ao carregar página
     window.onload = () => {
-        if (userAtivo && db.usuarios[userAtivo]) {
-            iniciarApp();
-        } else {
-            mostrarTela('tela-login');
-        }
+        if (userAtivo && db.usuarios[userAtivo]) iniciarApp(); else mostrarTela('tela-login');
     };
   </script>
 </body>
