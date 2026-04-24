@@ -1,44 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🛒 V75 REPAIR MASTER - Completo</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    :root { --primary: #0066ff; --purple: #673ab7; --success: #2e7d32; --danger: #ff1744; --dark: #1a1a1a; --bg: #f0f2f5; }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    
-    body { background: var(--bg); padding: 15px; min-height: 100vh; color: var(--dark); }
-    .body-com-resumo { padding-bottom: 160px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>V75 REPAIR MASTER - Final</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root { --primary: #0066ff; --success: #2e7d32; --danger: #ff1744; --bg: #f0f2f5; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); padding: 15px; min-height: 100vh; }
+        .body-com-resumo { padding-bottom: 160px; }
+        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        
+        /* Correção do ícone de senha conforme as imagens enviadas */
+        .input-container { position: relative; width: 100%; display: flex; align-items: center; margin-bottom: 10px; }
+        .input-container input { width: 100%; height: 50px; padding: 0 45px 0 15px !important; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; }
+        .btn-olho { position: absolute; right: 10px; background: transparent; border: none; font-size: 20px; cursor: pointer; z-index: 10; height: 50px; display: flex; align-items: center; }
 
-    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 100%; }
-    
-    .input-container { position: relative; width: 100%; display: flex; align-items: center; margin-bottom: 10px; }
-    .input-container input { width: 100%; height: 50px; padding: 0 45px 0 15px !important; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; }
-    
-    .btn-olho { position: absolute; right: 10px; background: transparent; border: none; font-size: 20px; cursor: pointer; z-index: 10; height: 50px; width: 40px; display: flex; align-items: center; justify-content: center; }
-    
-    input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; margin-bottom: 10px; }
-    
-    button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-    button:active { transform: scale(0.96); }
-
-    .item-lista { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; border: 1px solid #eee; justify-content: space-between; }
-    .thumb-lista { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-right: 12px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-
-    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; background: #000; }
-    #tela-login, #tela-cadastro, #tela-trocar-senha, #app-principal, #painel-master { display: none; }
-
-    .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); display: none; border-radius: 20px 20px 0 0; z-index: 999; }
-    .resumo-colunas { display: flex; justify-content: space-around; width: 100%; }
-  </style>
+        input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 10px; outline: none; }
+        button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .item-lista { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #eee; }
+        .thumb-lista { width: 45px; height: 45px; border-radius: 8px; margin-right: 12px; background: #f0f0f0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
+        .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); display: none; border-radius: 20px 20px 0 0; z-index: 999; }
+        
+        /* Esconde as telas inicialmente para evitar "piscada" em branco */
+        .tela { display: none; }
+    </style>
 </head>
 <body>
 
-  <div id="main-container" style="max-width:500px; margin: auto;">
+<div id="app" style="max-width:500px; margin: auto;">
     
-    <div id="tela-login" class="card">
+    <div id="tela-login" class="tela card">
         <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
         <input type="text" id="login_user" placeholder="Usuário">
         <div class="input-container">
@@ -49,45 +45,286 @@
         <button style="background: transparent; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
     </div>
 
-    <div id="tela-cadastro" class="card">
+    <div id="tela-cadastro" class="tela card">
         <h2 style="text-align:center; margin-bottom:20px;">📝 Novo Membro</h2>
         <input type="text" id="novo_nome" placeholder="Nome do Membro">
         <button style="background: var(--success); color: white;" onclick="registrarUsuario()">CADASTRAR</button>
         <button style="background: #eee;" onclick="mostrarTela('tela-login')">VOLTAR</button>
     </div>
 
-    <div id="painel-master" class="card">
+    <div id="painel-master" class="tela card">
         <button onclick="mostrarTela('app-principal')" style="background:#eee;">⬅️ VOLTAR</button>
-        <h3 style="margin: 15px 0;">🛡️ Gestão de Membros</h3>
+        <h3 style="margin: 15px 0;">🛡️ Gerenciar Membros</h3>
         <div id="lista-usuarios-master"></div>
     </div>
 
-    <div id="app-principal">
+    <div id="app-principal" class="tela">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 id="boas_vindas">Olá</h3>
             <div style="display:flex; gap:5px;">
-                <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 10px; background:var(--dark); color:gold; height:35px;">🛡️ MASTER</button>
-                <button onclick="logout()" style="width:auto; padding:0 10px; background:#ccc; height:35px;">SAIR</button>
+                <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 10px; background:#1a1a1a; color:gold; height:35px; margin:0;">🛡️ MASTER</button>
+                <button onclick="logout()" style="width:auto; padding:0 10px; background:#ccc; height:35px; margin:0;">SAIR</button>
             </div>
         </div>
         
         <div class="card" style="border-left: 5px solid var(--success);">
             <small>💰 SALDO DISPONÍVEL</small>
             <div style="display:flex; gap:10px;">
-                <input type="number" id="input_saldo" step="0.01" style="font-size:20px; font-weight:bold; margin-bottom:0;">
-                <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white; margin-bottom:0;">✅</button>
+                <input type="number" id="input_saldo" step="0.01" style="font-size:20px; font-weight:bold; margin:0;">
+                <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white; margin:0;">✅</button>
             </div>
         </div>
 
         <div class="card">
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button style="background:var(--purple); color:white; flex:1; margin-bottom:0;" onclick="alternarScanner()">📷 LER CÓDIGO</button>
-                <button style="background:#e8f0fe; color:var(--primary); flex:1; margin-bottom:0;" onclick="document.getElementById('camera-input').click()">🖼️ FOTO</button>
+                <button style="background:#673ab7; color:white; flex:1; margin:0;" onclick="alternarScanner()">📷 ESCANEAR</button>
+                <button style="background:#e8f0fe; color:#0066ff; flex:1; margin:0;" onclick="document.getElementById('camera-input').click()">🖼️ FOTO</button>
             </div>
             
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
-            <div style="text-align:center"><img id="img-preview" style="max-height:100px; border-radius:12px; display:none; margin-bottom:10px;"></div>
-            
+            <div style="text-align:center"><img id="img-preview" style="max-height:100px; border-radius:12px; display:none; margin-bottom:10px; margin-inline: auto;"></div>
             <div id="reader"></div>
             
-            <input type="text" id="codigo" placeholder="EAN ou Balança
+            <input type="text" id="codigo" placeholder="Código de Barras" oninput="buscarProduto(this.value)">
+            <input type="text" id="nome_prod" placeholder="Nome do Produto">
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="qtd_prod" value="1" step="0.001" style="flex:1">
+                <input type="number" id="valor_prod" placeholder="Preço R$" step="0.01" style="flex:2">
+            </div>
+            <select id="metodo_pagto">
+                <option value="saldo">Abater do Saldo</option>
+                <option value="extra">Pagamento Extra</option>
+            </select>
+            <button style="background:var(--success); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+        </div>
+
+        <div id="lista_itens"></div>
+        <button style="background:var(--primary); color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
+    </div>
+
+    <div id="tela-trocar-senha" class="tela card">
+        <h3>🔒 Criar Nova Senha</h3>
+        <input type="password" id="nova_senha" placeholder="Nova senha">
+        <button style="background:var(--success); color:white; margin-top:10px;" onclick="salvarNovaSenha()">SALVAR</button>
+    </div>
+
+</div>
+
+<div class="resumo-fixo" id="barra-resumo">
+    <div style="display:flex; justify-content:space-around;">
+        <div style="text-align:center"><small>Gasto</small><br><b id="res_saldo_uso">R$ 0,00</b></div>
+        <div style="text-align:center"><small>Sobra</small><br><b id="res_saldo_sobra">R$ 0,00</b></div>
+        <div style="text-align:center"><small>Extra</small><br><b id="res_extra">R$ 0,00</b></div>
+    </div>
+</div>
+
+<script>
+    const DB_KEY = "FAMILIA_DATA_V8";
+    const SENHA_PADRAO = "Compras@2026";
+    
+    // Início seguro do Banco de Dados
+    let db = JSON.parse(localStorage.getItem(DB_KEY)) || {
+        usuarios: { "master": { nome: "Master", senha: "Melissa@2016", role: "master", lista: [], reset: false } },
+        saldo: 0,
+        precos: {}
+    };
+
+    let userLogado = sessionStorage.getItem('user');
+    let scanner = null;
+    let fotoTemp = null;
+
+    function salvar() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+    function mostrarTela(id) {
+        document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
+        const target = document.getElementById(id);
+        if(target) target.style.display = 'block';
+        
+        document.getElementById('barra-resumo').style.display = (id === 'app-principal') ? 'block' : 'none';
+        if(id === 'app-principal') document.body.classList.add('body-com-resumo');
+    }
+
+    function toggleSenha(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    // BUSCA NA INTERNET (OPENFOODFACTS)
+    async function buscarProduto(cod) {
+        if(cod.length < 8) return;
+        if(db.precos[cod]) { document.getElementById('nome_prod').value = db.precos[cod]; return; }
+
+        try {
+            const resp = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
+            const data = await resp.json();
+            if(data.status === 1) {
+                const nome = data.product.product_name || data.product.product_name_pt;
+                document.getElementById('nome_prod').value = nome;
+                db.precos[cod] = nome;
+                salvar();
+            }
+        } catch(e) { console.warn("Erro na busca remota"); }
+    }
+
+    // FOTO
+    function processarFoto(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX = 300;
+                const scale = MAX / img.width;
+                canvas.width = MAX; canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                fotoTemp = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById('img-preview').src = fotoTemp;
+                document.getElementById('img-preview').style.display = 'block';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // GESTÃO MASTER
+    function abrirMaster() {
+        mostrarTela('painel-master');
+        const lista = document.getElementById('lista-usuarios-master');
+        lista.innerHTML = "";
+        Object.keys(db.usuarios).forEach(uid => {
+            const u = db.usuarios[uid];
+            lista.innerHTML += `
+                <div class="item-lista">
+                    <div><b>${u.nome}</b><br><small>${u.role}</small></div>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="resetar('${uid}')" style="width:60px; height:30px; font-size:10px; background:orange; color:white; margin:0;">RESET</button>
+                        ${uid !== 'master' ? `<button onclick="excluir('${uid}')" style="width:35px; height:30px; background:red; color:white; margin:0;">X</button>` : ''}
+                    </div>
+                </div>`;
+        });
+    }
+
+    function resetar(uid) {
+        db.usuarios[uid].senha = SENHA_PADRAO;
+        db.usuarios[uid].reset = true;
+        salvar(); alert("Senha resetada para o padrão!");
+    }
+
+    function excluir(uid) {
+        if(confirm("Deseja excluir este membro?")) { delete db.usuarios[uid]; salvar(); abrirMaster(); }
+    }
+
+    // LOGIN E CADASTRO
+    function registrarUsuario() {
+        const nome = document.getElementById('novo_nome').value.trim();
+        if(!nome) return;
+        const id = nome.toLowerCase().replace(/\s/g, '');
+        if(db.usuarios[id]) return alert("Usuário já existe!");
+        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, role: "user", lista: [], reset: true };
+        salvar(); alert("Cadastrado com sucesso!"); mostrarTela('tela-login');
+    }
+
+    function tentarLogin() {
+        const u = document.getElementById('login_user').value.toLowerCase().trim();
+        const p = document.getElementById('login_pass').value;
+        if(db.usuarios[u] && db.usuarios[u].senha === p) {
+            userLogado = u;
+            sessionStorage.setItem('user', u);
+            if(db.usuarios[u].reset) mostrarTela('tela-trocar-senha');
+            else entrarApp();
+        } else alert("Usuário ou senha incorretos!");
+    }
+
+    function entrarApp() {
+        mostrarTela('app-principal');
+        document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userLogado].nome;
+        document.getElementById('btn-master').style.display = db.usuarios[userLogado].role === 'master' ? 'block' : 'none';
+        document.getElementById('input_saldo').value = db.saldo;
+        renderizar();
+    }
+
+    function adicionarItem() {
+        const nome = document.getElementById('nome_prod').value || "Produto";
+        const preco = parseFloat(document.getElementById('valor_prod').value) || 0;
+        const qtd = parseFloat(document.getElementById('qtd_prod').value) || 1;
+        const met = document.getElementById('metodo_pagto').value;
+        if(preco <= 0) return alert("Insira o preço!");
+
+        db.usuarios[userLogado].lista.push({ nome, preco, qtd, met, total: preco * qtd, foto: fotoTemp });
+        fotoTemp = null;
+        document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
+        salvar(); renderizar();
+    }
+
+    function renderizar() {
+        const div = document.getElementById('lista_itens');
+        div.innerHTML = "";
+        let tSaldo = 0, tExtra = 0;
+        db.usuarios[userLogado].lista.forEach((it, i) => {
+            if(it.met === 'saldo') tSaldo += it.total; else tExtra += it.total;
+            div.innerHTML += `
+                <div class="item-lista">
+                    <div style="display:flex; align-items:center;">
+                        <div class="thumb-lista">${it.foto ? `<img src="${it.foto}" style="width:100%">` : '📦'}</div>
+                        <div><b>${it.nome}</b><br><small>${it.qtd}x R$ ${it.preco.toFixed(2)}</small></div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <b>R$ ${it.total.toFixed(2)}</b>
+                        <button onclick="removerItem(${i})" style="width:30px; background:none; color:red; font-size:20px; margin:0;">&times;</button>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
+        document.getElementById('res_extra').innerText = "R$ " + tExtra.toFixed(2);
+        document.getElementById('res_saldo_sobra').innerText = "R$ " + (db.saldo - tSaldo).toFixed(2);
+    }
+
+    function removerItem(i) { db.usuarios[userLogado].lista.splice(i, 1); salvar(); renderizar(); }
+
+    function finalizarCompra() {
+        if(confirm("Confirmar fechamento e descontar do saldo?")) {
+            let gasto = 0;
+            db.usuarios[userLogado].lista.forEach(it => { if(it.met === 'saldo') gasto += it.total; });
+            db.saldo -= gasto;
+            db.usuarios[userLogado].lista = [];
+            salvar(); entrarApp();
+        }
+    }
+
+    function alternarScanner() {
+        if(!scanner) {
+            document.getElementById('reader').style.display = 'block';
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('codigo').value = txt;
+                buscarProduto(txt);
+                pararScanner();
+            }).catch(e => alert("Câmera bloqueada ou erro de permissão."));
+        } else pararScanner();
+    }
+
+    function pararScanner() {
+        if(scanner) { scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; }); }
+    }
+
+    function atualizarSaldoGlobal() { db.saldo = parseFloat(document.getElementById('input_saldo').value) || 0; salvar(); renderizar(); }
+    function logout() { sessionStorage.clear(); location.reload(); }
+    function salvarNovaSenha() {
+        const n = document.getElementById('nova_senha').value;
+        if(n.length < 4) return alert("Senha muito curta!");
+        db.usuarios[userLogado].senha = n;
+        db.usuarios[userLogado].reset = false;
+        salvar(); entrarApp();
+    }
+
+    // Inicialização segura
+    window.onload = () => {
+        if(userLogado && db.usuarios[userLogado]) entrarApp();
+        else mostrarTela('tela-login');
+    };
+</script>
+</body>
+</html>
