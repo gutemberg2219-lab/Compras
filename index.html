@@ -128,6 +128,7 @@
         }
         
         button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .item-lista { 
             background: rgba(255, 255, 255, 0.95);
@@ -428,15 +429,15 @@
             position: fixed;
             top: 10px;
             right: 10px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             color: white;
-            padding: 5px 10px;
+            padding: 8px 15px;
             border-radius: 20px;
             font-size: 12px;
             z-index: 1000;
             display: none;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
         
         .saving-indicator.active { display: flex; }
@@ -515,6 +516,38 @@
         
         .backup-buttons button { flex: 1; margin: 0; }
         
+        /* Loading overlay para cadastro */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .loading-overlay.active { display: flex; }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            color: white;
+            font-size: 16px;
+        }
+        
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -531,6 +564,11 @@
     </style>
 </head>
 <body>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Salvando dados...</div>
+</div>
 
 <div id="app" style="max-width:500px; margin: auto;">
     
@@ -699,7 +737,7 @@
 </div>
 
 <script>
-    const DB_KEY = "LISTA_COMPRAS_V14_PERMANENTE";
+    const DB_KEY = "LISTA_COMPRAS_V15_PERMANENTE";
     const SENHA_PADRAO = "Compras@2026";
     
     let dadosApp = null;
@@ -710,7 +748,6 @@
     let buscaTimeout = null;
     let ultimoCodigoBuscado = '';
     let supermercadoAtual = '';
-    let filtroRelatorioAtual = 'todos';
     
     // Mapeamento de códigos de balança
     const BALANCA_PRODUTOS = {
@@ -744,51 +781,44 @@
         precos: {}
     };
     
-    // Carregar dados (tenta localStorage primeiro, senão usa padrão)
+    function mostrarLoading(mostrar, texto = "Salvando...") {
+        const overlay = document.getElementById('loadingOverlay');
+        const textElement = overlay.querySelector('.loading-text');
+        if (textElement) textElement.textContent = texto;
+        if (mostrar) overlay.classList.add('active');
+        else overlay.classList.remove('active');
+    }
+    
+    // Carregar dados
     function carregarDados() {
         const dadosSalvos = localStorage.getItem(DB_KEY);
         if (dadosSalvos) {
             try {
                 dadosApp = JSON.parse(dadosSalvos);
-                console.log("✅ Dados carregados com sucesso!");
+                console.log("✅ Dados carregados!");
             } catch(e) {
-                console.error("Erro ao carregar dados:", e);
+                console.error("Erro:", e);
                 dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
             }
         } else {
             dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
             salvarDados();
-            console.log("📦 Dados padrão criados!");
         }
         
-        // Garantir que todos os usuários tenham a propriedade 'foto'
+        // Garantir estrutura correta
         Object.keys(dadosApp.usuarios).forEach(uid => {
-            if (!dadosApp.usuarios[uid].foto) {
-                dadosApp.usuarios[uid].foto = null;
-            }
-            if (!dadosApp.usuarios[uid].historico) {
-                dadosApp.usuarios[uid].historico = [];
-            }
-            if (!dadosApp.usuarios[uid].lista) {
-                dadosApp.usuarios[uid].lista = [];
-            }
+            if (!dadosApp.usuarios[uid].foto) dadosApp.usuarios[uid].foto = null;
+            if (!dadosApp.usuarios[uid].historico) dadosApp.usuarios[uid].historico = [];
+            if (!dadosApp.usuarios[uid].lista) dadosApp.usuarios[uid].lista = [];
         });
     }
     
     function salvarDados() {
-        mostrarSaving(true);
         localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
-        setTimeout(() => mostrarSaving(false), 500);
         console.log("💾 Dados salvos!");
     }
     
-    function mostrarSaving(mostrar) {
-        const indicator = document.getElementById('saving-indicator');
-        if(mostrar) indicator.classList.add('active');
-        else indicator.classList.remove('active');
-    }
-    
-    function mostrarToast(msg, duracao = 3000) {
+    function mostrarToast(msg, duracao = 2500) {
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.textContent = msg;
@@ -828,16 +858,15 @@
             dadosApp.precos[codigo] = produto.nome;
             salvarDados();
         } else {
-            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido. Preencha manualmente.`;
+            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido.`;
             infoDiv.classList.add('show');
-            mostrarToast('🏷️ Código de balança - Preencha os dados');
-            document.getElementById('nome_prod').focus();
+            mostrarToast('🏷️ Código de balança - Preencha manualmente');
         }
         
         document.getElementById('codigo').value = codigo;
         document.getElementById('codigo-info').innerHTML = '🏷️ Código de Balança';
         document.getElementById('codigo-info').style.display = 'block';
-        setTimeout(() => infoDiv.classList.remove('show'), 5000);
+        setTimeout(() => infoDiv.classList.remove('show'), 4000);
     }
     
     function identificarTipoCodigo(codigo) {
@@ -902,7 +931,7 @@
             mostrarToast('❌ Erro na busca');
         } finally {
             mostrarIndicadorBusca(false);
-            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 3000);
+            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
         }
     }
     
@@ -1010,15 +1039,21 @@
         const id = nome.toLowerCase().replace(/\s/g, '');
         if(dadosApp.usuarios[id]) return alert("Usuário já existe!");
         
-        dadosApp.usuarios[id] = { 
-            nome, senhaHash: hashSenha(SENHA_PADRAO), role: "user", 
-            lista: [], reset: true, historico: [], foto: fotoCadastroTemp || null
-        };
-        salvarDados();
-        mostrarToast(`✅ ${nome} cadastrado!\nSenha: ${SENHA_PADRAO}`, 5000);
-        limparCadastroFoto();
-        sessionStorage.setItem('mostrarAvisoSenha', 'true');
-        mostrarTela('tela-login');
+        mostrarLoading(true, "Cadastrando usuário...");
+        
+        // Simular um pequeno delay para mostrar o loading (apenas visual)
+        setTimeout(() => {
+            dadosApp.usuarios[id] = { 
+                nome, senhaHash: hashSenha(SENHA_PADRAO), role: "user", 
+                lista: [], reset: true, historico: [], foto: fotoCadastroTemp || null
+            };
+            salvarDados();
+            mostrarLoading(false);
+            mostrarToast(`✅ ${nome} cadastrado! Senha: ${SENHA_PADRAO}`, 4000);
+            limparCadastroFoto();
+            sessionStorage.setItem('mostrarAvisoSenha', 'true');
+            mostrarTela('tela-login');
+        }, 100);
     }
     
     function tentarLogin() {
@@ -1179,11 +1214,6 @@
     }
     
     function mostrarRelatorioGeral() {
-        carregarRelatorioGeral();
-        document.getElementById('modal-relatorio-geral').style.display = 'flex';
-    }
-    
-    function carregarRelatorioGeral() {
         let todasCompras = [];
         let totalGeral = 0;
         let comprasPorUsuario = {};
@@ -1203,8 +1233,8 @@
         
         const conteudo = document.getElementById('conteudo-relatorio-geral');
         conteudo.innerHTML = `
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <div class="stat-card"><b>💰 Total: R$ ${totalGeral.toFixed(2)}</b></div>
+            <div style="margin-bottom:20px;">
+                <div class="stat-card"><b>💰 Total Geral: R$ ${totalGeral.toFixed(2)}</b></div>
             </div>
             <h4>👥 Gastos por Membro</h4>
             ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${nome}: R$ ${valor.toFixed(2)}</div>`).join('') || '<div>Sem dados</div>'}
@@ -1216,6 +1246,7 @@
                 </div>
             `).join('') || '<div>Sem compras</div>'}
         `;
+        document.getElementById('modal-relatorio-geral').style.display = 'flex';
     }
     
     function mostrarComparativoPrecos() {
@@ -1303,7 +1334,7 @@
             reader.onload = (event) => {
                 try {
                     const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
+                    if(confirm('⚠️ Substituir dados atuais?')) {
                         dadosApp = backup;
                         salvarDados();
                         mostrarToast('✅ Backup restaurado!');
@@ -1324,7 +1355,7 @@
                 dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
                 salvarDados();
                 mostrarToast('🗑️ Dados resetados!');
-                setTimeout(() => location.reload(), 2000);
+                setTimeout(() => location.reload(), 1500);
             }
         }
     }
@@ -1338,7 +1369,7 @@
     
     window.onload = () => {
         console.log("🚀 Sistema iniciado!");
-        console.log("👥 Usuários cadastrados:", Object.keys(dadosApp.usuarios));
+        console.log("👥 Usuários cadastrados:", Object.keys(dadosApp.usuarios).length);
         if(userLogado && dadosApp.usuarios[userLogado]) {
             entrarApp();
         } else {
