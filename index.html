@@ -333,12 +333,8 @@
         }
         
         @keyframes floatTitle {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-5px);
-            }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
         }
         
         .main-title::before {
@@ -348,21 +344,14 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, 
-                transparent 30%, 
-                rgba(102, 126, 234, 0.1) 50%, 
-                transparent 70%);
+            background: linear-gradient(45deg, transparent 30%, rgba(102, 126, 234, 0.1) 50%, transparent 70%);
             animation: shine 3s infinite;
             pointer-events: none;
         }
         
         @keyframes shine {
-            0% {
-                transform: translateX(-100%) translateY(-100%) rotate(45deg);
-            }
-            100% {
-                transform: translateX(100%) translateY(100%) rotate(45deg);
-            }
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
         
         .main-title h1 {
@@ -379,12 +368,8 @@
         }
         
         @keyframes pulseText {
-            0%, 100% {
-                text-shadow: 0 0 0px rgba(102, 126, 234, 0);
-            }
-            50% {
-                text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
-            }
+            0%, 100% { text-shadow: 0 0 0px rgba(102, 126, 234, 0); }
+            50% { text-shadow: 0 0 10px rgba(102, 126, 234, 0.5); }
         }
         
         .main-title h1::before {
@@ -398,12 +383,8 @@
         }
         
         @keyframes bounce {
-            0%, 100% {
-                transform: translateY(-50%) rotate(0deg);
-            }
-            50% {
-                transform: translateY(-50%) rotate(15deg);
-            }
+            0%, 100% { transform: translateY(-50%) rotate(0deg); }
+            50% { transform: translateY(-50%) rotate(15deg); }
         }
         
         .main-title h1::after {
@@ -424,14 +405,8 @@
         }
         
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .btn-voltar {
@@ -448,6 +423,26 @@
             text-align: center;
         }
         
+        /* Indicador de salvamento */
+        .saving-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .saving-indicator.active {
+            display: flex;
+        }
+        
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -461,21 +456,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 10px;
         }
-        
-        /* Loading animation */
-        @keyframes loadingPulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
     </style>
 </head>
 <body>
 
 <div id="app" style="max-width:500px; margin: auto;">
+    
+    <div class="saving-indicator" id="saving-indicator">
+        <div class="spinner" style="width:12px; height:12px;"></div>
+        <span>Salvando...</span>
+    </div>
     
     <div id="tela-login" class="tela card">
         <div class="main-title">
@@ -520,6 +510,7 @@
         <div id="lista-usuarios-master"></div>
         <button onclick="exportarBackup()" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; margin-top: 10px;">💾 EXPORTAR BACKUP</button>
         <button onclick="importarBackup()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">📥 IMPORTAR BACKUP</button>
+        <button onclick="resetarTodosDados()" style="background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white;">⚠️ RESETAR TODOS OS DADOS</button>
     </div>
 
     <div id="app-principal" class="tela">
@@ -618,20 +609,20 @@
 </div>
 
 <script>
-    const DB_KEY = "FAMILIA_DATA_V10";
+    const DB_NAME = "ListaComprasDB";
+    const DB_VERSION = 1;
+    const STORE_NAME = "appData";
     const SENHA_PADRAO = "Compras@2026";
     
-    function hashSenha(senha) {
-        let hash = 0;
-        for (let i = 0; i < senha.length; i++) {
-            const char = senha.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return hash.toString();
-    }
+    let db = null;
+    let userLogado = sessionStorage.getItem('user');
+    let scanner = null;
+    let fotoTemp = null;
+    let buscaTimeout = null;
+    let ultimoCodigoBuscado = '';
     
-    let db = JSON.parse(localStorage.getItem(DB_KEY)) || {
+    // Dados padrão iniciais
+    const DADOS_PADRAO = {
         usuarios: { 
             "master": { 
                 nome: "Master", 
@@ -645,58 +636,107 @@
         saldo: 0,
         precos: {}
     };
-
-    let userLogado = sessionStorage.getItem('user');
-    let scanner = null;
-    let fotoTemp = null;
-    let buscaTimeout = null;
-    let ultimoCodigoBuscado = '';
-
-    function salvar() { 
-        localStorage.setItem(DB_KEY, JSON.stringify(db)); 
-        fazerBackupAutomatico();
+    
+    function hashSenha(senha) {
+        let hash = 0;
+        for (let i = 0; i < senha.length; i++) {
+            const char = senha.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return hash.toString();
     }
     
-    function fazerBackupAutomatico() {
-        const backups = JSON.parse(localStorage.getItem('BACKUPS_V75') || '[]');
-        backups.push({ data: new Date().toISOString(), db: db });
-        while(backups.length > 5) backups.shift();
-        localStorage.setItem('BACKUPS_V75', JSON.stringify(backups));
-    }
-    
-    function exportarBackup() {
-        const dataStr = JSON.stringify(db, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', `backup_lista_compras_${new Date().toISOString().slice(0,19)}.json`);
-        linkElement.click();
-        mostrarToast('💾 Backup exportado!');
-    }
-    
-    function importarBackup() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const backupDb = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
-                        db = backupDb;
-                        salvar();
-                        mostrarToast('✅ Backup restaurado!');
-                        location.reload();
-                    }
-                } catch(err) {
-                    mostrarToast('❌ Arquivo inválido!');
+    // Inicializar IndexedDB
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onerror = () => {
+                console.error("Erro ao abrir banco de dados");
+                reject(request.error);
+            };
+            
+            request.onsuccess = () => {
+                db = request.result;
+                console.log("Banco de dados conectado");
+                resolve(db);
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const dbUpgrade = event.target.result;
+                if (!dbUpgrade.objectStoreNames.contains(STORE_NAME)) {
+                    const store = dbUpgrade.createObjectStore(STORE_NAME, { keyPath: "id" });
+                    store.createIndex("id", "id", { unique: true });
+                    console.log("Store criada");
                 }
             };
-            reader.readAsText(file);
-        };
-        input.click();
+        });
+    }
+    
+    // Salvar dados no IndexedDB
+    async function salvarDados(dados) {
+        mostrarSaving(true);
+        return new Promise((resolve, reject) => {
+            if (!db) {
+                console.error("Banco de dados não inicializado");
+                resolve(false);
+                mostrarSaving(false);
+                return;
+            }
+            
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.put({ id: "mainData", data: dados, updatedAt: new Date().toISOString() });
+            
+            request.onsuccess = () => {
+                console.log("Dados salvos com sucesso");
+                mostrarSaving(false);
+                resolve(true);
+            };
+            
+            request.onerror = () => {
+                console.error("Erro ao salvar dados");
+                mostrarSaving(false);
+                reject(request.error);
+            };
+        });
+    }
+    
+    // Carregar dados do IndexedDB
+    async function carregarDados() {
+        return new Promise((resolve, reject) => {
+            if (!db) {
+                console.error("Banco de dados não inicializado");
+                resolve(DADOS_PADRAO);
+                return;
+            }
+            
+            const transaction = db.transaction([STORE_NAME], "readonly");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get("mainData");
+            
+            request.onsuccess = () => {
+                if (request.result && request.result.data) {
+                    console.log("Dados carregados do IndexedDB");
+                    resolve(request.result.data);
+                } else {
+                    console.log("Nenhum dado encontrado, usando padrão");
+                    resolve(DADOS_PADRAO);
+                }
+            };
+            
+            request.onerror = () => {
+                console.error("Erro ao carregar dados");
+                resolve(DADOS_PADRAO);
+            };
+        });
+    }
+    
+    function mostrarSaving(mostrar) {
+        const indicator = document.getElementById('saving-indicator');
+        if (mostrar) indicator.classList.add('active');
+        else indicator.classList.remove('active');
     }
     
     function mostrarToast(mensagem, duracao = 3000) {
@@ -706,30 +746,33 @@
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), duracao);
     }
-
+    
     function mostrarIndicadorBusca(mostrar) {
         const indicator = document.getElementById('searching-indicator');
         if(mostrar) indicator.classList.add('active');
         else indicator.classList.remove('active');
     }
-
-    function handleCodigoBarras(codigo) {
+    
+    async function handleCodigoBarras(codigo) {
+        const dados = await carregarDadosGlobal();
         if(buscaTimeout) clearTimeout(buscaTimeout);
         if(codigo.length < 8) return;
-        if(db.precos[codigo]) {
-            document.getElementById('nome_prod').value = db.precos[codigo];
+        if(dados.precos[codigo]) {
+            document.getElementById('nome_prod').value = dados.precos[codigo];
             return;
         }
         buscaTimeout = setTimeout(() => buscarProduto(codigo), 500);
     }
-
+    
     async function buscarProduto(codigo) {
         if(!codigo || codigo.length < 8 || ultimoCodigoBuscado === codigo) return;
         ultimoCodigoBuscado = codigo;
         mostrarIndicadorBusca(true);
         
-        if(db.precos[codigo]) {
-            document.getElementById('nome_prod').value = db.precos[codigo];
+        const dados = await carregarDadosGlobal();
+        
+        if(dados.precos[codigo]) {
+            document.getElementById('nome_prod').value = dados.precos[codigo];
             mostrarIndicadorBusca(false);
             return;
         }
@@ -743,8 +786,8 @@
                 if(nomeProduto) {
                     nomeProduto = nomeProduto.split(',')[0].trim();
                     document.getElementById('nome_prod').value = nomeProduto;
-                    db.precos[codigo] = nomeProduto;
-                    salvar();
+                    dados.precos[codigo] = nomeProduto;
+                    await salvarDados(dados);
                     mostrarToast(`✅ Produto encontrado: ${nomeProduto}`);
                 }
             }
@@ -755,7 +798,19 @@
             setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
         }
     }
-
+    
+    async function carregarDadosGlobal() {
+        if (!window.dadosCache) {
+            window.dadosCache = await carregarDados();
+        }
+        return window.dadosCache;
+    }
+    
+    async function atualizarDadosGlobal(novosDados) {
+        window.dadosCache = novosDados;
+        await salvarDados(novosDados);
+    }
+    
     function buscarProdutoManual() {
         const codigo = document.getElementById('codigo').value;
         if(codigo?.length >= 8) {
@@ -765,7 +820,7 @@
             mostrarToast('Digite um código de barras válido');
         }
     }
-
+    
     function processarFoto(event) {
         const file = event.target.files[0];
         if(!file) return;
@@ -780,11 +835,11 @@
         reader.readAsDataURL(file);
         event.target.value = '';
     }
-
+    
     function validarPreco(preco) {
         return !isNaN(preco) && preco > 0 && preco < 1000000;
     }
-
+    
     function mostrarTela(id) {
         document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
         const target = document.getElementById(id);
@@ -803,7 +858,7 @@
             }
         }
     }
-
+    
     function toggleSenha(inputId, buttonElement) {
         const input = document.getElementById(inputId);
         if (input.type === "password") {
@@ -814,13 +869,14 @@
             buttonElement.textContent = "👁️";
         }
     }
-
-    function abrirMaster() {
+    
+    async function abrirMaster() {
         mostrarTela('painel-master');
+        const dados = await carregarDadosGlobal();
         const lista = document.getElementById('lista-usuarios-master');
         lista.innerHTML = "";
-        Object.keys(db.usuarios).forEach(uid => {
-            const u = db.usuarios[uid];
+        Object.keys(dados.usuarios).forEach(uid => {
+            const u = dados.usuarios[uid];
             lista.innerHTML += `
                 <div class="item-lista">
                     <div><b>${u.nome}</b><br><small>${u.role === 'master' ? '👑 MASTER' : '👤 MEMBRO'}</small></div>
@@ -831,33 +887,37 @@
                 </div>`;
         });
     }
-
-    function resetarSenha(uid) {
-        if(confirm(`Resetar senha de ${db.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
-            db.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
-            db.usuarios[uid].reset = true;
-            salvar(); 
+    
+    async function resetarSenha(uid) {
+        if(confirm(`Resetar senha de ${(await carregarDadosGlobal()).usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
+            const dados = await carregarDadosGlobal();
+            dados.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
+            dados.usuarios[uid].reset = true;
+            await atualizarDadosGlobal(dados);
             mostrarToast(`✅ Senha resetada para: ${SENHA_PADRAO}`);
             abrirMaster();
         }
     }
-
-    function excluirUsuario(uid) {
-        if(confirm(`Excluir ${db.usuarios[uid].nome}?`)) { 
-            delete db.usuarios[uid]; 
-            salvar(); 
+    
+    async function excluirUsuario(uid) {
+        if(confirm(`Excluir ${(await carregarDadosGlobal()).usuarios[uid].nome}?`)) { 
+            const dados = await carregarDadosGlobal();
+            delete dados.usuarios[uid]; 
+            await atualizarDadosGlobal(dados);
             mostrarToast('🗑️ Usuário excluído');
             abrirMaster(); 
         }
     }
-
-    function registrarUsuario() {
+    
+    async function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
         if(!nome) return alert("Digite um nome!");
         const id = nome.toLowerCase().replace(/\s/g, '');
-        if(db.usuarios[id]) return alert("Usuário já existe!");
         
-        db.usuarios[id] = { 
+        const dados = await carregarDadosGlobal();
+        if(dados.usuarios[id]) return alert("Usuário já existe!");
+        
+        dados.usuarios[id] = { 
             nome: nome, 
             senhaHash: hashSenha(SENHA_PADRAO), 
             role: "user", 
@@ -865,20 +925,21 @@
             reset: true,
             historico: []
         };
-        salvar(); 
+        await atualizarDadosGlobal(dados);
         mostrarToast(`✅ ${nome} cadastrado!\nSenha: ${SENHA_PADRAO}`, 5000);
         sessionStorage.setItem('mostrarAvisoSenha', 'true');
         mostrarTela('tela-login');
     }
-
-    function tentarLogin() {
+    
+    async function tentarLogin() {
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
+        const dados = await carregarDadosGlobal();
         
-        if(db.usuarios[u] && db.usuarios[u].senhaHash === hashSenha(p)) {
+        if(dados.usuarios[u] && dados.usuarios[u].senhaHash === hashSenha(p)) {
             userLogado = u;
             sessionStorage.setItem('user', u);
-            if(db.usuarios[u].reset) {
+            if(dados.usuarios[u].reset) {
                 mostrarToast('⚠️ Crie uma nova senha!', 3000);
                 mostrarTela('tela-trocar-senha');
             } else entrarApp();
@@ -886,16 +947,17 @@
             alert(`❌ Usuário ou senha incorretos!\nSenha padrão: ${SENHA_PADRAO}`);
         }
     }
-
-    function entrarApp() {
+    
+    async function entrarApp() {
+        const dados = await carregarDadosGlobal();
         mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerHTML = `Olá, ${db.usuarios[userLogado].nome}! 👋`;
-        document.getElementById('btn-master').style.display = db.usuarios[userLogado].role === 'master' ? 'block' : 'none';
-        document.getElementById('input_saldo').value = db.saldo;
+        document.getElementById('boas_vindas').innerHTML = `Olá, ${dados.usuarios[userLogado].nome}! 👋`;
+        document.getElementById('btn-master').style.display = dados.usuarios[userLogado].role === 'master' ? 'block' : 'none';
+        document.getElementById('input_saldo').value = dados.saldo;
         renderizar();
     }
-
-    function adicionarItem() {
+    
+    async function adicionarItem() {
         const nome = document.getElementById('nome_prod').value.trim() || "Produto";
         const preco = parseFloat(document.getElementById('valor_prod').value);
         const qtd = parseFloat(document.getElementById('qtd_prod').value) || 1;
@@ -903,28 +965,31 @@
         
         if(!validarPreco(preco)) return alert("💰 Preço inválido!");
         
-        db.usuarios[userLogado].lista.push({ 
+        const dados = await carregarDadosGlobal();
+        dados.usuarios[userLogado].lista.push({ 
             nome, preco, qtd, met, 
             total: preco * qtd, 
             foto: fotoTemp,
             data: new Date().toISOString()
         });
         
+        await atualizarDadosGlobal(dados);
+        
         fotoTemp = null;
         document.getElementById('img-preview').style.display = 'none';
         document.getElementById('nome_prod').value = ""; 
         document.getElementById('valor_prod').value = "";
         document.getElementById('codigo').value = "";
-        salvar(); 
         renderizar();
         mostrarToast('➕ Item adicionado!');
     }
-
-    function renderizar() {
+    
+    async function renderizar() {
         const div = document.getElementById('lista_itens');
         div.innerHTML = "";
         let tSaldo = 0, tExtra = 0;
-        const itens = db.usuarios[userLogado].lista;
+        const dados = await carregarDadosGlobal();
+        const itens = dados.usuarios[userLogado]?.lista || [];
         
         if(itens.length === 0) {
             div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item adicionado</div>';
@@ -944,19 +1009,21 @@
         });
         document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
         document.getElementById('res_extra').innerText = "R$ " + tExtra.toFixed(2);
-        document.getElementById('res_saldo_sobra').innerText = "R$ " + (db.saldo - tSaldo).toFixed(2);
+        document.getElementById('res_saldo_sobra').innerText = "R$ " + (dados.saldo - tSaldo).toFixed(2);
     }
-
-    function removerItem(i) {
+    
+    async function removerItem(i) {
         if(confirm('Remover item?')) {
-            db.usuarios[userLogado].lista.splice(i, 1); 
-            salvar(); 
+            const dados = await carregarDadosGlobal();
+            dados.usuarios[userLogado].lista.splice(i, 1); 
+            await atualizarDadosGlobal(dados);
             renderizar();
         }
     }
-
-    function finalizarCompra() {
-        const itens = db.usuarios[userLogado].lista;
+    
+    async function finalizarCompra() {
+        const dados = await carregarDadosGlobal();
+        const itens = dados.usuarios[userLogado].lista;
         if(itens.length === 0) return alert('Nenhum item para finalizar!');
         
         let gasto = 0, extra = 0;
@@ -965,24 +1032,25 @@
             else extra += it.total;
         });
         
-        if(gasto > db.saldo) return alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)}`);
+        if(gasto > dados.saldo) return alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)}`);
         
         if(confirm(`Confirmar compra?\n💰 Saldo: R$ ${gasto.toFixed(2)}\n💵 Extra: R$ ${extra.toFixed(2)}`)) {
-            db.usuarios[userLogado].historico.push({
+            dados.usuarios[userLogado].historico.push({
                 data: new Date().toISOString(),
                 itens: [...itens],
                 gastoSaldo: gasto,
                 pagamentoExtra: extra
             });
-            db.saldo -= gasto;
-            db.usuarios[userLogado].lista = [];
-            salvar(); 
+            dados.saldo -= gasto;
+            dados.usuarios[userLogado].lista = [];
+            await atualizarDadosGlobal(dados);
             entrarApp();
         }
     }
-
-    function abrirRelatorio() {
-        const historico = db.usuarios[userLogado].historico || [];
+    
+    async function abrirRelatorio() {
+        const dados = await carregarDadosGlobal();
+        const historico = dados.usuarios[userLogado]?.historico || [];
         const modal = document.getElementById('modal-relatorio');
         const conteudo = document.getElementById('conteudo-relatorio');
         
@@ -1003,7 +1071,7 @@
     function fecharModal() {
         document.getElementById('modal-relatorio').style.display = 'none';
     }
-
+    
     function alternarScanner() {
         if(!scanner) {
             document.getElementById('reader').style.display = 'block';
@@ -1016,16 +1084,17 @@
             }).catch(() => alert("Erro na câmera"));
         } else pararScanner();
     }
-
+    
     function pararScanner() {
         if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; });
     }
-
-    function atualizarSaldoGlobal() { 
+    
+    async function atualizarSaldoGlobal() { 
         const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
         if(!isNaN(novoSaldo) && novoSaldo >= 0) {
-            db.saldo = novoSaldo; 
-            salvar(); 
+            const dados = await carregarDadosGlobal();
+            dados.saldo = novoSaldo; 
+            await atualizarDadosGlobal(dados);
             renderizar();
             mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
         }
@@ -1033,23 +1102,74 @@
     
     function logout() { sessionStorage.clear(); location.reload(); }
     
-    function salvarNovaSenha() {
+    async function salvarNovaSenha() {
         const n = document.getElementById('nova_senha').value;
         if(n.length < 4) return alert("Mínimo 4 caracteres!");
-        db.usuarios[userLogado].senhaHash = hashSenha(n);
-        db.usuarios[userLogado].reset = false;
-        salvar(); 
+        const dados = await carregarDadosGlobal();
+        dados.usuarios[userLogado].senhaHash = hashSenha(n);
+        dados.usuarios[userLogado].reset = false;
+        await atualizarDadosGlobal(dados);
         mostrarToast('✅ Senha alterada!');
         entrarApp();
     }
-
+    
+    async function exportarBackup() {
+        const dados = await carregarDadosGlobal();
+        const dataStr = JSON.stringify(dados, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', `backup_lista_compras_${new Date().toISOString().slice(0,19)}.json`);
+        linkElement.click();
+        mostrarToast('💾 Backup exportado!');
+    }
+    
+    function importarBackup() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const backupDados = JSON.parse(event.target.result);
+                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
+                        await atualizarDadosGlobal(backupDados);
+                        mostrarToast('✅ Backup restaurado!');
+                        location.reload();
+                    }
+                } catch(err) {
+                    mostrarToast('❌ Arquivo inválido!');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+    
+    async function resetarTodosDados() {
+        if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!\nDeseja continuar?')) {
+            if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários, compras e saldo serão perdidos. Continuar?')) {
+                await atualizarDadosGlobal(JSON.parse(JSON.stringify(DADOS_PADRAO)));
+                mostrarToast('🗑️ Todos os dados foram resetados!');
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+    }
+    
     window.onclick = (event) => {
         if (event.target.classList.contains('modal')) fecharModal();
     }
-
-    window.onload = () => {
-        if(userLogado && db.usuarios[userLogado]) entrarApp();
-        else mostrarTela('tela-login');
+    
+    // Inicialização
+    window.onload = async () => {
+        await initDB();
+        if(userLogado && (await carregarDadosGlobal()).usuarios[userLogado]) {
+            entrarApp();
+        } else {
+            mostrarTela('tela-login');
+        }
     };
 </script>
 </body>
