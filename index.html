@@ -166,7 +166,6 @@
             object-fit: cover;
         }
         
-        /* Estilo para foto do usuário em círculo */
         .user-photo-circle {
             width: 60px;
             height: 60px;
@@ -199,7 +198,6 @@
             margin-bottom: 5px;
         }
         
-        /* Estilo para foto de cadastro */
         .photo-upload-area {
             display: flex;
             flex-direction: column;
@@ -475,7 +473,6 @@
             text-align: left;
         }
         
-        /* Lista de usuários master com foto */
         .usuario-item {
             display: flex;
             align-items: center;
@@ -495,6 +492,17 @@
             justify-content: center;
             font-size: 20px;
             color: white;
+        }
+        
+        /* Estilo para informações do código lido */
+        .codigo-info {
+            font-size: 11px;
+            color: #666;
+            margin-top: -8px;
+            margin-bottom: 8px;
+            padding: 4px 8px;
+            background: #f5f5f5;
+            border-radius: 8px;
         }
         
         ::-webkit-scrollbar {
@@ -545,7 +553,6 @@
         </div>
         <h2 style="text-align:center;">📝 Novo Membro</h2>
         
-        <!-- Upload de Foto -->
         <div class="photo-upload-area">
             <div class="photo-preview-circle" onclick="document.getElementById('cadastro-foto-input').click()">
                 <span id="foto-placeholder">📸</span>
@@ -591,7 +598,6 @@
             <p id="boas_vindas" style="margin-top:8px;">Olá, usuário!</p>
         </div>
         
-        <!-- Informações do usuário logado com foto em círculo -->
         <div class="user-info" id="user-info-area">
             <div class="user-photo-circle" id="user-photo">
                 👤
@@ -608,7 +614,6 @@
             <button onclick="logout()" style="width:auto; padding:0 15px; background: rgba(0,0,0,0.7); color:white; height:35px; margin:0;">🚪 SAIR</button>
         </div>
         
-        <!-- Campo Supermercado -->
         <div class="supermercado-input">
             <small>🏪 LOCAL DA COMPRA</small>
             <div class="supermercado-simple">
@@ -640,10 +645,11 @@
             
             <div class="searching-indicator" id="searching-indicator">
                 <div class="spinner"></div>
-                <span>Buscando produto...</span>
+                <span>Buscando produto na internet...</span>
             </div>
             
             <input type="text" id="codigo" placeholder="🔢 Código de Barras" oninput="handleCodigoBarras(this.value)">
+            <div id="codigo-info" class="codigo-info" style="display:none;"></div>
             <input type="text" id="nome_prod" placeholder="📦 Nome do Produto">
             <div style="display:flex; gap:10px;">
                 <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd" style="flex:1">
@@ -654,6 +660,7 @@
                 <option value="extra">💵 Pagamento Extra</option>
             </select>
             <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+            <button id="btn-buscar-manual" class="btn-buscar-manual" onclick="buscarProdutoManual()" style="display:none;">🔍 Buscar Produto Novamente</button>
         </div>
 
         <div id="lista_itens"></div>
@@ -791,7 +798,34 @@
         else indicator.classList.remove('active');
     }
     
-    // Processar foto do cadastro
+    // Função para identificar o tipo de código de barras
+    function identificarTipoCodigo(codigo) {
+        const codigoStr = codigo.toString();
+        const infoDiv = document.getElementById('codigo-info');
+        
+        if (codigoStr.length === 13) {
+            infoDiv.innerHTML = '📦 Código EAN-13 (Produto padrão)';
+            infoDiv.style.display = 'block';
+            return 'EAN-13';
+        } else if (codigoStr.length === 8) {
+            infoDiv.innerHTML = '📦 Código EAN-8 (Produto pequeno)';
+            infoDiv.style.display = 'block';
+            return 'EAN-8';
+        } else if (codigoStr.length >= 5 && codigoStr.length <= 8) {
+            infoDiv.innerHTML = '🏷️ Código de Balança (Produto pesado)';
+            infoDiv.style.display = 'block';
+            return 'BALANCA';
+        } else if (codigoStr.length === 12) {
+            infoDiv.innerHTML = '📦 Código UPC-A (Produto internacional)';
+            infoDiv.style.display = 'block';
+            return 'UPC-A';
+        } else {
+            infoDiv.innerHTML = `🔢 Código com ${codigoStr.length} dígitos`;
+            infoDiv.style.display = 'block';
+            return 'OUTRO';
+        }
+    }
+    
     function processarFotoCadastro(event) {
         const file = event.target.files[0];
         if(!file) return;
@@ -820,48 +854,114 @@
     
     function handleCodigoBarras(codigo) {
         if(buscaTimeout) clearTimeout(buscaTimeout);
-        if(codigo.length < 8) return;
-        if(dadosApp.precos[codigo]) {
-            document.getElementById('nome_prod').value = dadosApp.precos[codigo];
+        if(codigo.length < 4) {
+            document.getElementById('codigo-info').style.display = 'none';
             return;
         }
-        buscaTimeout = setTimeout(() => buscarProduto(codigo), 500);
+        
+        // Identificar o tipo de código
+        identificarTipoCodigo(codigo);
+        
+        // Verificar se já temos o produto em cache
+        if(dadosApp.precos[codigo]) {
+            document.getElementById('nome_prod').value = dadosApp.precos[codigo];
+            mostrarToast(`📦 Produto em cache: ${dadosApp.precos[codigo]}`);
+            return;
+        }
+        
+        // Para códigos de balança (5-8 dígitos), não buscar na API
+        const tipoCodigo = identificarTipoCodigoDisplay(codigo);
+        if (tipoCodigo === 'BALANCA') {
+            mostrarToast('🏷️ Código de balança - Preencha o nome manualmente');
+            document.getElementById('btn-buscar-manual').style.display = 'none';
+            return;
+        }
+        
+        // Aguardar digitação para buscar
+        buscaTimeout = setTimeout(() => buscarProduto(codigo), 800);
+    }
+    
+    function identificarTipoCodigoDisplay(codigo) {
+        const codigoStr = codigo.toString();
+        if (codigoStr.length === 13) return 'EAN-13';
+        if (codigoStr.length === 8) return 'EAN-8';
+        if (codigoStr.length >= 5 && codigoStr.length <= 8) return 'BALANCA';
+        return 'OUTRO';
     }
     
     async function buscarProduto(codigo) {
-        if(!codigo || codigo.length < 8 || ultimoCodigoBuscado === codigo) return;
+        if(!codigo || codigo.length < 4 || ultimoCodigoBuscado === codigo) return;
+        
+        const tipoCodigo = identificarTipoCodigoDisplay(codigo);
+        
+        // Não buscar códigos de balança na API
+        if (tipoCodigo === 'BALANCA') {
+            mostrarToast('🏷️ Produto de balança - Cadastre manualmente');
+            return;
+        }
+        
         ultimoCodigoBuscado = codigo;
         mostrarIndicadorBusca(true);
         
+        // Verificar cache novamente
+        if(dadosApp.precos[codigo]) {
+            document.getElementById('nome_prod').value = dadosApp.precos[codigo];
+            mostrarIndicadorBusca(false);
+            mostrarToast(`📦 Produto encontrado no cache: ${dadosApp.precos[codigo]}`);
+            return;
+        }
+        
         try {
-            const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${codigo}.json`);
+            // Tentar API do OpenFoodFacts
+            const url = `https://world.openfoodfacts.org/api/v0/product/${codigo}.json`;
+            console.log('Buscando:', url);
+            
+            const response = await fetch(url);
             const data = await response.json();
             
             if(data?.status === 1 && data.product) {
-                let nomeProduto = data.product.product_name_pt || data.product.product_name || data.product.generic_name;
+                let nomeProduto = data.product.product_name_pt || 
+                                 data.product.product_name || 
+                                 data.product.generic_name ||
+                                 data.product.brands;
+                
                 if(nomeProduto) {
                     nomeProduto = nomeProduto.split(',')[0].trim();
                     document.getElementById('nome_prod').value = nomeProduto;
                     dadosApp.precos[codigo] = nomeProduto;
                     salvarDados();
-                    mostrarToast(`✅ ${nomeProduto}`);
+                    mostrarToast(`✅ Produto encontrado: ${nomeProduto}`);
+                    document.getElementById('btn-buscar-manual').style.display = 'none';
+                } else {
+                    mostrarToast('⚠️ Produto encontrado mas sem nome cadastrado');
+                    document.getElementById('btn-buscar-manual').style.display = 'block';
                 }
+            } else {
+                mostrarToast('❌ Produto não encontrado na base de dados');
+                document.getElementById('btn-buscar-manual').style.display = 'block';
             }
         } catch(error) {
-            console.error('Erro:', error);
+            console.error('Erro na busca:', error);
+            mostrarToast('❌ Erro ao buscar produto. Verifique sua conexão.');
+            document.getElementById('btn-buscar-manual').style.display = 'block';
         } finally {
             mostrarIndicadorBusca(false);
-            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
+            setTimeout(() => {
+                if(ultimoCodigoBuscado === codigo) {
+                    ultimoCodigoBuscado = '';
+                }
+            }, 3000);
         }
     }
     
     function buscarProdutoManual() {
         const codigo = document.getElementById('codigo').value;
-        if(codigo?.length >= 8) {
+        if(codigo && codigo.length >= 4) {
+            mostrarToast('🔍 Tentando buscar novamente...');
             ultimoCodigoBuscado = '';
             buscarProduto(codigo);
         } else {
-            mostrarToast('Digite um código válido');
+            mostrarToast('📱 Digite um código de barras válido primeiro');
         }
     }
     
@@ -985,7 +1085,7 @@
                 mostrarTela('tela-trocar-senha');
             } else entrarApp();
         } else {
-            alert(`❌ Senha padrão: ${SENHA_PADRAO}`);
+            alert(`❌ Usuário ou senha incorretos!\nSenha padrão: ${SENHA_PADRAO}`);
         }
     }
     
@@ -996,7 +1096,6 @@
         document.getElementById('user-name').innerHTML = user.nome;
         document.getElementById('user-role').innerHTML = user.role === 'master' ? 'Administrador' : 'Membro da Família';
         
-        // Atualizar foto do usuário em círculo
         const userPhotoDiv = document.getElementById('user-photo');
         if(user.foto) {
             userPhotoDiv.innerHTML = `<img src="${user.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
@@ -1011,10 +1110,10 @@
         document.getElementById('btn-master').style.display = user.role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = dadosApp.saldo;
         
-        // Limpar campo de supermercado
         document.getElementById('input_supermercado').value = '';
         supermercadoAtual = '';
         document.getElementById('supermercado_atual').innerHTML = '';
+        document.getElementById('codigo-info').style.display = 'none';
         
         renderizar();
     }
@@ -1039,6 +1138,7 @@
         document.getElementById('nome_prod').value = "";
         document.getElementById('valor_prod').value = "";
         document.getElementById('codigo').value = "";
+        document.getElementById('codigo-info').style.display = 'none';
         renderizar();
         mostrarToast('➕ Item adicionado!');
     }
@@ -1050,7 +1150,7 @@
         const itens = dadosApp.usuarios[userLogado]?.lista || [];
         
         if(itens.length === 0) {
-            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item</div>';
+            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item adicionado</div>';
         }
         
         itens.forEach((it, i) => {
@@ -1080,7 +1180,7 @@
     
     function finalizarCompra() {
         const itens = dadosApp.usuarios[userLogado].lista;
-        if(itens.length === 0) return alert('Nenhum item!');
+        if(itens.length === 0) return alert('Nenhum item para finalizar!');
         
         let gasto = 0, extra = 0;
         itens.forEach(it => {
@@ -1088,7 +1188,7 @@
             else extra += it.total;
         });
         
-        if(gasto > dadosApp.saldo) return alert(`Saldo insuficiente!`);
+        if(gasto > dadosApp.saldo) return alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)}`);
         
         if(confirm(`Confirmar compra?\n💰 Saldo: R$ ${gasto.toFixed(2)}\n💵 Extra: R$ ${extra.toFixed(2)}`)) {
             const compra = {
@@ -1103,7 +1203,7 @@
             dadosApp.saldo -= gasto;
             dadosApp.usuarios[userLogado].lista = [];
             salvarDados();
-            mostrarToast('✅ Compra finalizada!');
+            mostrarToast('✅ Compra finalizada com sucesso!');
             entrarApp();
         }
     }
@@ -1253,7 +1353,7 @@
             `;
         });
         
-        html += '</tbody></table>';
+        html += '</tbody><tr>';
         
         if(Object.keys(produtos).length === 0) {
             html = '<p style="text-align:center;">Nenhum produto registrado ainda</p>';
@@ -1283,10 +1383,10 @@
             scanner = new Html5Qrcode("reader");
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 document.getElementById('codigo').value = txt;
-                buscarProduto(txt);
+                handleCodigoBarras(txt);
                 pararScanner();
-                mostrarToast('📷 Código lido!');
-            }).catch(() => alert("Erro na câmera"));
+                mostrarToast('📷 Código lido com sucesso!');
+            }).catch(() => alert("❌ Erro ao acessar a câmera. Verifique as permissões."));
         } else pararScanner();
     }
     
@@ -1300,7 +1400,7 @@
             dadosApp.saldo = novoSaldo;
             salvarDados();
             renderizar();
-            mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
+            mostrarToast(`💰 Saldo atualizado: R$ ${novoSaldo.toFixed(2)}`);
         }
     }
     
@@ -1312,7 +1412,7 @@
         dadosApp.usuarios[userLogado].senhaHash = hashSenha(n);
         dadosApp.usuarios[userLogado].reset = false;
         salvarDados();
-        mostrarToast('✅ Senha alterada!');
+        mostrarToast('✅ Senha alterada com sucesso!');
         entrarApp();
     }
     
@@ -1322,7 +1422,7 @@
         link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         link.download = `backup_lista_compras_${new Date().toISOString().slice(0,19)}.json`;
         link.click();
-        mostrarToast('💾 Backup exportado!');
+        mostrarToast('💾 Backup exportado com sucesso!');
     }
     
     function importarBackup() {
@@ -1335,10 +1435,10 @@
             reader.onload = (event) => {
                 try {
                     const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Substituir dados atuais?')) {
+                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
                         dadosApp = backup;
                         salvarDados();
-                        mostrarToast('✅ Backup restaurado!');
+                        mostrarToast('✅ Backup restaurado com sucesso!');
                         location.reload();
                     }
                 } catch(err) {
@@ -1351,14 +1451,14 @@
     }
     
     function resetarTodosDados() {
-        if(confirm('⚠️ APAGAR TODOS OS DADOS?')) {
-            if(confirm('ÚLTIMA CONFIRMAÇÃO!')){
+        if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!')) {
+            if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários, compras e saldo serão perdidos.')){
                 dadosApp = {
                     usuarios: { "master": { nome: "Master", senhaHash: hashSenha("Melissa@2016"), role: "master", lista: [], reset: false, historico: [], foto: null } },
                     saldo: 0, precos: {}
                 };
                 salvarDados();
-                mostrarToast('🗑️ Dados resetados!');
+                mostrarToast('🗑️ Todos os dados foram resetados!');
                 setTimeout(() => location.reload(), 2000);
             }
         }
