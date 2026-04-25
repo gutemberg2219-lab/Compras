@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>V75 REPAIR MASTER - Sistema de Compras Familiar</title>
+    <title>LISTA DE COMPRAS - Sistema Familiar</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { 
@@ -11,7 +11,6 @@
             --success: #2e7d32; 
             --danger: #ff1744; 
             --warning: #ff9800; 
-            --bg: rgba(0,0,0,0.7);
         }
         
         * { 
@@ -24,11 +23,11 @@
         /* Fundo do supermercado */
         body { 
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             position: relative;
             padding: 15px;
         }
         
+        /* Imagem de fundo do supermercado */
         body::before {
             content: '';
             position: fixed;
@@ -36,15 +35,16 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&h=900&fit=crop');
+            background-image: url('https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?w=1600&h=900&fit=crop');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            opacity: 0.3;
+            opacity: 0.4;
             z-index: -2;
         }
         
+        /* Overlay escuro para melhor contraste */
         body::after {
             content: '';
             position: fixed;
@@ -52,7 +52,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(102,126,234,0.95) 0%, rgba(118,75,162,0.95) 100%);
+            background: rgba(0, 0, 0, 0.6);
             z-index: -1;
         }
         
@@ -344,7 +344,7 @@
             font-size: 14px;
         }
         
-        .aviso-senha, .senha-destaque {
+        .aviso-senha {
             background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
             border-radius: 12px;
             padding: 12px;
@@ -353,24 +353,32 @@
             border-left: 4px solid var(--warning);
         }
         
-        .senha-destaque code {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--warning);
-            background: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            display: inline-block;
-            margin-top: 5px;
+        /* Título principal - LISTA DE COMPRAS */
+        .main-title {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
         }
         
-        /* Títulos com ícones */
-        h2, h3 {
+        .main-title h1 {
+            font-size: 32px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 15px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        
+        .main-title p {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
         }
         
         /* Botão de voltar especial */
@@ -394,39 +402,20 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 10px;
         }
-        
-        /* Logo e cabeçalho */
-        .logo-area {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo-area h1 {
-            font-size: 28px;
-            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .logo-area p {
-            color: rgba(255,255,255,0.9);
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
 
 <div id="app" style="max-width:500px; margin: auto;">
     
-    <div class="logo-area">
-        <h1>🛒 V75 REPAIR MASTER</h1>
-        <p>Sistema Familiar de Compras</p>
-    </div>
+    <!-- Título principal removido daqui, será inserido dinamicamente -->
     
     <div id="tela-login" class="tela card">
-        <h2 style="text-align:center;">🔐 Login Família</h2>
+        <div class="main-title">
+            <h1>🛒 LISTA DE COMPRAS</h1>
+            <p>Sistema Familiar de Compras</p>
+        </div>
+        <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
         <div class="aviso-senha" id="aviso-senha-padrao" style="display:none;">
             ⚠️ <strong>Senha padrão:</strong><br>
             <code id="senha-padrao-texto" style="font-size: 16px;">Compras@2026</code>
@@ -441,6 +430,10 @@
     </div>
 
     <div id="tela-cadastro" class="tela card">
+        <div class="main-title">
+            <h1>🛒 LISTA DE COMPRAS</h1>
+            <p>Sistema Familiar de Compras</p>
+        </div>
         <h2 style="text-align:center;">📝 Novo Membro</h2>
         <div class="aviso-senha">
             ℹ️ A senha padrão para novos membros é:<br>
@@ -453,6 +446,10 @@
     </div>
 
     <div id="painel-master" class="tela card">
+        <div class="main-title">
+            <h1>🛒 LISTA DE COMPRAS</h1>
+            <p>Painel Administrativo</p>
+        </div>
         <button class="btn-voltar" onclick="mostrarTela('app-principal')">⬅️ VOLTAR</button>
         <h3 style="margin: 15px 0;">🛡️ Gerenciar Membros</h3>
         <div id="lista-usuarios-master"></div>
@@ -461,13 +458,15 @@
     </div>
 
     <div id="app-principal" class="tela">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 id="boas_vindas" style="margin:0;">Olá</h3>
-            <div style="display:flex; gap:5px;">
-                <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 10px; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white; height:35px; margin:0; font-size:12px;">🛡️ MASTER</button>
-                <button onclick="abrirRelatorio()" style="width:auto; padding:0 10px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; height:35px; margin:0;">📊 RELATÓRIO</button>
-                <button onclick="logout()" style="width:auto; padding:0 10px; background: rgba(0,0,0,0.7); color:white; height:35px; margin:0;">🚪 SAIR</button>
-            </div>
+        <div class="main-title">
+            <h1>🛒 LISTA DE COMPRAS</h1>
+            <p id="boas_vindas" style="margin-top:8px;">Olá, usuário!</p>
+        </div>
+        
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:15px;">
+            <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 15px; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white; height:35px; margin:0; font-size:12px;">🛡️ MASTER</button>
+            <button onclick="abrirRelatorio()" style="width:auto; padding:0 15px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; height:35px; margin:0;">📊 RELATÓRIO</button>
+            <button onclick="logout()" style="width:auto; padding:0 15px; background: rgba(0,0,0,0.7); color:white; height:35px; margin:0;">🚪 SAIR</button>
         </div>
         
         <div class="card" style="border-left: 5px solid #4caf50;">
@@ -512,6 +511,10 @@
     </div>
 
     <div id="tela-trocar-senha" class="tela card">
+        <div class="main-title">
+            <h1>🛒 LISTA DE COMPRAS</h1>
+            <p>Alterar Senha</p>
+        </div>
         <h3>🔒 Criar Nova Senha</h3>
         <div class="aviso-senha">
             ℹ️ Este é seu primeiro acesso. Por favor, crie uma nova senha.
@@ -882,7 +885,7 @@
 
     function entrarApp() {
         mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerHTML = `👋 Olá, ${db.usuarios[userLogado].nome}!`;
+        document.getElementById('boas_vindas').innerHTML = `Olá, ${db.usuarios[userLogado].nome}!`;
         document.getElementById('btn-master').style.display = db.usuarios[userLogado].role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = db.saldo;
         renderizar();
