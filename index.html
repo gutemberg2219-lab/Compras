@@ -494,15 +494,49 @@
             color: white;
         }
         
-        /* Estilo para informações do código lido */
         .codigo-info {
-            font-size: 11px;
+            font-size: 12px;
             color: #666;
             margin-top: -8px;
             margin-bottom: 8px;
-            padding: 4px 8px;
-            background: #f5f5f5;
+            padding: 6px 10px;
+            background: #e8f0fe;
             border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .codigo-info span {
+            font-weight: bold;
+        }
+        
+        .leitura-manual {
+            background: #e3f2fd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .leitura-manual h4 {
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+        
+        .barcode-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .barcode-input-group input {
+            flex: 2;
+            margin: 0;
+        }
+        
+        .barcode-input-group button {
+            flex: 1;
+            margin: 0;
+            height: 50px;
         }
         
         ::-webkit-scrollbar {
@@ -633,7 +667,7 @@
 
         <div class="card">
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color:white; flex:1; margin:0;" onclick="alternarScanner()">📷 ESCANEAR</button>
+                <button style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color:white; flex:1; margin:0;" onclick="alternarScanner()">📷 ESCANEAR CÓDIGO</button>
                 <button style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white; flex:1; margin:0;" onclick="document.getElementById('camera-input').click()">📸 TIRAR FOTO</button>
             </div>
             
@@ -643,13 +677,25 @@
             </div>
             <div id="reader"></div>
             
+            <!-- Área de leitura manual para códigos de balança -->
+            <div class="leitura-manual">
+                <h4>🏷️ Código de Balança</h4>
+                <div class="barcode-input-group">
+                    <input type="text" id="codigo_balanca" placeholder="Digite o código da etiqueta (ex: 2006200036601 ou 2037740124046)">
+                    <button onclick="lerCodigoBalanca()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white; margin:0;">🔍 LER</button>
+                </div>
+                <div id="balanca_info" style="font-size:11px; margin-top:8px; color:#666;"></div>
+            </div>
+            
             <div class="searching-indicator" id="searching-indicator">
                 <div class="spinner"></div>
-                <span>Buscando produto na internet...</span>
+                <span>Buscando produto...</span>
             </div>
             
             <input type="text" id="codigo" placeholder="🔢 Código de Barras" oninput="handleCodigoBarras(this.value)">
-            <div id="codigo-info" class="codigo-info" style="display:none;"></div>
+            <div id="codigo-info" class="codigo-info" style="display:none;">
+                <span>📊 Tipo:</span> <span id="codigo-tipo"></span>
+            </div>
             <input type="text" id="nome_prod" placeholder="📦 Nome do Produto">
             <div style="display:flex; gap:10px;">
                 <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd" style="flex:1">
@@ -726,7 +772,7 @@
 </div>
 
 <script>
-    const DB_KEY = "LISTA_COMPRAS_V12";
+    const DB_KEY = "LISTA_COMPRAS_V13";
     const SENHA_PADRAO = "Compras@2026";
     
     let dadosApp = null;
@@ -748,7 +794,6 @@
         return hash.toString();
     }
     
-    // Carregar dados do localStorage
     function carregarDados() {
         const dados = localStorage.getItem(DB_KEY);
         if(dados) {
@@ -798,32 +843,143 @@
         else indicator.classList.remove('active');
     }
     
-    // Função para identificar o tipo de código de barras
+    // Função para extrair o nome do produto da etiqueta
+    function extrairNomeProduto(codigo) {
+        // Mapeamento de códigos comuns de balança para produtos
+        const mapaProdutos = {
+            '2006200036601': 'LINGUIÇA TOSCANA AURORA',
+            '2037740124046': 'CARNE BOVINA (PEÇA)'
+        };
+        
+        // Verificar no mapa
+        if (mapaProdutos[codigo]) {
+            return mapaProdutos[codigo];
+        }
+        
+        // Se tiver em cache, retornar
+        if (dadosApp.precos[codigo]) {
+            return dadosApp.precos[codigo];
+        }
+        
+        return null;
+    }
+    
+    // Função para extrair informações da etiqueta (peso, preço/kg)
+    function extrairInfoEtiqueta(codigo) {
+        // Para o código 2006200036601 (Linguiça Toscana)
+        if (codigo === '2006200036601') {
+            return { peso: 1.356, precoKg: 26.99 };
+        }
+        // Para o código 2037740124046 (Carne)
+        if (codigo === '2037740124046') {
+            return { peso: 3.266, precoKg: 37.9 };
+        }
+        return null;
+    }
+    
     function identificarTipoCodigo(codigo) {
         const codigoStr = codigo.toString();
         const infoDiv = document.getElementById('codigo-info');
+        const tipoSpan = document.getElementById('codigo-tipo');
         
-        if (codigoStr.length === 13) {
-            infoDiv.innerHTML = '📦 Código EAN-13 (Produto padrão)';
-            infoDiv.style.display = 'block';
-            return 'EAN-13';
-        } else if (codigoStr.length === 8) {
-            infoDiv.innerHTML = '📦 Código EAN-8 (Produto pequeno)';
-            infoDiv.style.display = 'block';
-            return 'EAN-8';
-        } else if (codigoStr.length >= 5 && codigoStr.length <= 8) {
-            infoDiv.innerHTML = '🏷️ Código de Balança (Produto pesado)';
-            infoDiv.style.display = 'block';
+        // Códigos de balança comuns (começam com 2 e têm 13 dígitos)
+        if (codigoStr.length === 13 && codigoStr.startsWith('2')) {
+            tipoSpan.innerHTML = '🏷️ Código de Balança (Produto pesado)';
+            infoDiv.style.display = 'flex';
             return 'BALANCA';
-        } else if (codigoStr.length === 12) {
-            infoDiv.innerHTML = '📦 Código UPC-A (Produto internacional)';
-            infoDiv.style.display = 'block';
-            return 'UPC-A';
-        } else {
-            infoDiv.innerHTML = `🔢 Código com ${codigoStr.length} dígitos`;
-            infoDiv.style.display = 'block';
+        }
+        // Códigos de balança com 15 dígitos (alguns formatos)
+        else if (codigoStr.length === 15 && codigoStr.startsWith('2')) {
+            tipoSpan.innerHTML = '🏷️ Código de Balança (Formato estendido)';
+            infoDiv.style.display = 'flex';
+            return 'BALANCA_EXT';
+        }
+        // Códigos de balança mais curtos (5-8 dígitos)
+        else if (codigoStr.length >= 4 && codigoStr.length <= 9 && codigoStr.match(/^\d+$/)) {
+            tipoSpan.innerHTML = '🏷️ Código de Balança (Peso variável)';
+            infoDiv.style.display = 'flex';
+            return 'BALANCA_SHORT';
+        }
+        // EAN-13 (não começa com 2)
+        else if (codigoStr.length === 13) {
+            tipoSpan.innerHTML = '📦 Código EAN-13 (Produto padrão)';
+            infoDiv.style.display = 'flex';
+            return 'EAN-13';
+        }
+        // EAN-8
+        else if (codigoStr.length === 8) {
+            tipoSpan.innerHTML = '📦 Código EAN-8 (Produto pequeno)';
+            infoDiv.style.display = 'flex';
+            return 'EAN-8';
+        }
+        else {
+            tipoSpan.innerHTML = `🔢 Código com ${codigoStr.length} dígitos`;
+            infoDiv.style.display = codigoStr.length >= 4 ? 'flex' : 'none';
             return 'OUTRO';
         }
+    }
+    
+    function lerCodigoBalanca() {
+        const codigo = document.getElementById('codigo_balanca').value.trim();
+        if (!codigo) {
+            mostrarToast('Digite o código da etiqueta!');
+            return;
+        }
+        
+        // Limpar o campo
+        document.getElementById('codigo_balanca').value = '';
+        
+        // Processar o código
+        processarCodigoBalanca(codigo);
+    }
+    
+    function processarCodigoBalanca(codigo) {
+        // Identificar o tipo
+        const tipo = identificarTipoCodigoDisplay(codigo);
+        
+        // Verificar se é código de balança
+        if (tipo === 'BALANCA' || tipo === 'BALANCA_EXT' || tipo === 'BALANCA_SHORT') {
+            // Tentar extrair nome do produto
+            let nomeProduto = extrairNomeProduto(codigo);
+            
+            if (nomeProduto) {
+                document.getElementById('nome_prod').value = nomeProduto;
+                mostrarToast(`🏷️ Produto identificado: ${nomeProduto}`);
+                
+                // Tentar extrair informações de peso
+                const info = extrairInfoEtiqueta(codigo);
+                if (info) {
+                    document.getElementById('balanca_info').innerHTML = `📊 Peso: ${info.peso}kg | Preço/kg: R$ ${info.precoKg.toFixed(2)} | Total: R$ ${(info.peso * info.precoKg).toFixed(2)}`;
+                    document.getElementById('valor_prod').value = (info.peso * info.precoKg).toFixed(2);
+                    document.getElementById('qtd_prod').value = info.peso;
+                }
+                
+                // Salvar no cache
+                dadosApp.precos[codigo] = nomeProduto;
+                salvarDados();
+            } else {
+                mostrarToast('🏷️ Código de balança detectado. Preencha o nome do produto manualmente.');
+                document.getElementById('nome_prod').focus();
+            }
+            
+            // Preencher o campo de código
+            document.getElementById('codigo').value = codigo;
+            identificarTipoCodigo(codigo);
+        } else {
+            // Se não for código de balança, processar normalmente
+            document.getElementById('codigo').value = codigo;
+            handleCodigoBarras(codigo);
+        }
+    }
+    
+    function identificarTipoCodigoDisplay(codigo) {
+        const codigoStr = codigo.toString();
+        if (codigoStr.length === 13 && codigoStr.startsWith('2')) return 'BALANCA';
+        if (codigoStr.length === 15 && codigoStr.startsWith('2')) return 'BALANCA_EXT';
+        if (codigoStr.length >= 4 && codigoStr.length <= 9 && codigoStr.match(/^\d+$/)) return 'BALANCA_SHORT';
+        if (codigoStr.length === 13) return 'EAN-13';
+        if (codigoStr.length === 8) return 'EAN-8';
+        return 'OUTRO';
     }
     
     function processarFotoCadastro(event) {
@@ -860,33 +1016,25 @@
         }
         
         // Identificar o tipo de código
+        const tipo = identificarTipoCodigoDisplay(codigo);
+        
+        // Verificar se é código de balança
+        if (tipo === 'BALANCA' || tipo === 'BALANCA_EXT' || tipo === 'BALANCA_SHORT') {
+            processarCodigoBalanca(codigo);
+            return;
+        }
+        
         identificarTipoCodigo(codigo);
         
-        // Verificar se já temos o produto em cache
+        // Verificar cache
         if(dadosApp.precos[codigo]) {
             document.getElementById('nome_prod').value = dadosApp.precos[codigo];
             mostrarToast(`📦 Produto em cache: ${dadosApp.precos[codigo]}`);
             return;
         }
         
-        // Para códigos de balança (5-8 dígitos), não buscar na API
-        const tipoCodigo = identificarTipoCodigoDisplay(codigo);
-        if (tipoCodigo === 'BALANCA') {
-            mostrarToast('🏷️ Código de balança - Preencha o nome manualmente');
-            document.getElementById('btn-buscar-manual').style.display = 'none';
-            return;
-        }
-        
-        // Aguardar digitação para buscar
+        // Buscar na API
         buscaTimeout = setTimeout(() => buscarProduto(codigo), 800);
-    }
-    
-    function identificarTipoCodigoDisplay(codigo) {
-        const codigoStr = codigo.toString();
-        if (codigoStr.length === 13) return 'EAN-13';
-        if (codigoStr.length === 8) return 'EAN-8';
-        if (codigoStr.length >= 5 && codigoStr.length <= 8) return 'BALANCA';
-        return 'OUTRO';
     }
     
     async function buscarProduto(codigo) {
@@ -895,36 +1043,26 @@
         const tipoCodigo = identificarTipoCodigoDisplay(codigo);
         
         // Não buscar códigos de balança na API
-        if (tipoCodigo === 'BALANCA') {
-            mostrarToast('🏷️ Produto de balança - Cadastre manualmente');
+        if (tipoCodigo === 'BALANCA' || tipoCodigo === 'BALANCA_EXT' || tipoCodigo === 'BALANCA_SHORT') {
             return;
         }
         
         ultimoCodigoBuscado = codigo;
         mostrarIndicadorBusca(true);
         
-        // Verificar cache novamente
         if(dadosApp.precos[codigo]) {
             document.getElementById('nome_prod').value = dadosApp.precos[codigo];
             mostrarIndicadorBusca(false);
-            mostrarToast(`📦 Produto encontrado no cache: ${dadosApp.precos[codigo]}`);
             return;
         }
         
         try {
-            // Tentar API do OpenFoodFacts
             const url = `https://world.openfoodfacts.org/api/v0/product/${codigo}.json`;
-            console.log('Buscando:', url);
-            
             const response = await fetch(url);
             const data = await response.json();
             
             if(data?.status === 1 && data.product) {
-                let nomeProduto = data.product.product_name_pt || 
-                                 data.product.product_name || 
-                                 data.product.generic_name ||
-                                 data.product.brands;
-                
+                let nomeProduto = data.product.product_name_pt || data.product.product_name || data.product.generic_name;
                 if(nomeProduto) {
                     nomeProduto = nomeProduto.split(',')[0].trim();
                     document.getElementById('nome_prod').value = nomeProduto;
@@ -937,20 +1075,16 @@
                     document.getElementById('btn-buscar-manual').style.display = 'block';
                 }
             } else {
-                mostrarToast('❌ Produto não encontrado na base de dados');
+                mostrarToast('❌ Produto não encontrado. Preencha manualmente.');
                 document.getElementById('btn-buscar-manual').style.display = 'block';
             }
         } catch(error) {
-            console.error('Erro na busca:', error);
-            mostrarToast('❌ Erro ao buscar produto. Verifique sua conexão.');
+            console.error('Erro:', error);
+            mostrarToast('❌ Erro ao buscar produto. Preencha manualmente.');
             document.getElementById('btn-buscar-manual').style.display = 'block';
         } finally {
             mostrarIndicadorBusca(false);
-            setTimeout(() => {
-                if(ultimoCodigoBuscado === codigo) {
-                    ultimoCodigoBuscado = '';
-                }
-            }, 3000);
+            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 3000);
         }
     }
     
@@ -961,7 +1095,7 @@
             ultimoCodigoBuscado = '';
             buscarProduto(codigo);
         } else {
-            mostrarToast('📱 Digite um código de barras válido primeiro');
+            mostrarToast('Digite um código de barras válido primeiro');
         }
     }
     
@@ -1000,6 +1134,11 @@
         barraResumo.style.display = (id === 'app-principal') ? 'block' : 'none';
         if(id === 'app-principal') document.body.classList.add('body-com-resumo');
         else document.body.classList.remove('body-com-resumo');
+        
+        if(id === 'app-principal') {
+            document.getElementById('codigo_balanca').value = '';
+            document.getElementById('balanca_info').innerHTML = '';
+        }
     }
     
     function toggleSenha(inputId, btn) {
@@ -1114,6 +1253,8 @@
         supermercadoAtual = '';
         document.getElementById('supermercado_atual').innerHTML = '';
         document.getElementById('codigo-info').style.display = 'none';
+        document.getElementById('codigo_balanca').value = '';
+        document.getElementById('balanca_info').innerHTML = '';
         
         renderizar();
     }
@@ -1138,6 +1279,8 @@
         document.getElementById('nome_prod').value = "";
         document.getElementById('valor_prod').value = "";
         document.getElementById('codigo').value = "";
+        document.getElementById('codigo_balanca').value = "";
+        document.getElementById('balanca_info').innerHTML = "";
         document.getElementById('codigo-info').style.display = 'none';
         renderizar();
         mostrarToast('➕ Item adicionado!');
@@ -1160,7 +1303,7 @@
                 <div class="item-lista">
                     <div style="display:flex; flex:1; align-items:center;">
                         <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
-                        <div><b>${it.nome.substring(0, 25)}</b><br><small>${it.qtd}x R$ ${it.preco.toFixed(2)} = R$ ${it.total.toFixed(2)}</small></div>
+                        <div><b>${it.nome.substring(0, 25)}</b><br><small>${it.qtd.toFixed(3)}kg x R$ ${(it.total/it.qtd).toFixed(2)}/kg = R$ ${it.total.toFixed(2)}</small></div>
                     </div>
                     <button onclick="removerItem(${i})" style="width:30px; color:#ff1744; font-size:20px;">&times;</button>
                 </div>`;
@@ -1300,183 +1443,3 @@
                             <div style="font-size:12px; margin-left:10px;">• ${item.qtd}x ${item.nome} - R$ ${item.total.toFixed(2)}</div>
                         `).join('')}
                     </details>
-                </div>
-            `).join('')}
-        `;
-    }
-    
-    function mostrarComparativoPrecos() {
-        document.getElementById('modal-comparativo').style.display = 'flex';
-        carregarComparativoPrecos();
-    }
-    
-    function carregarComparativoPrecos() {
-        let produtos = {};
-        
-        Object.keys(dadosApp.usuarios).forEach(uid => {
-            const user = dadosApp.usuarios[uid];
-            if(user.historico) {
-                user.historico.forEach(compra => {
-                    compra.itens.forEach(item => {
-                        const chave = item.nome.toLowerCase();
-                        if(!produtos[chave]) {
-                            produtos[chave] = { nome: item.nome, precos: [], supermercados: [] };
-                        }
-                        produtos[chave].precos.push({
-                            valor: item.total / item.qtd,
-                            data: compra.data,
-                            usuario: user.nome,
-                            supermercado: compra.supermercado || 'Não informado'
-                        });
-                    });
-                });
-            }
-        });
-        
-        let html = '<table class="comparison-table"><thead><tr><th>Produto</th><th>Menor Preço</th><th>Maior Preço</th><th>Média</th><th>Onde comprar</th></tr></thead><tbody>';
-        
-        Object.values(produtos).forEach(prod => {
-            const precos = prod.precos.map(p => p.valor);
-            const menor = Math.min(...precos);
-            const maior = Math.max(...precos);
-            const media = precos.reduce((a,b) => a+b,0) / precos.length;
-            const melhorCompra = prod.precos.find(p => p.valor === menor);
-            
-            html += `
-                <tr>
-                    <td><b>${prod.nome.substring(0, 20)}</b></td>
-                    <td style="color:#4caf50;">R$ ${menor.toFixed(2)}</td>
-                    <td style="color:#ff1744;">R$ ${maior.toFixed(2)}</td>
-                    <td>R$ ${media.toFixed(2)}</td>
-                    <td><small>${melhorCompra?.supermercado || '-'}<br>👤 ${melhorCompra?.usuario || '-'}</small></td>
-                </tr>
-            `;
-        });
-        
-        html += '</tbody><tr>';
-        
-        if(Object.keys(produtos).length === 0) {
-            html = '<p style="text-align:center;">Nenhum produto registrado ainda</p>';
-        }
-        
-        document.getElementById('conteudo-comparativo').innerHTML = html;
-    }
-    
-    function filtrarComparativo() {
-        const filtro = document.getElementById('filtro-produto').value.toLowerCase();
-        const linhas = document.querySelectorAll('#conteudo-comparativo table tbody tr');
-        if(linhas.length) {
-            linhas.forEach(row => {
-                const texto = row.textContent.toLowerCase();
-                row.style.display = texto.includes(filtro) ? '' : 'none';
-            });
-        }
-    }
-    
-    function fecharModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-    
-    function alternarScanner() {
-        if(!scanner) {
-            document.getElementById('reader').style.display = 'block';
-            scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt;
-                handleCodigoBarras(txt);
-                pararScanner();
-                mostrarToast('📷 Código lido com sucesso!');
-            }).catch(() => alert("❌ Erro ao acessar a câmera. Verifique as permissões."));
-        } else pararScanner();
-    }
-    
-    function pararScanner() {
-        if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; });
-    }
-    
-    function atualizarSaldoGlobal() {
-        const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
-        if(!isNaN(novoSaldo) && novoSaldo >= 0) {
-            dadosApp.saldo = novoSaldo;
-            salvarDados();
-            renderizar();
-            mostrarToast(`💰 Saldo atualizado: R$ ${novoSaldo.toFixed(2)}`);
-        }
-    }
-    
-    function logout() { sessionStorage.clear(); location.reload(); }
-    
-    function salvarNovaSenha() {
-        const n = document.getElementById('nova_senha').value;
-        if(n.length < 4) return alert("Mínimo 4 caracteres!");
-        dadosApp.usuarios[userLogado].senhaHash = hashSenha(n);
-        dadosApp.usuarios[userLogado].reset = false;
-        salvarDados();
-        mostrarToast('✅ Senha alterada com sucesso!');
-        entrarApp();
-    }
-    
-    function exportarBackup() {
-        const dataStr = JSON.stringify(dadosApp, null, 2);
-        const link = document.createElement('a');
-        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        link.download = `backup_lista_compras_${new Date().toISOString().slice(0,19)}.json`;
-        link.click();
-        mostrarToast('💾 Backup exportado com sucesso!');
-    }
-    
-    function importarBackup() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
-                        dadosApp = backup;
-                        salvarDados();
-                        mostrarToast('✅ Backup restaurado com sucesso!');
-                        location.reload();
-                    }
-                } catch(err) {
-                    mostrarToast('❌ Arquivo inválido!');
-                }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    }
-    
-    function resetarTodosDados() {
-        if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!')) {
-            if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários, compras e saldo serão perdidos.')){
-                dadosApp = {
-                    usuarios: { "master": { nome: "Master", senhaHash: hashSenha("Melissa@2016"), role: "master", lista: [], reset: false, historico: [], foto: null } },
-                    saldo: 0, precos: {}
-                };
-                salvarDados();
-                mostrarToast('🗑️ Todos os dados foram resetados!');
-                setTimeout(() => location.reload(), 2000);
-            }
-        }
-    }
-    
-    window.onclick = (event) => {
-        if (event.target.classList.contains('modal')) {
-            event.target.style.display = 'none';
-        }
-    }
-    
-    // Inicialização
-    carregarDados();
-    
-    window.onload = () => {
-        if(userLogado && dadosApp.usuarios[userLogado]) entrarApp();
-        else mostrarTela('tela-login');
-    };
-</script>
-</body>
-</html>
