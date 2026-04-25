@@ -3,15 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>V75 REPAIR MASTER - Sistema Familiar de Compras</title>
+    <title>V75 REPAIR MASTER - Sistema de Compras Familiar</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #0066ff; --success: #2e7d32; --danger: #ff1744; --warning: #ff9800; --bg: #f0f2f5; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); padding: 15px; min-height: 100vh; }
+        :root { 
+            --primary: #0066ff; 
+            --success: #2e7d32; 
+            --danger: #ff1744; 
+            --warning: #ff9800; 
+            --bg: rgba(0,0,0,0.7);
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', 'Poppins', sans-serif; 
+        }
+        
+        /* Fundo do supermercado */
+        body { 
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            padding: 15px;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&h=900&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            opacity: 0.3;
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102,126,234,0.95) 0%, rgba(118,75,162,0.95) 100%);
+            z-index: -1;
+        }
+        
         .body-com-resumo { padding-bottom: 160px; }
-        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.2s; }
-        .card:hover { transform: translateY(-2px); }
+        
+        /* Cards com efeito vidro */
+        .card { 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .card:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
         
         /* Container para o campo de senha com ícone */
         .password-wrapper {
@@ -28,11 +90,14 @@
             border-radius: 12px;
             font-size: 16px;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.9);
         }
         
         .password-wrapper input:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,102,255,0.1);
+            background: white;
         }
         
         .toggle-password {
@@ -74,11 +139,13 @@
             margin-bottom: 10px; 
             outline: none; 
             transition: all 0.3s; 
+            background: rgba(255,255,255,0.9);
         }
         
         input:focus, select:focus { 
             border-color: var(--primary); 
             box-shadow: 0 0 0 3px rgba(0,102,255,0.1); 
+            background: white;
         }
         
         button { 
@@ -94,20 +161,28 @@
             justify-content: center; 
             gap: 8px; 
             transition: all 0.3s; 
+            font-size: 16px;
         }
         
         button:active { transform: scale(0.98); }
         
         .item-lista { 
-            background: #fff; 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
             border-radius: 12px; 
             padding: 12px; 
             margin-bottom: 8px; 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            border: 1px solid #eee; 
-            animation: slideIn 0.3s ease; 
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: slideIn 0.3s ease;
+            transition: all 0.3s;
+        }
+        
+        .item-lista:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         @keyframes slideIn {
@@ -120,27 +195,69 @@
             height: 45px; 
             border-radius: 8px; 
             margin-right: 12px; 
-            background: #f0f0f0; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden; 
             display: flex; 
             align-items: center; 
-            justify-content: center; 
+            justify-content: center;
+            color: white;
+            font-size: 24px;
         }
         
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
+        #reader { 
+            width: 100%; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            display: none; 
+            margin-bottom: 15px; 
+            background: #000;
+            position: relative;
+        }
+        
+        /* Indicador de busca */
+        .searching-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: white;
+        }
+        
+        .searching-indicator.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         
         .resumo-fixo { 
             position: fixed; 
             bottom: 0; 
             left: 0; 
             width: 100%; 
-            background: white; 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             padding: 15px; 
             box-shadow: 0 -5px 25px rgba(0,0,0,0.1); 
             display: none; 
             border-radius: 20px 20px 0 0; 
             z-index: 999; 
-            animation: slideUp 0.3s ease; 
+            animation: slideUp 0.3s ease;
+            border-top: 1px solid rgba(255,255,255,0.3);
         }
         
         @keyframes slideUp {
@@ -151,8 +268,8 @@
         .tela { display: none; animation: fadeIn 0.3s ease; }
         
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
         
         .badge { 
@@ -163,8 +280,9 @@
             font-weight: bold; 
         }
         
-        .badge-success { background: #e8f5e8; color: var(--success); }
-        .badge-warning { background: #fff3e0; color: var(--warning); }
+        .badge-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; }
+        .badge-warning { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; }
+        .badge-info { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; }
         
         .modal { 
             display: none; 
@@ -174,23 +292,26 @@
             width: 100%; 
             height: 100%; 
             background: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(5px);
             z-index: 1000; 
             justify-content: center; 
             align-items: center; 
         }
         
         .modal-content { 
-            background: white; 
-            border-radius: 16px; 
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
             padding: 20px; 
             max-width: 90%; 
             width: 400px; 
-            animation: modalIn 0.3s ease; 
+            animation: modalIn 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
         }
         
         @keyframes modalIn {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            from { transform: scale(0.9) translateY(-20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
         }
         
         .toast { 
@@ -198,17 +319,100 @@
             bottom: 20px; 
             left: 50%; 
             transform: translateX(-50%); 
-            background: #333; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white; 
             padding: 12px 20px; 
-            border-radius: 8px; 
+            border-radius: 12px; 
             z-index: 1001; 
-            animation: toastIn 0.3s ease; 
+            animation: toastIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-weight: 500;
+            max-width: 90%;
+            text-align: center;
         }
         
         @keyframes toastIn {
             from { transform: translateX(-50%) translateY(100px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .btn-buscar-manual {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 40px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .aviso-senha, .senha-destaque {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+            text-align: center;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .senha-destaque code {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--warning);
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        /* Títulos com ícones */
+        h2, h3 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 15px;
+        }
+        
+        /* Botão de voltar especial */
+        .btn-voltar {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        
+        /* Logo e cabeçalho */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-area h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .logo-area p {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
         }
     </style>
 </head>
@@ -216,91 +420,114 @@
 
 <div id="app" style="max-width:500px; margin: auto;">
     
+    <div class="logo-area">
+        <h1>🛒 V75 REPAIR MASTER</h1>
+        <p>Sistema Familiar de Compras</p>
+    </div>
+    
     <div id="tela-login" class="tela card">
-        <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
-        <input type="text" id="login_user" placeholder="Usuário">
+        <h2 style="text-align:center;">🔐 Login Família</h2>
+        <div class="aviso-senha" id="aviso-senha-padrao" style="display:none;">
+            ⚠️ <strong>Senha padrão:</strong><br>
+            <code id="senha-padrao-texto" style="font-size: 16px;">Compras@2026</code>
+        </div>
+        <input type="text" id="login_user" placeholder="👤 Usuário">
         <div class="password-wrapper">
-            <input type="password" id="login_pass" placeholder="Senha">
+            <input type="password" id="login_pass" placeholder="🔒 Senha">
             <button type="button" class="toggle-password" onclick="toggleSenha('login_pass', this)">👁️</button>
         </div>
-        <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
-        <button style="background: transparent; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
+        <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="tentarLogin()">🚀 ENTRAR</button>
+        <button style="background: transparent; color: #667eea; border: 2px solid #667eea;" onclick="mostrarTela('tela-cadastro')">✨ CRIAR NOVO ACESSO</button>
     </div>
 
     <div id="tela-cadastro" class="tela card">
-        <h2 style="text-align:center; margin-bottom:20px;">📝 Novo Membro</h2>
-        <input type="text" id="novo_nome" placeholder="Nome do Membro">
-        <button style="background: var(--success); color: white;" onclick="registrarUsuario()">CADASTRAR</button>
-        <button style="background: #eee;" onclick="mostrarTela('tela-login')">VOLTAR</button>
+        <h2 style="text-align:center;">📝 Novo Membro</h2>
+        <div class="aviso-senha">
+            ℹ️ A senha padrão para novos membros é:<br>
+            <strong style="font-size: 20px; color: var(--warning);">Compras@2026</strong><br>
+            <small style="color: #666;">⚠️ O membro deverá trocar a senha no primeiro acesso</small>
+        </div>
+        <input type="text" id="novo_nome" placeholder="👤 Nome do Membro (ex: João)">
+        <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;" onclick="registrarUsuario()">✅ CADASTRAR</button>
+        <button class="btn-voltar" onclick="mostrarTela('tela-login')">⬅️ VOLTAR</button>
     </div>
 
     <div id="painel-master" class="tela card">
-        <button onclick="mostrarTela('app-principal')" style="background:#eee;">⬅️ VOLTAR</button>
+        <button class="btn-voltar" onclick="mostrarTela('app-principal')">⬅️ VOLTAR</button>
         <h3 style="margin: 15px 0;">🛡️ Gerenciar Membros</h3>
         <div id="lista-usuarios-master"></div>
-        <button onclick="exportarBackup()" style="background: var(--primary); color: white; margin-top: 10px;">💾 EXPORTAR BACKUP</button>
-        <button onclick="importarBackup()" style="background: var(--success); color: white;">📥 IMPORTAR BACKUP</button>
+        <button onclick="exportarBackup()" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; margin-top: 10px;">💾 EXPORTAR BACKUP</button>
+        <button onclick="importarBackup()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">📥 IMPORTAR BACKUP</button>
     </div>
 
     <div id="app-principal" class="tela">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 id="boas_vindas">Olá</h3>
+            <h3 id="boas_vindas" style="margin:0;">Olá</h3>
             <div style="display:flex; gap:5px;">
-                <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 10px; background:#1a1a1a; color:gold; height:35px; margin:0;">🛡️ MASTER</button>
-                <button onclick="abrirRelatorio()" style="width:auto; padding:0 10px; background:#4caf50; color:white; height:35px; margin:0;">📊 RELATÓRIO</button>
-                <button onclick="logout()" style="width:auto; padding:0 10px; background:#ccc; height:35px; margin:0;">SAIR</button>
+                <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 10px; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white; height:35px; margin:0; font-size:12px;">🛡️ MASTER</button>
+                <button onclick="abrirRelatorio()" style="width:auto; padding:0 10px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; height:35px; margin:0;">📊 RELATÓRIO</button>
+                <button onclick="logout()" style="width:auto; padding:0 10px; background: rgba(0,0,0,0.7); color:white; height:35px; margin:0;">🚪 SAIR</button>
             </div>
         </div>
         
-        <div class="card" style="border-left: 5px solid var(--success);">
+        <div class="card" style="border-left: 5px solid #4caf50;">
             <small>💰 SALDO DISPONÍVEL</small>
             <div style="display:flex; gap:10px;">
                 <input type="number" id="input_saldo" step="0.01" style="font-size:20px; font-weight:bold; margin:0;">
-                <button onclick="atualizarSaldoGlobal()" style="width:50px; background:var(--success); color:white; margin:0;">✅</button>
+                <button onclick="atualizarSaldoGlobal()" style="width:50px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin:0;">✅</button>
             </div>
         </div>
 
         <div class="card">
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button style="background:#673ab7; color:white; flex:1; margin:0;" onclick="alternarScanner()">📷 ESCANEAR</button>
-                <button style="background:#e8f0fe; color:#0066ff; flex:1; margin:0;" onclick="document.getElementById('camera-input').click()">🖼️ FOTO</button>
+                <button style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color:white; flex:1; margin:0;" onclick="alternarScanner()">📷 ESCANEAR</button>
+                <button style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white; flex:1; margin:0;" onclick="document.getElementById('camera-input').click()">🖼️ FOTO</button>
             </div>
             
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
             <div style="text-align:center"><img id="img-preview" style="max-height:100px; border-radius:12px; display:none; margin-bottom:10px; margin-inline: auto;"></div>
             <div id="reader"></div>
             
-            <input type="text" id="codigo" placeholder="Código de Barras" oninput="debounceBuscarProduto(this.value)">
-            <input type="text" id="nome_prod" placeholder="Nome do Produto">
+            <div class="searching-indicator" id="searching-indicator">
+                <div class="spinner"></div>
+                <span>Buscando produto na internet...</span>
+            </div>
+            
+            <input type="text" id="codigo" placeholder="🔢 Código de Barras" oninput="handleCodigoBarras(this.value)">
+            <input type="text" id="nome_prod" placeholder="📦 Nome do Produto">
             <div style="display:flex; gap:10px;">
-                <input type="number" id="qtd_prod" value="1" step="0.001" style="flex:1">
-                <input type="number" id="valor_prod" placeholder="Preço R$" step="0.01" style="flex:2">
+                <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd" style="flex:1">
+                <input type="number" id="valor_prod" placeholder="💰 Preço R$" step="0.01" style="flex:2">
             </div>
             <select id="metodo_pagto">
-                <option value="saldo">Abater do Saldo</option>
-                <option value="extra">Pagamento Extra</option>
+                <option value="saldo">💳 Abater do Saldo</option>
+                <option value="extra">💵 Pagamento Extra</option>
             </select>
-            <button style="background:var(--success); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+            <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+            <button id="btn-buscar-manual" class="btn-buscar-manual" onclick="buscarProdutoManual()" style="display:none;">🔍 Buscar Produto Novamente</button>
         </div>
 
         <div id="lista_itens"></div>
-        <button style="background:var(--primary); color:white;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
+        <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:18px;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
 
     <div id="tela-trocar-senha" class="tela card">
         <h3>🔒 Criar Nova Senha</h3>
+        <div class="aviso-senha">
+            ℹ️ Este é seu primeiro acesso. Por favor, crie uma nova senha.
+        </div>
         <div class="password-wrapper">
-            <input type="password" id="nova_senha" placeholder="Nova senha (mínimo 4 caracteres)">
+            <input type="password" id="nova_senha" placeholder="🔒 Nova senha (mínimo 4 caracteres)">
             <button type="button" class="toggle-password" onclick="toggleSenha('nova_senha', this)">👁️</button>
         </div>
-        <button style="background:var(--success); color:white; margin-top:10px;" onclick="salvarNovaSenha()">SALVAR</button>
+        <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin-top:10px;" onclick="salvarNovaSenha()">💾 SALVAR</button>
     </div>
 
     <div id="modal-relatorio" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom: 15px;">📊 Relatório de Compras</h3>
-            <div id="conteudo-relatorio"></div>
-            <button onclick="fecharModal()" style="background: var(--primary); color: white; margin-top: 15px;">FECHAR</button>
+            <div id="conteudo-relatorio" style="max-height: 400px; overflow-y: auto;"></div>
+            <button onclick="fecharModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-top: 15px;">FECHAR</button>
         </div>
     </div>
 
@@ -308,9 +535,18 @@
 
 <div class="resumo-fixo" id="barra-resumo">
     <div style="display:flex; justify-content:space-around;">
-        <div style="text-align:center"><small>Gasto</small><br><b id="res_saldo_uso">R$ 0,00</b></div>
-        <div style="text-align:center"><small>Sobra</small><br><b id="res_saldo_sobra">R$ 0,00</b></div>
-        <div style="text-align:center"><small>Extra</small><br><b id="res_extra">R$ 0,00</b></div>
+        <div style="text-align:center">
+            <small>💰 Gasto do Saldo</small><br>
+            <b id="res_saldo_uso" style="color: #ff1744; font-size: 16px;">R$ 0,00</b>
+        </div>
+        <div style="text-align:center">
+            <small>✅ Saldo Restante</small><br>
+            <b id="res_saldo_sobra" style="color: #4caf50; font-size: 16px;">R$ 0,00</b>
+        </div>
+        <div style="text-align:center">
+            <small>💵 Pagamento Extra</small><br>
+            <b id="res_extra" style="color: #ff9800; font-size: 16px;">R$ 0,00</b>
+        </div>
     </div>
 </div>
 
@@ -348,7 +584,8 @@
     let userLogado = sessionStorage.getItem('user');
     let scanner = null;
     let fotoTemp = null;
-    let debounceTimer = null;
+    let buscaTimeout = null;
+    let ultimoCodigoBuscado = '';
 
     function salvar() { 
         localStorage.setItem(DB_KEY, JSON.stringify(db)); 
@@ -374,7 +611,7 @@
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
-        mostrarToast('Backup exportado com sucesso!');
+        mostrarToast('💾 Backup exportado com sucesso!');
     }
     
     function importarBackup() {
@@ -387,14 +624,14 @@
             reader.onload = (event) => {
                 try {
                     const backupDb = JSON.parse(event.target.result);
-                    if(confirm('Isso substituirá todos os dados atuais. Continuar?')) {
+                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
                         db = backupDb;
                         salvar();
-                        mostrarToast('Backup restaurado com sucesso!');
+                        mostrarToast('✅ Backup restaurado com sucesso!');
                         location.reload();
                     }
                 } catch(err) {
-                    mostrarToast('Arquivo inválido!');
+                    mostrarToast('❌ Arquivo inválido!');
                 }
             };
             reader.readAsText(file);
@@ -402,64 +639,107 @@
         input.click();
     }
     
-    function mostrarToast(mensagem) {
+    function mostrarToast(mensagem, duracao = 4000) {
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.textContent = mensagem;
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        setTimeout(() => toast.remove(), duracao);
     }
 
-    function mostrarTela(id) {
-        document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
-        const target = document.getElementById(id);
-        if(target) target.style.display = 'block';
-        
-        document.getElementById('barra-resumo').style.display = (id === 'app-principal') ? 'block' : 'none';
-        if(id === 'app-principal') document.body.classList.add('body-com-resumo');
-        else document.body.classList.remove('body-com-resumo');
-    }
-
-    function toggleSenha(inputId, buttonElement) {
-        const input = document.getElementById(inputId);
-        if (input.type === "password") {
-            input.type = "text";
-            buttonElement.textContent = "🙈";
+    function mostrarIndicadorBusca(mostrar) {
+        const indicator = document.getElementById('searching-indicator');
+        if(mostrar) {
+            indicator.classList.add('active');
         } else {
-            input.type = "password";
-            buttonElement.textContent = "👁️";
+            indicator.classList.remove('active');
         }
     }
 
-    function debounceBuscarProduto(cod) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => buscarProduto(cod), 500);
+    function handleCodigoBarras(codigo) {
+        if(buscaTimeout) clearTimeout(buscaTimeout);
+        if(codigo.length < 8) return;
+        
+        if(db.precos[codigo]) {
+            document.getElementById('nome_prod').value = db.precos[codigo];
+            document.getElementById('btn-buscar-manual').style.display = 'none';
+            return;
+        }
+        
+        buscaTimeout = setTimeout(() => {
+            buscarProduto(codigo);
+        }, 500);
+    }
+
+    async function buscarProduto(codigo) {
+        if(!codigo || codigo.length < 8) return;
+        if(ultimoCodigoBuscado === codigo) return;
+        
+        ultimoCodigoBuscado = codigo;
+        mostrarIndicadorBusca(true);
+        
+        if(db.precos[codigo]) {
+            document.getElementById('nome_prod').value = db.precos[codigo];
+            mostrarIndicadorBusca(false);
+            mostrarToast('📦 Produto encontrado no cache!');
+            document.getElementById('btn-buscar-manual').style.display = 'none';
+            return;
+        }
+        
+        try {
+            const url = `https://world.openfoodfacts.org/api/v0/product/${codigo}.json`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if(data && data.status === 1 && data.product) {
+                let nomeProduto = data.product.product_name_pt || 
+                                 data.product.product_name || 
+                                 data.product.generic_name ||
+                                 data.product.brands;
+                
+                if(nomeProduto) {
+                    nomeProduto = nomeProduto.split(',')[0].trim();
+                    document.getElementById('nome_prod').value = nomeProduto;
+                    db.precos[codigo] = nomeProduto;
+                    salvar();
+                    mostrarToast(`✅ Produto encontrado: ${nomeProduto}`);
+                    document.getElementById('btn-buscar-manual').style.display = 'none';
+                } else {
+                    mostrarToast('⚠️ Produto encontrado mas sem nome cadastrado');
+                    document.getElementById('btn-buscar-manual').style.display = 'block';
+                }
+            } else {
+                mostrarToast('❌ Produto não encontrado. Preencha o nome manualmente.');
+                document.getElementById('btn-buscar-manual').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Erro na busca:', error);
+            mostrarToast('❌ Erro ao buscar produto. Verifique sua conexão.');
+            document.getElementById('btn-buscar-manual').style.display = 'block';
+        } finally {
+            mostrarIndicadorBusca(false);
+            setTimeout(() => {
+                if(ultimoCodigoBuscado === codigo) {
+                    ultimoCodigoBuscado = '';
+                }
+            }, 2000);
+        }
+    }
+
+    function buscarProdutoManual() {
+        const codigo = document.getElementById('codigo').value;
+        if(codigo && codigo.length >= 8) {
+            mostrarToast('🔍 Tentando buscar novamente...');
+            ultimoCodigoBuscado = '';
+            buscarProduto(codigo);
+        } else {
+            mostrarToast('📱 Digite um código de barras válido primeiro');
+        }
     }
 
     function validarPreco(preco) {
         return !isNaN(preco) && preco > 0 && preco < 1000000;
-    }
-
-    async function buscarProduto(cod) {
-        if(cod.length < 8) return;
-        if(db.precos[cod]) { 
-            document.getElementById('nome_prod').value = db.precos[cod]; 
-            return;
-        }
-
-        try {
-            const resp = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
-            const data = await resp.json();
-            if(data.status === 1) {
-                const nome = data.product.product_name || data.product.product_name_pt || data.product.generic_name;
-                if(nome) {
-                    document.getElementById('nome_prod').value = nome;
-                    db.precos[cod] = nome;
-                    salvar();
-                    mostrarToast('Produto encontrado!');
-                }
-            }
-        } catch(e) { console.warn("Erro na busca remota"); }
     }
 
     function processarFoto(event) {
@@ -478,11 +758,45 @@
                 fotoTemp = canvas.toDataURL('image/jpeg', 0.6);
                 document.getElementById('img-preview').src = fotoTemp;
                 document.getElementById('img-preview').style.display = 'block';
-                mostrarToast('Foto capturada!');
+                mostrarToast('📸 Foto capturada!');
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+
+    function mostrarTela(id) {
+        document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
+        const target = document.getElementById(id);
+        if(target) target.style.display = 'block';
+        
+        document.getElementById('barra-resumo').style.display = (id === 'app-principal') ? 'block' : 'none';
+        if(id === 'app-principal') document.body.classList.add('body-com-resumo');
+        else document.body.classList.remove('body-com-resumo');
+        
+        if(id === 'tela-login') {
+            const avisoSenha = document.getElementById('aviso-senha-padrao');
+            if(sessionStorage.getItem('mostrarAvisoSenha') === 'true') {
+                avisoSenha.style.display = 'block';
+                sessionStorage.removeItem('mostrarAvisoSenha');
+                setTimeout(() => {
+                    avisoSenha.style.display = 'none';
+                }, 5000);
+            } else {
+                avisoSenha.style.display = 'none';
+            }
+        }
+    }
+
+    function toggleSenha(inputId, buttonElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            buttonElement.textContent = "🙈";
+        } else {
+            input.type = "password";
+            buttonElement.textContent = "👁️";
+        }
     }
 
     function abrirMaster() {
@@ -495,23 +809,23 @@
                 <div class="item-lista">
                     <div>
                         <b>${u.nome}</b><br>
-                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
-                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
+                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? '👑 MASTER' : '👤 MEMBRO'}</small>
+                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">🔑 Senha padrão</small>' : ''}
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; font-size:10px; background:orange; color:white; margin:0;">RESET</button>
-                        ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:red; color:white; margin:0;">X</button>` : ''}
+                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; font-size:10px; background:orange; color:white; margin:0;">🔄 RESET</button>
+                        ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">🗑️</button>` : ''}
                     </div>
                 </div>`;
         });
     }
 
     function resetarSenha(uid) {
-        if(confirm(`Resetar senha de ${db.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
+        if(confirm(`Resetar senha de ${db.usuarios[uid].nome} para "${SENHA_PADRAO}"?\n\nO membro precisará trocar a senha no próximo acesso.`)) {
             db.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
             db.usuarios[uid].reset = true;
             salvar(); 
-            mostrarToast(`Senha de ${db.usuarios[uid].nome} resetada!`);
+            mostrarToast(`✅ Senha de ${db.usuarios[uid].nome} resetada para: ${SENHA_PADRAO}`);
             abrirMaster();
         }
     }
@@ -520,7 +834,7 @@
         if(confirm(`Deseja excluir ${db.usuarios[uid].nome} permanentemente?`)) { 
             delete db.usuarios[uid]; 
             salvar(); 
-            mostrarToast('Usuário excluído!');
+            mostrarToast('🗑️ Usuário excluído!');
             abrirMaster(); 
         }
     }
@@ -528,8 +842,10 @@
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
         if(!nome) return alert("Digite um nome!");
+        
         const id = nome.toLowerCase().replace(/\s/g, '');
         if(db.usuarios[id]) return alert("Usuário já existe!");
+        
         db.usuarios[id] = { 
             nome: nome, 
             senhaHash: hashSenha(SENHA_PADRAO), 
@@ -539,7 +855,10 @@
             historico: []
         };
         salvar(); 
-        mostrarToast(`Usuário ${nome} cadastrado com sucesso!`);
+        
+        mostrarToast(`✅ ${nome} cadastrado com sucesso!\n\n📝 Senha padrão: ${SENHA_PADRAO}\n\n⚠️ O membro deverá trocar a senha no primeiro acesso.`, 6000);
+        
+        sessionStorage.setItem('mostrarAvisoSenha', 'true');
         mostrarTela('tela-login');
     }
 
@@ -552,16 +871,18 @@
             userLogado = u;
             sessionStorage.setItem('user', u);
             if(db.usuarios[u].reset) {
-                mostrarToast('Por favor, crie uma nova senha!');
+                mostrarToast('⚠️ Esta é a senha padrão. Por favor, crie uma nova senha!', 5000);
                 mostrarTela('tela-trocar-senha');
             }
             else entrarApp();
-        } else alert("Usuário ou senha incorretos!");
+        } else {
+            alert("❌ Usuário ou senha incorretos!\n\n📝 A senha padrão é: " + SENHA_PADRAO);
+        }
     }
 
     function entrarApp() {
         mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerHTML = `Oi, ${db.usuarios[userLogado].nome} 👋`;
+        document.getElementById('boas_vindas').innerHTML = `👋 Olá, ${db.usuarios[userLogado].nome}!`;
         document.getElementById('btn-master').style.display = db.usuarios[userLogado].role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = db.saldo;
         renderizar();
@@ -574,12 +895,12 @@
         const met = document.getElementById('metodo_pagto').value;
         
         if(!validarPreco(preco)) {
-            alert("Por favor, insira um preço válido!");
+            alert("💰 Por favor, insira um preço válido!");
             return;
         }
         
         if(preco <= 0) {
-            alert("Preço deve ser maior que zero!");
+            alert("💰 Preço deve ser maior que zero!");
             return;
         }
 
@@ -600,7 +921,7 @@
         document.getElementById('codigo').value = "";
         salvar(); 
         renderizar();
-        mostrarToast('Item adicionado!');
+        mostrarToast('➕ Item adicionado à lista!');
     }
 
     function renderizar() {
@@ -610,7 +931,7 @@
         const itens = db.usuarios[userLogado].lista;
         
         if(itens.length === 0) {
-            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">Nenhum item adicionado ainda</div>';
+            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item adicionado ainda</div>';
         }
         
         itens.forEach((it, i) => {
@@ -623,10 +944,10 @@
                         <div style="flex:1;">
                             <b>${it.nome.substring(0, 30)}</b><br>
                             <small>${it.qtd}x R$ ${it.preco.toFixed(2)} = R$ ${it.total.toFixed(2)}</small>
-                            <br><small class="badge ${it.met === 'saldo' ? 'badge-success' : 'badge-warning'}">${it.met === 'saldo' ? 'Saldo' : 'Extra'}</small>
+                            <br><small class="badge ${it.met === 'saldo' ? 'badge-success' : 'badge-warning'}">${it.met === 'saldo' ? '💳 Saldo' : '💵 Extra'}</small>
                         </div>
                     </div>
-                    <button onclick="removerItemComConfirmacao(${i})" style="width:30px; background:none; color:red; font-size:20px; margin:0; height:30px;">&times;</button>
+                    <button onclick="removerItemComConfirmacao(${i})" style="width:30px; background:none; color:#ff1744; font-size:20px; margin:0; height:30px;">&times;</button>
                 </div>`;
         });
         document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
@@ -635,18 +956,18 @@
     }
 
     function removerItemComConfirmacao(i) {
-        if(confirm('Remover este item da lista?')) {
+        if(confirm('🗑️ Remover este item da lista?')) {
             db.usuarios[userLogado].lista.splice(i, 1); 
             salvar(); 
             renderizar();
-            mostrarToast('Item removido');
+            mostrarToast('🗑️ Item removido');
         }
     }
 
     function finalizarCompra() {
         const itens = db.usuarios[userLogado].lista;
         if(itens.length === 0) {
-            alert('Nenhum item para finalizar!');
+            alert('🛒 Nenhum item para finalizar!');
             return;
         }
         
@@ -658,11 +979,11 @@
         });
         
         if(gasto > db.saldo) {
-            alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)} | Disponível: R$ ${db.saldo.toFixed(2)}`);
+            alert(`❌ Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)} | Disponível: R$ ${db.saldo.toFixed(2)}`);
             return;
         }
         
-        if(confirm(`Confirmar compra?\n\nGasto do Saldo: R$ ${gasto.toFixed(2)}\nPagamento Extra: R$ ${extra.toFixed(2)}\nSaldo restante: R$ ${(db.saldo - gasto).toFixed(2)}`)) {
+        if(confirm(`✅ Confirmar compra?\n\n💰 Gasto do Saldo: R$ ${gasto.toFixed(2)}\n💵 Pagamento Extra: R$ ${extra.toFixed(2)}\n💚 Saldo restante: R$ ${(db.saldo - gasto).toFixed(2)}`)) {
             const compra = {
                 data: new Date().toISOString(),
                 itens: [...itens],
@@ -676,7 +997,7 @@
             db.saldo -= gasto;
             db.usuarios[userLogado].lista = [];
             salvar(); 
-            mostrarToast('Compra finalizada com sucesso!');
+            mostrarToast('✅ Compra finalizada com sucesso!');
             entrarApp();
         }
     }
@@ -687,18 +1008,18 @@
         const conteudo = document.getElementById('conteudo-relatorio');
         
         if(historico.length === 0) {
-            conteudo.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma compra registrada ainda</p>';
+            conteudo.innerHTML = '<p style="text-align:center; color:#999;">📊 Nenhuma compra registrada ainda</p>';
         } else {
             conteudo.innerHTML = historico.slice().reverse().map((compra, idx) => `
                 <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-                    <small style="color:#666;">${new Date(compra.data).toLocaleString('pt-BR')}</small>
+                    <small style="color:#666;">📅 ${new Date(compra.data).toLocaleString('pt-BR')}</small>
                     <div><b>${compra.itens.length} itens</b></div>
-                    <div>💰 Saldo: R$ ${compra.gastoSaldo.toFixed(2)} | Extra: R$ ${compra.pagamentoExtra.toFixed(2)}</div>
+                    <div>💰 Saldo: R$ ${compra.gastoSaldo.toFixed(2)} | 💵 Extra: R$ ${compra.pagamentoExtra.toFixed(2)}</div>
                     <details>
-                        <summary style="cursor:pointer; color: var(--primary);">Ver itens</summary>
+                        <summary style="cursor:pointer; color: #667eea; margin-top:5px;">📋 Ver itens</summary>
                         ${compra.itens.map(item => `
                             <div style="font-size:12px; margin-left: 10px; margin-top: 5px;">
-                                • ${item.qtd}x ${item.nome} - R$ ${item.total.toFixed(2)} (${item.met === 'saldo' ? 'Saldo' : 'Extra'})
+                                • ${item.qtd}x ${item.nome} - R$ ${item.total.toFixed(2)} (${item.met === 'saldo' ? '💳 Saldo' : '💵 Extra'})
                             </div>
                         `).join('')}
                     </details>
@@ -721,9 +1042,9 @@
                 document.getElementById('codigo').value = txt;
                 buscarProduto(txt);
                 pararScanner();
-                mostrarToast('Código lido!');
+                mostrarToast('📷 Código lido com sucesso!');
             }).catch(e => {
-                alert("Câmera bloqueada ou erro de permissão.");
+                alert("❌ Câmera bloqueada ou erro de permissão.");
                 pararScanner();
             });
         } else pararScanner();
@@ -744,9 +1065,9 @@
             db.saldo = novoSaldo; 
             salvar(); 
             renderizar();
-            mostrarToast(`Saldo atualizado para R$ ${novoSaldo.toFixed(2)}`);
+            mostrarToast(`💰 Saldo atualizado para R$ ${novoSaldo.toFixed(2)}`);
         } else {
-            alert('Valor inválido!');
+            alert('❌ Valor inválido!');
         }
     }
     
@@ -757,11 +1078,11 @@
     
     function salvarNovaSenha() {
         const n = document.getElementById('nova_senha').value;
-        if(n.length < 4) return alert("Senha deve ter no mínimo 4 caracteres!");
+        if(n.length < 4) return alert("🔒 Senha deve ter no mínimo 4 caracteres!");
         db.usuarios[userLogado].senhaHash = hashSenha(n);
         db.usuarios[userLogado].reset = false;
         salvar(); 
-        mostrarToast('Senha alterada com sucesso!');
+        mostrarToast('✅ Senha alterada com sucesso!');
         entrarApp();
     }
 
