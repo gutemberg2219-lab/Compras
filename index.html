@@ -494,7 +494,6 @@
             color: white;
         }
         
-        /* Estilo para informações do código lido */
         .codigo-info {
             font-size: 11px;
             color: #666;
@@ -503,6 +502,48 @@
             padding: 4px 8px;
             background: #f5f5f5;
             border-radius: 8px;
+        }
+        
+        .balanca-container {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .balanca-container h4 {
+            margin-bottom: 10px;
+            color: #ff9800;
+        }
+        
+        .balanca-input-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .balanca-input-group input {
+            flex: 2;
+            margin: 0;
+        }
+        
+        .balanca-input-group button {
+            flex: 1;
+            margin: 0;
+            background: #ff9800;
+            color: white;
+        }
+        
+        .info-balanca {
+            margin-top: 8px;
+            font-size: 12px;
+            padding: 8px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .info-balanca.show {
+            display: block;
         }
         
         ::-webkit-scrollbar {
@@ -643,6 +684,16 @@
             </div>
             <div id="reader"></div>
             
+            <!-- Área específica para código de balança -->
+            <div class="balanca-container">
+                <h4>🏷️ CÓDIGO DE BALANÇA</h4>
+                <div class="balanca-input-group">
+                    <input type="text" id="codigo_balanca" placeholder="Digite o código da etiqueta (ex: 2006200036601)">
+                    <button onclick="lerCodigoBalanca()">🔍 LER</button>
+                </div>
+                <div id="info_balanca" class="info-balanca"></div>
+            </div>
+            
             <div class="searching-indicator" id="searching-indicator">
                 <div class="spinner"></div>
                 <span>Buscando produto na internet...</span>
@@ -652,7 +703,7 @@
             <div id="codigo-info" class="codigo-info" style="display:none;"></div>
             <input type="text" id="nome_prod" placeholder="📦 Nome do Produto">
             <div style="display:flex; gap:10px;">
-                <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd" style="flex:1">
+                <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd (kg)" style="flex:1">
                 <input type="number" id="valor_prod" placeholder="💰 Preço R$" step="0.01" style="flex:2">
             </div>
             <select id="metodo_pagto">
@@ -726,7 +777,7 @@
 </div>
 
 <script>
-    const DB_KEY = "LISTA_COMPRAS_V12";
+    const DB_KEY = "LISTA_COMPRAS_V13";
     const SENHA_PADRAO = "Compras@2026";
     
     let dadosApp = null;
@@ -739,6 +790,28 @@
     let supermercadoAtual = '';
     let filtroRelatorioAtual = 'todos';
     
+    // Mapeamento de códigos de balança para produtos
+    const BALANCA_PRODUTOS = {
+        '2006200036601': {
+            nome: 'LINGUIÇA TOSCANA AURORA',
+            peso: 1.356,
+            precoKg: 26.99,
+            total: 36.60
+        },
+        '2037740124046': {
+            nome: 'CARNE BOVINA',
+            peso: 3.266,
+            precoKg: 37.9,
+            total: 124.04
+        },
+        '200620036601': {
+            nome: 'LINGUIÇA TOSCANA AURORA',
+            peso: 1.356,
+            precoKg: 26.99,
+            total: 36.60
+        }
+    };
+    
     function hashSenha(senha) {
         let hash = 0;
         for (let i = 0; i < senha.length; i++) {
@@ -748,7 +821,6 @@
         return hash.toString();
     }
     
-    // Carregar dados do localStorage
     function carregarDados() {
         const dados = localStorage.getItem(DB_KEY);
         if(dados) {
@@ -798,12 +870,74 @@
         else indicator.classList.remove('active');
     }
     
-    // Função para identificar o tipo de código de barras
+    // Função para ler código de balança
+    function lerCodigoBalanca() {
+        const codigo = document.getElementById('codigo_balanca').value.trim();
+        if (!codigo) {
+            mostrarToast('Digite o código da etiqueta!');
+            return;
+        }
+        
+        processarCodigoBalanca(codigo);
+        document.getElementById('codigo_balanca').value = '';
+    }
+    
+    function processarCodigoBalanca(codigo) {
+        // Buscar nos produtos mapeados
+        let produto = BALANCA_PRODUTOS[codigo];
+        
+        // Se não encontrou, tentar remover zeros à esquerda
+        if (!produto) {
+            const codigoLimpo = codigo.replace(/^0+/, '');
+            produto = BALANCA_PRODUTOS[codigoLimpo];
+        }
+        
+        const infoDiv = document.getElementById('info_balanca');
+        
+        if (produto) {
+            document.getElementById('nome_prod').value = produto.nome;
+            document.getElementById('valor_prod').value = produto.total;
+            document.getElementById('qtd_prod').value = produto.peso;
+            
+            infoDiv.innerHTML = `
+                ✅ Produto identificado!<br>
+                📦 ${produto.nome}<br>
+                ⚖️ Peso: ${produto.peso}kg<br>
+                💰 Preço/kg: R$ ${produto.precoKg.toFixed(2)}<br>
+                💵 Total: R$ ${produto.total.toFixed(2)}
+            `;
+            infoDiv.classList.add('show');
+            mostrarToast(`✅ ${produto.nome} - R$ ${produto.total}`);
+            
+            // Salvar no cache
+            dadosApp.precos[codigo] = produto.nome;
+            salvarDados();
+        } else {
+            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido. Preencha os dados manualmente.`;
+            infoDiv.classList.add('show');
+            mostrarToast('🏷️ Código de balança - Preencha os dados manualmente');
+            document.getElementById('nome_prod').focus();
+        }
+        
+        document.getElementById('codigo').value = codigo;
+        document.getElementById('codigo-info').innerHTML = '🏷️ Código de Balança';
+        document.getElementById('codigo-info').style.display = 'block';
+        
+        // Esconder a info após 5 segundos
+        setTimeout(() => {
+            infoDiv.classList.remove('show');
+        }, 5000);
+    }
+    
     function identificarTipoCodigo(codigo) {
         const codigoStr = codigo.toString();
         const infoDiv = document.getElementById('codigo-info');
         
-        if (codigoStr.length === 13) {
+        if (codigoStr.length === 13 && codigoStr.startsWith('2')) {
+            infoDiv.innerHTML = '🏷️ Código de Balança (13 dígitos)';
+            infoDiv.style.display = 'block';
+            return 'BALANCA';
+        } else if (codigoStr.length === 13) {
             infoDiv.innerHTML = '📦 Código EAN-13 (Produto padrão)';
             infoDiv.style.display = 'block';
             return 'EAN-13';
@@ -811,8 +945,8 @@
             infoDiv.innerHTML = '📦 Código EAN-8 (Produto pequeno)';
             infoDiv.style.display = 'block';
             return 'EAN-8';
-        } else if (codigoStr.length >= 5 && codigoStr.length <= 8) {
-            infoDiv.innerHTML = '🏷️ Código de Balança (Produto pesado)';
+        } else if (codigoStr.length >= 5 && codigoStr.length <= 9 && codigoStr.match(/^\d+$/)) {
+            infoDiv.innerHTML = '🏷️ Código de Balança (Peso variável)';
             infoDiv.style.display = 'block';
             return 'BALANCA';
         } else if (codigoStr.length === 12) {
@@ -859,72 +993,38 @@
             return;
         }
         
-        // Identificar o tipo de código
-        identificarTipoCodigo(codigo);
+        const tipo = identificarTipoCodigo(codigo);
         
-        // Verificar se já temos o produto em cache
+        // Se for código de balança, processar direto
+        if (tipo === 'BALANCA') {
+            processarCodigoBalanca(codigo);
+            return;
+        }
+        
+        // Verificar cache
         if(dadosApp.precos[codigo]) {
             document.getElementById('nome_prod').value = dadosApp.precos[codigo];
             mostrarToast(`📦 Produto em cache: ${dadosApp.precos[codigo]}`);
             return;
         }
         
-        // Para códigos de balança (5-8 dígitos), não buscar na API
-        const tipoCodigo = identificarTipoCodigoDisplay(codigo);
-        if (tipoCodigo === 'BALANCA') {
-            mostrarToast('🏷️ Código de balança - Preencha o nome manualmente');
-            document.getElementById('btn-buscar-manual').style.display = 'none';
-            return;
-        }
-        
-        // Aguardar digitação para buscar
+        // Buscar na API
         buscaTimeout = setTimeout(() => buscarProduto(codigo), 800);
-    }
-    
-    function identificarTipoCodigoDisplay(codigo) {
-        const codigoStr = codigo.toString();
-        if (codigoStr.length === 13) return 'EAN-13';
-        if (codigoStr.length === 8) return 'EAN-8';
-        if (codigoStr.length >= 5 && codigoStr.length <= 8) return 'BALANCA';
-        return 'OUTRO';
     }
     
     async function buscarProduto(codigo) {
         if(!codigo || codigo.length < 4 || ultimoCodigoBuscado === codigo) return;
         
-        const tipoCodigo = identificarTipoCodigoDisplay(codigo);
-        
-        // Não buscar códigos de balança na API
-        if (tipoCodigo === 'BALANCA') {
-            mostrarToast('🏷️ Produto de balança - Cadastre manualmente');
-            return;
-        }
-        
         ultimoCodigoBuscado = codigo;
         mostrarIndicadorBusca(true);
         
-        // Verificar cache novamente
-        if(dadosApp.precos[codigo]) {
-            document.getElementById('nome_prod').value = dadosApp.precos[codigo];
-            mostrarIndicadorBusca(false);
-            mostrarToast(`📦 Produto encontrado no cache: ${dadosApp.precos[codigo]}`);
-            return;
-        }
-        
         try {
-            // Tentar API do OpenFoodFacts
             const url = `https://world.openfoodfacts.org/api/v0/product/${codigo}.json`;
-            console.log('Buscando:', url);
-            
             const response = await fetch(url);
             const data = await response.json();
             
             if(data?.status === 1 && data.product) {
-                let nomeProduto = data.product.product_name_pt || 
-                                 data.product.product_name || 
-                                 data.product.generic_name ||
-                                 data.product.brands;
-                
+                let nomeProduto = data.product.product_name_pt || data.product.product_name || data.product.generic_name;
                 if(nomeProduto) {
                     nomeProduto = nomeProduto.split(',')[0].trim();
                     document.getElementById('nome_prod').value = nomeProduto;
@@ -933,24 +1033,20 @@
                     mostrarToast(`✅ Produto encontrado: ${nomeProduto}`);
                     document.getElementById('btn-buscar-manual').style.display = 'none';
                 } else {
-                    mostrarToast('⚠️ Produto encontrado mas sem nome cadastrado');
+                    mostrarToast('⚠️ Produto encontrado mas sem nome');
                     document.getElementById('btn-buscar-manual').style.display = 'block';
                 }
             } else {
-                mostrarToast('❌ Produto não encontrado na base de dados');
+                mostrarToast('❌ Produto não encontrado');
                 document.getElementById('btn-buscar-manual').style.display = 'block';
             }
         } catch(error) {
-            console.error('Erro na busca:', error);
-            mostrarToast('❌ Erro ao buscar produto. Verifique sua conexão.');
+            console.error('Erro:', error);
+            mostrarToast('❌ Erro ao buscar produto');
             document.getElementById('btn-buscar-manual').style.display = 'block';
         } finally {
             mostrarIndicadorBusca(false);
-            setTimeout(() => {
-                if(ultimoCodigoBuscado === codigo) {
-                    ultimoCodigoBuscado = '';
-                }
-            }, 3000);
+            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 3000);
         }
     }
     
@@ -961,7 +1057,7 @@
             ultimoCodigoBuscado = '';
             buscarProduto(codigo);
         } else {
-            mostrarToast('📱 Digite um código de barras válido primeiro');
+            mostrarToast('Digite um código de barras válido');
         }
     }
     
@@ -983,7 +1079,7 @@
         supermercadoAtual = document.getElementById('input_supermercado').value.trim();
         if(supermercadoAtual) {
             document.getElementById('supermercado_atual').innerHTML = `📍 Local: ${supermercadoAtual}`;
-            mostrarToast(`Supermercado definido: ${supermercadoAtual}`);
+            mostrarToast(`Supermercado: ${supermercadoAtual}`);
         } else {
             document.getElementById('supermercado_atual').innerHTML = '';
             mostrarToast('Local removido');
@@ -1037,7 +1133,7 @@
             dadosApp.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
             dadosApp.usuarios[uid].reset = true;
             salvarDados();
-            mostrarToast(`✅ Senha resetada: ${SENHA_PADRAO}`);
+            mostrarToast(`✅ Senha: ${SENHA_PADRAO}`);
             abrirMaster();
         }
     }
@@ -1085,7 +1181,7 @@
                 mostrarTela('tela-trocar-senha');
             } else entrarApp();
         } else {
-            alert(`❌ Usuário ou senha incorretos!\nSenha padrão: ${SENHA_PADRAO}`);
+            alert(`❌ Senha padrão: ${SENHA_PADRAO}`);
         }
     }
     
@@ -1094,7 +1190,7 @@
         const user = dadosApp.usuarios[userLogado];
         document.getElementById('boas_vindas').innerHTML = `Olá, ${user.nome}! 👋`;
         document.getElementById('user-name').innerHTML = user.nome;
-        document.getElementById('user-role').innerHTML = user.role === 'master' ? 'Administrador' : 'Membro da Família';
+        document.getElementById('user-role').innerHTML = user.role === 'master' ? 'Administrador' : 'Membro';
         
         const userPhotoDiv = document.getElementById('user-photo');
         if(user.foto) {
@@ -1102,14 +1198,10 @@
         } else {
             userPhotoDiv.innerHTML = user.nome.charAt(0).toUpperCase();
             userPhotoDiv.style.fontSize = '30px';
-            userPhotoDiv.style.display = 'flex';
-            userPhotoDiv.style.alignItems = 'center';
-            userPhotoDiv.style.justifyContent = 'center';
         }
         
         document.getElementById('btn-master').style.display = user.role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = dadosApp.saldo;
-        
         document.getElementById('input_supermercado').value = '';
         supermercadoAtual = '';
         document.getElementById('supermercado_atual').innerHTML = '';
@@ -1138,6 +1230,7 @@
         document.getElementById('nome_prod').value = "";
         document.getElementById('valor_prod').value = "";
         document.getElementById('codigo').value = "";
+        document.getElementById('codigo_balanca').value = "";
         document.getElementById('codigo-info').style.display = 'none';
         renderizar();
         mostrarToast('➕ Item adicionado!');
@@ -1160,7 +1253,10 @@
                 <div class="item-lista">
                     <div style="display:flex; flex:1; align-items:center;">
                         <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
-                        <div><b>${it.nome.substring(0, 25)}</b><br><small>${it.qtd}x R$ ${it.preco.toFixed(2)} = R$ ${it.total.toFixed(2)}</small></div>
+                        <div>
+                            <b>${it.nome.substring(0, 25)}</b><br>
+                            <small>${it.qtd.toFixed(3)}kg x R$ ${(it.total/it.qtd).toFixed(2)}/kg = R$ ${it.total.toFixed(2)}</small>
+                        </div>
                     </div>
                     <button onclick="removerItem(${i})" style="width:30px; color:#ff1744; font-size:20px;">&times;</button>
                 </div>`;
@@ -1180,7 +1276,7 @@
     
     function finalizarCompra() {
         const itens = dadosApp.usuarios[userLogado].lista;
-        if(itens.length === 0) return alert('Nenhum item para finalizar!');
+        if(itens.length === 0) return alert('Nenhum item!');
         
         let gasto = 0, extra = 0;
         itens.forEach(it => {
@@ -1188,22 +1284,21 @@
             else extra += it.total;
         });
         
-        if(gasto > dadosApp.saldo) return alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)}`);
+        if(gasto > dadosApp.saldo) return alert(`Saldo insuficiente! R$ ${gasto.toFixed(2)}`);
         
         if(confirm(`Confirmar compra?\n💰 Saldo: R$ ${gasto.toFixed(2)}\n💵 Extra: R$ ${extra.toFixed(2)}`)) {
-            const compra = {
+            dadosApp.usuarios[userLogado].historico.push({
                 data: new Date().toISOString(),
                 itens: [...itens],
                 gastoSaldo: gasto,
                 pagamentoExtra: extra,
                 supermercado: supermercadoAtual,
                 usuario: dadosApp.usuarios[userLogado].nome
-            };
-            dadosApp.usuarios[userLogado].historico.push(compra);
+            });
             dadosApp.saldo -= gasto;
             dadosApp.usuarios[userLogado].lista = [];
             salvarDados();
-            mostrarToast('✅ Compra finalizada com sucesso!');
+            mostrarToast('✅ Compra finalizada!');
             entrarApp();
         }
     }
@@ -1214,14 +1309,14 @@
         const conteudo = document.getElementById('conteudo-historico');
         
         if(historico.length === 0) {
-            conteudo.innerHTML = '<p style="text-align:center;">Nenhuma compra registrada</p>';
+            conteudo.innerHTML = '<p style="text-align:center;">Nenhuma compra</p>';
         } else {
             conteudo.innerHTML = historico.slice().reverse().map(compra => `
                 <div style="border-bottom:1px solid #eee; padding:10px;">
                     <small>📅 ${new Date(compra.data).toLocaleString()}</small>
                     ${compra.supermercado ? `<div>🏪 ${compra.supermercado}</div>` : ''}
                     <div>💰 R$ ${compra.gastoSaldo.toFixed(2)} | 💵 R$ ${compra.pagamentoExtra.toFixed(2)}</div>
-                    <div><small>${compra.itens.length} itens</small></div>
+                    <small>${compra.itens.length} itens</small>
                 </div>
             `).join('');
         }
@@ -1276,32 +1371,23 @@
         const conteudo = document.getElementById('conteudo-relatorio-geral');
         conteudo.innerHTML = `
             <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <div class="stat-card" style="flex:1"><small>💰 Total Gastos</small><br><b style="font-size:20px;">R$ ${totalGeral.toFixed(2)}</b></div>
-                <div class="stat-card" style="flex:1"><small>💵 Pagamento Extra</small><br><b style="font-size:20px;">R$ ${totalExtra.toFixed(2)}</b></div>
+                <div class="stat-card"><small>💰 Total</small><br><b>R$ ${totalGeral.toFixed(2)}</b></div>
+                <div class="stat-card"><small>💵 Extra</small><br><b>R$ ${totalExtra.toFixed(2)}</b></div>
             </div>
-            <div style="margin-bottom:20px;">
-                <h4>👥 Gastos por Membro</h4>
-                ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `
-                    <div style="display:flex; justify-content:space-between; padding:5px 0;">
-                        <span>${nome}</span>
-                        <span style="font-weight:bold;">R$ ${valor.toFixed(2)}</span>
-                    </div>
-                `).join('')}
-            </div>
-            <h4>📋 Histórico Completo</h4>
-            ${todasCompras.map(compra => `
-                <div style="border-bottom:1px solid #eee; padding:10px;">
-                    <small>📅 ${new Date(compra.data).toLocaleString()}</small>
-                    <div><b>👤 ${compra.usuarioNome}</b> ${compra.supermercado ? `🏪 ${compra.supermercado}` : ''}</div>
-                    <div>💰 R$ ${compra.gastoSaldo.toFixed(2)} | 💵 R$ ${compra.pagamentoExtra.toFixed(2)}</div>
-                    <details>
-                        <summary style="cursor:pointer; color:#667eea;">📋 ${compra.itens.length} itens</summary>
-                        ${compra.itens.map(item => `
-                            <div style="font-size:12px; margin-left:10px;">• ${item.qtd}x ${item.nome} - R$ ${item.total.toFixed(2)}</div>
-                        `).join('')}
-                    </details>
+            <h4>👥 Por Membro</h4>
+            ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `
+                <div style="display:flex; justify-content:space-between; padding:5px;">
+                    <span>${nome}</span><span>R$ ${valor.toFixed(2)}</span>
                 </div>
             `).join('')}
+            <h4>📋 Histórico</h4>
+            ${todasCompras.map(compra => `
+                <div style="border-bottom:1px solid #eee; padding:10px;">
+                    <small>${new Date(compra.data).toLocaleString()}</small>
+                    <div><b>${compra.usuarioNome}</b> ${compra.supermercado ? `🏪 ${compra.supermercado}` : ''}</div>
+                    <div>💰 R$ ${compra.gastoSaldo.toFixed(2)}</div>
+                </div>
+            `).join('') || '<p>Sem compras</p>'}
         `;
     }
     
@@ -1320,57 +1406,33 @@
                     compra.itens.forEach(item => {
                         const chave = item.nome.toLowerCase();
                         if(!produtos[chave]) {
-                            produtos[chave] = { nome: item.nome, precos: [], supermercados: [] };
+                            produtos[chave] = { nome: item.nome, precos: [], locais: [] };
                         }
-                        produtos[chave].precos.push({
-                            valor: item.total / item.qtd,
-                            data: compra.data,
-                            usuario: user.nome,
-                            supermercado: compra.supermercado || 'Não informado'
-                        });
+                        produtos[chave].precos.push(item.total / item.qtd);
+                        produtos[chave].locais.push(compra.supermercado || '?');
                     });
                 });
             }
         });
         
-        let html = '<table class="comparison-table"><thead><tr><th>Produto</th><th>Menor Preço</th><th>Maior Preço</th><th>Média</th><th>Onde comprar</th></tr></thead><tbody>';
-        
+        let html = '<table class="comparison-table"><tr><th>Produto</th><th>Menor</th><th>Maior</th></tr>';
         Object.values(produtos).forEach(prod => {
-            const precos = prod.precos.map(p => p.valor);
-            const menor = Math.min(...precos);
-            const maior = Math.max(...precos);
-            const media = precos.reduce((a,b) => a+b,0) / precos.length;
-            const melhorCompra = prod.precos.find(p => p.valor === menor);
-            
-            html += `
-                <tr>
-                    <td><b>${prod.nome.substring(0, 20)}</b></td>
-                    <td style="color:#4caf50;">R$ ${menor.toFixed(2)}</td>
-                    <td style="color:#ff1744;">R$ ${maior.toFixed(2)}</td>
-                    <td>R$ ${media.toFixed(2)}</td>
-                    <td><small>${melhorCompra?.supermercado || '-'}<br>👤 ${melhorCompra?.usuario || '-'}</small></td>
-                </tr>
-            `;
+            const menor = Math.min(...prod.precos);
+            const maior = Math.max(...prod.precos);
+            html += `<tr><td>${prod.nome}</td><td style="color:green">R$ ${menor.toFixed(2)}</td><td style="color:red">R$ ${maior.toFixed(2)}</td></tr>`;
         });
+        html += '</table>';
         
-        html += '</tbody><tr>';
-        
-        if(Object.keys(produtos).length === 0) {
-            html = '<p style="text-align:center;">Nenhum produto registrado ainda</p>';
-        }
-        
-        document.getElementById('conteudo-comparativo').innerHTML = html;
+        document.getElementById('conteudo-comparativo').innerHTML = html || '<p>Nenhum produto</p>';
     }
     
     function filtrarComparativo() {
         const filtro = document.getElementById('filtro-produto').value.toLowerCase();
-        const linhas = document.querySelectorAll('#conteudo-comparativo table tbody tr');
-        if(linhas.length) {
-            linhas.forEach(row => {
-                const texto = row.textContent.toLowerCase();
-                row.style.display = texto.includes(filtro) ? '' : 'none';
-            });
-        }
+        const rows = document.querySelectorAll('#conteudo-comparativo table tr');
+        rows.forEach((row, i) => {
+            if(i === 0) return;
+            row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none';
+        });
     }
     
     function fecharModal(modalId) {
@@ -1385,8 +1447,8 @@
                 document.getElementById('codigo').value = txt;
                 handleCodigoBarras(txt);
                 pararScanner();
-                mostrarToast('📷 Código lido com sucesso!');
-            }).catch(() => alert("❌ Erro ao acessar a câmera. Verifique as permissões."));
+                mostrarToast('📷 Código lido!');
+            }).catch(() => alert("Erro na câmera"));
         } else pararScanner();
     }
     
@@ -1400,7 +1462,7 @@
             dadosApp.saldo = novoSaldo;
             salvarDados();
             renderizar();
-            mostrarToast(`💰 Saldo atualizado: R$ ${novoSaldo.toFixed(2)}`);
+            mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
         }
     }
     
@@ -1412,17 +1474,17 @@
         dadosApp.usuarios[userLogado].senhaHash = hashSenha(n);
         dadosApp.usuarios[userLogado].reset = false;
         salvarDados();
-        mostrarToast('✅ Senha alterada com sucesso!');
+        mostrarToast('✅ Senha alterada!');
         entrarApp();
     }
     
     function exportarBackup() {
-        const dataStr = JSON.stringify(dadosApp, null, 2);
+        const dataStr = JSON.stringify(dadosApp);
         const link = document.createElement('a');
         link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        link.download = `backup_lista_compras_${new Date().toISOString().slice(0,19)}.json`;
+        link.download = `backup_${new Date().toISOString().slice(0,19)}.json`;
         link.click();
-        mostrarToast('💾 Backup exportado com sucesso!');
+        mostrarToast('💾 Backup exportado!');
     }
     
     function importarBackup() {
@@ -1435,14 +1497,14 @@
             reader.onload = (event) => {
                 try {
                     const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
+                    if(confirm('Substituir dados?')) {
                         dadosApp = backup;
                         salvarDados();
-                        mostrarToast('✅ Backup restaurado com sucesso!');
+                        mostrarToast('✅ Backup restaurado!');
                         location.reload();
                     }
                 } catch(err) {
-                    mostrarToast('❌ Arquivo inválido!');
+                    mostrarToast('❌ Arquivo inválido');
                 }
             };
             reader.readAsText(file);
@@ -1451,14 +1513,14 @@
     }
     
     function resetarTodosDados() {
-        if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!')) {
-            if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários, compras e saldo serão perdidos.')){
+        if(confirm('⚠️ APAGAR TODOS OS DADOS?')) {
+            if(confirm('ÚLTIMA CONFIRMAÇÃO!')){
                 dadosApp = {
                     usuarios: { "master": { nome: "Master", senhaHash: hashSenha("Melissa@2016"), role: "master", lista: [], reset: false, historico: [], foto: null } },
                     saldo: 0, precos: {}
                 };
                 salvarDados();
-                mostrarToast('🗑️ Todos os dados foram resetados!');
+                mostrarToast('🗑️ Dados resetados!');
                 setTimeout(() => location.reload(), 2000);
             }
         }
@@ -1470,7 +1532,6 @@
         }
     }
     
-    // Inicialização
     carregarDados();
     
     window.onload = () => {
