@@ -128,7 +128,6 @@
         }
         
         button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .item-lista { 
             background: rgba(255, 255, 255, 0.95);
@@ -508,14 +507,6 @@
         
         .info-balanca.show { display: block; }
         
-        .backup-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .backup-buttons button { flex: 1; margin: 0; }
-        
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -599,7 +590,8 @@
         
         <h3 style="margin: 15px 0;">🛡️ Membros Cadastrados</h3>
         <div id="lista-usuarios-master"></div>
-        <button onclick="resetarTodosDados()" style="background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white;">⚠️ RESETAR TUDO</button>
+        <button onclick="recarregarListaMaster()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">🔄 RECARREGAR</button>
+        <button onclick="resetarTodosDados()" style="background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white; margin-top: 10px;">⚠️ RESETAR TUDO</button>
     </div>
 
     <!-- APP PRINCIPAL -->
@@ -700,7 +692,7 @@
 </div>
 
 <script>
-    const DB_KEY = "LISTA_COMPRAS_V16_INSTANTANEO";
+    const DB_KEY = "LISTA_COMPRAS_V17_FINAL";
     const SENHA_PADRAO = "Compras@2026";
     
     let dadosApp = null;
@@ -750,62 +742,36 @@
         else indicator.classList.remove('active');
     }
     
-    // CARREGAMENTO CORRIGIDO E ROBUSTO
+    // Carregar dados
     function carregarDados() {
         const dadosSalvos = localStorage.getItem(DB_KEY);
         if (dadosSalvos) {
             try {
                 dadosApp = JSON.parse(dadosSalvos);
                 console.log("✅ Dados carregados!");
+                console.log("👥 Usuários:", Object.keys(dadosApp.usuarios));
             } catch(e) {
                 console.error("Erro ao carregar:", e);
                 dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
             }
         } else {
+            console.log("📦 Criando dados padrão");
             dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
             salvarDados();
         }
         
-        // Valida e corrige estrutura dos usuários
-        const usuariosValidos = {};
+        // Garantir estrutura correta
         Object.keys(dadosApp.usuarios).forEach(uid => {
-            const u = dadosApp.usuarios[uid];
-            if (u && typeof u.nome === 'string' && u.nome.trim() !== '') {
-                u.foto = u.foto || null;
-                u.historico = Array.isArray(u.historico) ? u.historico : [];
-                u.lista = Array.isArray(u.lista) ? u.lista : [];
-                u.role = u.role || (uid === 'master' ? 'master' : 'user');
-                u.senhaHash = u.senhaHash || hashSenha(SENHA_PADRAO);
-                u.reset = u.reset === true;
-                usuariosValidos[uid] = u;
-            } else {
-                console.warn(`Usuário inválido removido: ${uid}`);
-            }
+            if (!dadosApp.usuarios[uid].foto) dadosApp.usuarios[uid].foto = null;
+            if (!dadosApp.usuarios[uid].historico) dadosApp.usuarios[uid].historico = [];
+            if (!dadosApp.usuarios[uid].lista) dadosApp.usuarios[uid].lista = [];
         });
-        dadosApp.usuarios = usuariosValidos;
-        
-        // Garantir que usuário master exista
-        if (!dadosApp.usuarios['master']) {
-            dadosApp.usuarios['master'] = {
-                nome: "Master",
-                senhaHash: hashSenha("Melissa@2016"),
-                role: "master",
-                lista: [],
-                reset: false,
-                historico: [],
-                foto: null
-            };
-        }
-        
-        dadosApp.saldo = typeof dadosApp.saldo === 'number' ? dadosApp.saldo : 0;
-        dadosApp.precos = dadosApp.precos || {};
-        
-        salvarDados();
     }
     
     function salvarDados() {
         localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
         console.log("💾 Dados salvos!");
+        console.log("👥 Total usuários:", Object.keys(dadosApp.usuarios).length);
     }
     
     function mostrarToast(msg, duracao = 2000) {
@@ -814,6 +780,11 @@
         toast.textContent = msg;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), duracao);
+    }
+    
+    function recarregarListaMaster() {
+        abrirMaster();
+        mostrarToast('🔄 Lista recarregada!');
     }
     
     function mostrarIndicadorBusca(mostrar) {
@@ -965,13 +936,10 @@
         if(supermercadoAtual) {
             document.getElementById('supermercado_atual').innerHTML = `📍 ${supermercadoAtual}`;
             mostrarToast(`Supermercado: ${supermercadoAtual}`);
-            dadosApp.supermercadoAtual = supermercadoAtual;
-            salvarDados();
         } else {
             document.getElementById('supermercado_atual').innerHTML = '';
-            delete dadosApp.supermercadoAtual;
-            salvarDados();
         }
+        salvarDados();
     }
     
     function mostrarTela(id) {
@@ -989,64 +957,46 @@
         btn.textContent = input.type === "password" ? "👁️" : "🙈";
     }
     
-    // PAINEL MASTER TOTALMENTE CORRIGIDO
     function abrirMaster() {
         mostrarTela('painel-master');
         const lista = document.getElementById('lista-usuarios-master');
         lista.innerHTML = "";
         
         if (!dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
-            lista.innerHTML = '<div class="card">Nenhum membro cadastrado.</div>';
+            lista.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Nenhum membro cadastrado</div>';
             return;
         }
         
         Object.keys(dadosApp.usuarios).forEach(uid => {
             const u = dadosApp.usuarios[uid];
-            if (!u || typeof u.nome !== 'string') {
-                console.warn(`Usuário inválido: ${uid}`, u);
-                return;
-            }
-            
-            const fotoHtml = u.foto
-                ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`
-                : u.nome.charAt(0).toUpperCase();
-            
             lista.innerHTML += `
                 <div class="usuario-item">
-                    <div class="usuario-foto">${fotoHtml}</div>
+                    <div class="usuario-foto">${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : u.nome.charAt(0).toUpperCase()}</div>
                     <div style="flex:1;">
-                        <b>${escapeHtml(u.nome)}</b><br>
-                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">
-                            ${u.role === 'master' ? 'MASTER' : 'MEMBRO'}
-                        </small>
+                        <b>${u.nome}</b><br>
+                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
+                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; background:orange; color:white; margin:0;">RESET</button>
+                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; background:orange; color:white; margin:0; font-size:11px;">RESET</button>
                         ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">X</button>` : ''}
                     </div>
                 </div>`;
         });
     }
     
-    function escapeHtml(texto) {
-        if (!texto) return '';
-        const div = document.createElement('div');
-        div.textContent = texto;
-        return div.innerHTML;
-    }
-    
     function resetarSenha(uid) {
-        if(confirm(`Resetar senha de ${dadosApp.usuarios[uid].nome}?`)) {
+        if(confirm(`Resetar senha de ${dadosApp.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
             dadosApp.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
             dadosApp.usuarios[uid].reset = true;
             salvarDados();
-            mostrarToast(`✅ Senha: ${SENHA_PADRAO}`);
+            mostrarToast(`✅ Senha resetada: ${SENHA_PADRAO}`);
             abrirMaster();
         }
     }
     
     function excluirUsuario(uid) {
-        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome}?`)) {
+        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome} permanentemente?`)) {
             delete dadosApp.usuarios[uid];
             salvarDados();
             mostrarToast('🗑️ Usuário excluído');
@@ -1054,25 +1004,26 @@
         }
     }
     
-    // CADASTRO CORRIGIDO - VERIFICA POR NOME, NÃO APENAS ID
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
-        if (!nome) return alert("Digite um nome!");
+        if(!nome) return alert("Digite um nome!");
         
-        const nomeNormalizado = nome.toLowerCase();
-        const existe = Object.values(dadosApp.usuarios).some(
-            u => u.nome.toLowerCase() === nomeNormalizado
+        // Verificar se já existe um usuário com este nome (case insensitive)
+        const nomeLower = nome.toLowerCase();
+        const existe = Object.keys(dadosApp.usuarios).some(uid => 
+            dadosApp.usuarios[uid].nome.toLowerCase() === nomeLower
         );
         
         if (existe) {
-            alert(`Já existe um membro com o nome "${nome}". Escolha outro nome.`);
+            alert(`❌ Já existe um membro com o nome "${nome}"!`);
             return;
         }
         
-        const id = nome.toLowerCase().replace(/\s/g, '');
+        // Gerar um ID único baseado no nome + timestamp
+        const id = nome.toLowerCase().replace(/\s/g, '') + '_' + Date.now();
         
         dadosApp.usuarios[id] = { 
-            nome, 
+            nome: nome, 
             senhaHash: hashSenha(SENHA_PADRAO), 
             role: "user", 
             lista: [], 
@@ -1085,30 +1036,42 @@
         mostrarToast(`✅ ${nome} cadastrado! Senha: ${SENHA_PADRAO}`, 3000);
         
         limparCadastroFoto();
-        sessionStorage.setItem('mostrarAvisoSenha', 'true');
+        document.getElementById('novo_nome').value = '';
         mostrarTela('tela-login');
     }
     
     function tentarLogin() {
-        const u = document.getElementById('login_user').value.toLowerCase().trim();
+        const u = document.getElementById('login_user').value.trim();
         const p = document.getElementById('login_pass').value;
         
-        if(dadosApp.usuarios[u] && dadosApp.usuarios[u].senhaHash === hashSenha(p)) {
-            userLogado = u;
-            sessionStorage.setItem('user', u);
-            if(dadosApp.usuarios[u].reset) {
+        // Buscar usuário pelo nome (case insensitive)
+        let usuarioEncontrado = null;
+        let usuarioId = null;
+        
+        for (const [id, user] of Object.entries(dadosApp.usuarios)) {
+            if (user.nome.toLowerCase() === u.toLowerCase()) {
+                usuarioEncontrado = user;
+                usuarioId = id;
+                break;
+            }
+        }
+        
+        if (usuarioEncontrado && usuarioEncontrado.senhaHash === hashSenha(p)) {
+            userLogado = usuarioId;
+            sessionStorage.setItem('user', usuarioId);
+            if (usuarioEncontrado.reset) {
                 mostrarToast('⚠️ Crie uma nova senha!');
                 const novaSenha = prompt("Digite sua nova senha (mínimo 4 caracteres):");
-                if(novaSenha && novaSenha.length >= 4) {
-                    dadosApp.usuarios[u].senhaHash = hashSenha(novaSenha);
-                    dadosApp.usuarios[u].reset = false;
+                if (novaSenha && novaSenha.length >= 4) {
+                    dadosApp.usuarios[usuarioId].senhaHash = hashSenha(novaSenha);
+                    dadosApp.usuarios[usuarioId].reset = false;
                     salvarDados();
                     mostrarToast('✅ Senha alterada!');
                 }
             }
             entrarApp();
         } else {
-            alert(`❌ Senha padrão: ${SENHA_PADRAO}`);
+            alert(`❌ Usuário ou senha incorretos!\n\nSenha padrão: ${SENHA_PADRAO}`);
         }
     }
     
@@ -1129,18 +1092,9 @@
         
         document.getElementById('btn-master').style.display = user.role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = dadosApp.saldo;
-        
-        // Restaurar supermercado salvo
-        if (dadosApp.supermercadoAtual) {
-            supermercadoAtual = dadosApp.supermercadoAtual;
-            document.getElementById('input_supermercado').value = supermercadoAtual;
-            document.getElementById('supermercado_atual').innerHTML = `📍 ${supermercadoAtual}`;
-        } else {
-            document.getElementById('input_supermercado').value = '';
-            supermercadoAtual = '';
-            document.getElementById('supermercado_atual').innerHTML = '';
-        }
-        
+        document.getElementById('input_supermercado').value = '';
+        supermercadoAtual = '';
+        document.getElementById('supermercado_atual').innerHTML = '';
         document.getElementById('codigo-info').style.display = 'none';
         renderizar();
     }
@@ -1241,7 +1195,7 @@
         const conteudo = document.getElementById('conteudo-historico');
         
         if(historico.length === 0) {
-            conteudo.innerHTML = '<p>Nenhuma compra registrada</p>';
+            conteudo.innerHTML = '<p style="text-align:center;">Nenhuma compra registrada</p>';
         } else {
             conteudo.innerHTML = historico.slice().reverse().map(compra => `
                 <div style="border-bottom:1px solid #eee; padding:10px;">
@@ -1279,12 +1233,12 @@
                 <div class="stat-card"><b>💰 Total Geral: R$ ${totalGeral.toFixed(2)}</b></div>
             </div>
             <h4>👥 Gastos por Membro</h4>
-            ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${escapeHtml(nome)}: R$ ${valor.toFixed(2)}</div>`).join('') || '<div>Sem dados</div>'}
+            ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${nome}: R$ ${valor.toFixed(2)}</div>`).join('') || '<div>Sem dados</div>'}
             <h4>📋 Últimas Compras</h4>
             ${todasCompras.slice(0, 10).map(compra => `
                 <div style="border-bottom:1px solid #eee; padding:8px;">
                     <small>${new Date(compra.data).toLocaleString()}</small>
-                    <div><b>${escapeHtml(compra.usuarioNome)}</b> - R$ ${compra.gastoSaldo.toFixed(2)}</div>
+                    <div><b>${compra.usuarioNome}</b> - R$ ${compra.gastoSaldo.toFixed(2)}</div>
                 </div>
             `).join('') || '<div>Sem compras</div>'}
         `;
@@ -1310,11 +1264,11 @@
         Object.values(produtos).forEach(prod => {
             const menor = Math.min(...prod.precos);
             const maior = Math.max(...prod.precos);
-            html += `<tr><td>${escapeHtml(prod.nome)}</td><td style="color:green">R$ ${menor.toFixed(2)}</td><td style="color:red">R$ ${maior.toFixed(2)}</td></tr>`;
+            html += `<tr><td><b>${prod.nome}</b></td><td style="color:green">R$ ${menor.toFixed(2)}</td><td style="color:red">R$ ${maior.toFixed(2)}</td></tr>`;
         });
         html += '</table>';
         
-        document.getElementById('conteudo-comparativo').innerHTML = html || '<p>Nenhum produto</p>';
+        document.getElementById('conteudo-comparativo').innerHTML = html || '<p>Nenhum produto registrado</p>';
         document.getElementById('modal-comparativo').style.display = 'flex';
     }
     
@@ -1349,7 +1303,6 @@
         const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
         if(!isNaN(novoSaldo) && novoSaldo >= 0) {
             dadosApp.saldo = novoSaldo;
-            document.getElementById('input_saldo').value = novoSaldo.toFixed(2);
             salvarDados();
             renderizar();
             mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
@@ -1359,7 +1312,7 @@
     function logout() { sessionStorage.clear(); location.reload(); }
     
     function exportarBackup() {
-        const dataStr = JSON.stringify(dadosApp);
+        const dataStr = JSON.stringify(dadosApp, null, 2);
         const link = document.createElement('a');
         link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         link.download = `backup_compras_${new Date().toISOString().slice(0,19)}.json`;
@@ -1377,7 +1330,7 @@
             reader.onload = (event) => {
                 try {
                     const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Substituir dados atuais?')) {
+                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
                         dadosApp = backup;
                         salvarDados();
                         mostrarToast('✅ Backup restaurado!');
@@ -1413,6 +1366,8 @@
     window.onload = () => {
         console.log("🚀 Sistema iniciado!");
         console.log("👥 Usuários cadastrados:", Object.keys(dadosApp.usuarios).length);
+        console.log("📋 Lista de usuários:", Object.keys(dadosApp.usuarios).map(uid => dadosApp.usuarios[uid].nome));
+        
         if(userLogado && dadosApp.usuarios[userLogado]) {
             entrarApp();
         } else {
