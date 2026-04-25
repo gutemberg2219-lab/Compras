@@ -3,31 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>V75 REPAIR MASTER - Final</title>
+    <title>V75 REPAIR MASTER - Sistema Familiar de Compras</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #0066ff; --success: #2e7d32; --danger: #ff1744; --bg: #f0f2f5; }
+        :root { --primary: #0066ff; --success: #2e7d32; --danger: #ff1744; --warning: #ff9800; --bg: #f0f2f5; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); padding: 15px; min-height: 100vh; }
         .body-com-resumo { padding-bottom: 160px; }
-        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
         
-        /* Correção do ícone de senha conforme as imagens enviadas */
-        .input-container { position: relative; width: 100%; display: flex; align-items: center; margin-bottom: 10px; }
-        .input-container input { width: 100%; height: 50px; padding: 0 45px 0 15px !important; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; outline: none; }
-        .btn-olho { position: absolute; right: 10px; background: transparent; border: none; font-size: 20px; cursor: pointer; z-index: 10; height: 50px; display: flex; align-items: center; }
+        /* Container para o campo de senha com ícone */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .password-wrapper input {
+            width: 100%;
+            height: 50px;
+            padding: 0 45px 0 15px !important;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .password-wrapper input:focus {
+            border-color: var(--primary);
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            margin: 0;
+            color: #666;
+            transition: color 0.3s;
+        }
+        
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+        
+        .toggle-password:active {
+            transform: translateY(-50%) scale(0.95);
+        }
 
-        input, select { width: 100%; height: 50px; padding: 0 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; margin-bottom: 10px; outline: none; }
-        button { width: 100%; height: 50px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        input, select { 
+            width: 100%; 
+            height: 50px; 
+            padding: 0 15px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            margin-bottom: 10px; 
+            outline: none; 
+            transition: all 0.3s; 
+        }
         
-        .item-lista { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #eee; }
-        .thumb-lista { width: 45px; height: 45px; border-radius: 8px; margin-right: 12px; background: #f0f0f0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px rgba(0,102,255,0.1); 
+        }
+        
+        button { 
+            width: 100%; 
+            height: 50px; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-bottom: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            transition: all 0.3s; 
+        }
+        
+        button:active { transform: scale(0.98); }
+        
+        .item-lista { 
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 12px; 
+            margin-bottom: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border: 1px solid #eee; 
+            animation: slideIn 0.3s ease; 
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .thumb-lista { 
+            width: 45px; 
+            height: 45px; 
+            border-radius: 8px; 
+            margin-right: 12px; 
+            background: #f0f0f0; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
         
         #reader { width: 100%; border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; background: #000; }
-        .resumo-fixo { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); display: none; border-radius: 20px 20px 0 0; z-index: 999; }
         
-        /* Esconde as telas inicialmente para evitar "piscada" em branco */
-        .tela { display: none; }
+        .resumo-fixo { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: white; 
+            padding: 15px; 
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1); 
+            display: none; 
+            border-radius: 20px 20px 0 0; 
+            z-index: 999; 
+            animation: slideUp 0.3s ease; 
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        .tela { display: none; animation: fadeIn 0.3s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        
+        .badge-success { background: #e8f5e8; color: var(--success); }
+        .badge-warning { background: #fff3e0; color: var(--warning); }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1000; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        
+        .modal-content { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 20px; 
+            max-width: 90%; 
+            width: 400px; 
+            animation: modalIn 0.3s ease; 
+        }
+        
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .toast { 
+            position: fixed; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: #333; 
+            color: white; 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            z-index: 1001; 
+            animation: toastIn 0.3s ease; 
+        }
+        
+        @keyframes toastIn {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -37,9 +219,9 @@
     <div id="tela-login" class="tela card">
         <h2 style="text-align:center; margin-bottom:20px;">🛒 Login Família</h2>
         <input type="text" id="login_user" placeholder="Usuário">
-        <div class="input-container">
+        <div class="password-wrapper">
             <input type="password" id="login_pass" placeholder="Senha">
-            <button type="button" class="btn-olho" onclick="toggleSenha('login_pass')">👁️</button>
+            <button type="button" class="toggle-password" onclick="toggleSenha('login_pass', this)">👁️</button>
         </div>
         <button style="background: var(--primary); color: white;" onclick="tentarLogin()">ENTRAR</button>
         <button style="background: transparent; color: var(--primary); border: 2px solid var(--primary);" onclick="mostrarTela('tela-cadastro')">CRIAR NOVO ACESSO</button>
@@ -56,6 +238,8 @@
         <button onclick="mostrarTela('app-principal')" style="background:#eee;">⬅️ VOLTAR</button>
         <h3 style="margin: 15px 0;">🛡️ Gerenciar Membros</h3>
         <div id="lista-usuarios-master"></div>
+        <button onclick="exportarBackup()" style="background: var(--primary); color: white; margin-top: 10px;">💾 EXPORTAR BACKUP</button>
+        <button onclick="importarBackup()" style="background: var(--success); color: white;">📥 IMPORTAR BACKUP</button>
     </div>
 
     <div id="app-principal" class="tela">
@@ -63,6 +247,7 @@
             <h3 id="boas_vindas">Olá</h3>
             <div style="display:flex; gap:5px;">
                 <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 10px; background:#1a1a1a; color:gold; height:35px; margin:0;">🛡️ MASTER</button>
+                <button onclick="abrirRelatorio()" style="width:auto; padding:0 10px; background:#4caf50; color:white; height:35px; margin:0;">📊 RELATÓRIO</button>
                 <button onclick="logout()" style="width:auto; padding:0 10px; background:#ccc; height:35px; margin:0;">SAIR</button>
             </div>
         </div>
@@ -85,7 +270,7 @@
             <div style="text-align:center"><img id="img-preview" style="max-height:100px; border-radius:12px; display:none; margin-bottom:10px; margin-inline: auto;"></div>
             <div id="reader"></div>
             
-            <input type="text" id="codigo" placeholder="Código de Barras" oninput="buscarProduto(this.value)">
+            <input type="text" id="codigo" placeholder="Código de Barras" oninput="debounceBuscarProduto(this.value)">
             <input type="text" id="nome_prod" placeholder="Nome do Produto">
             <div style="display:flex; gap:10px;">
                 <input type="number" id="qtd_prod" value="1" step="0.001" style="flex:1">
@@ -104,8 +289,19 @@
 
     <div id="tela-trocar-senha" class="tela card">
         <h3>🔒 Criar Nova Senha</h3>
-        <input type="password" id="nova_senha" placeholder="Nova senha">
+        <div class="password-wrapper">
+            <input type="password" id="nova_senha" placeholder="Nova senha (mínimo 4 caracteres)">
+            <button type="button" class="toggle-password" onclick="toggleSenha('nova_senha', this)">👁️</button>
+        </div>
         <button style="background:var(--success); color:white; margin-top:10px;" onclick="salvarNovaSenha()">SALVAR</button>
+    </div>
+
+    <div id="modal-relatorio" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px;">📊 Relatório de Compras</h3>
+            <div id="conteudo-relatorio"></div>
+            <button onclick="fecharModal()" style="background: var(--primary); color: white; margin-top: 15px;">FECHAR</button>
+        </div>
     </div>
 
 </div>
@@ -119,12 +315,32 @@
 </div>
 
 <script>
-    const DB_KEY = "FAMILIA_DATA_V8";
+    const DB_KEY = "FAMILIA_DATA_V9";
     const SENHA_PADRAO = "Compras@2026";
+    
+    // Hash simples para senhas
+    function hashSenha(senha) {
+        let hash = 0;
+        for (let i = 0; i < senha.length; i++) {
+            const char = senha.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return hash.toString();
+    }
     
     // Início seguro do Banco de Dados
     let db = JSON.parse(localStorage.getItem(DB_KEY)) || {
-        usuarios: { "master": { nome: "Master", senha: "Melissa@2016", role: "master", lista: [], reset: false } },
+        usuarios: { 
+            "master": { 
+                nome: "Master", 
+                senhaHash: hashSenha("Melissa@2016"), 
+                role: "master", 
+                lista: [], 
+                reset: false,
+                historico: []
+            } 
+        },
         saldo: 0,
         precos: {}
     };
@@ -132,8 +348,67 @@
     let userLogado = sessionStorage.getItem('user');
     let scanner = null;
     let fotoTemp = null;
+    let debounceTimer = null;
 
-    function salvar() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+    function salvar() { 
+        localStorage.setItem(DB_KEY, JSON.stringify(db)); 
+        fazerBackupAutomatico();
+    }
+    
+    function fazerBackupAutomatico() {
+        const backups = JSON.parse(localStorage.getItem('BACKUPS_V75') || '[]');
+        const backup = {
+            data: new Date().toISOString(),
+            db: db
+        };
+        backups.push(backup);
+        while(backups.length > 5) backups.shift();
+        localStorage.setItem('BACKUPS_V75', JSON.stringify(backups));
+    }
+    
+    function exportarBackup() {
+        const dataStr = JSON.stringify(db, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `backup_v75_${new Date().toISOString().slice(0,19)}.json`;
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        mostrarToast('Backup exportado com sucesso!');
+    }
+    
+    function importarBackup() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const backupDb = JSON.parse(event.target.result);
+                    if(confirm('Isso substituirá todos os dados atuais. Continuar?')) {
+                        db = backupDb;
+                        salvar();
+                        mostrarToast('Backup restaurado com sucesso!');
+                        location.reload();
+                    }
+                } catch(err) {
+                    mostrarToast('Arquivo inválido!');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+    
+    function mostrarToast(mensagem) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = mensagem;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
 
     function mostrarTela(id) {
         document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
@@ -142,31 +417,51 @@
         
         document.getElementById('barra-resumo').style.display = (id === 'app-principal') ? 'block' : 'none';
         if(id === 'app-principal') document.body.classList.add('body-com-resumo');
+        else document.body.classList.remove('body-com-resumo');
     }
 
-    function toggleSenha(id) {
-        const input = document.getElementById(id);
-        input.type = input.type === "password" ? "text" : "password";
+    function toggleSenha(inputId, buttonElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            buttonElement.textContent = "🙈";
+        } else {
+            input.type = "password";
+            buttonElement.textContent = "👁️";
+        }
     }
 
-    // BUSCA NA INTERNET (OPENFOODFACTS)
+    function debounceBuscarProduto(cod) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => buscarProduto(cod), 500);
+    }
+
+    function validarPreco(preco) {
+        return !isNaN(preco) && preco > 0 && preco < 1000000;
+    }
+
     async function buscarProduto(cod) {
         if(cod.length < 8) return;
-        if(db.precos[cod]) { document.getElementById('nome_prod').value = db.precos[cod]; return; }
+        if(db.precos[cod]) { 
+            document.getElementById('nome_prod').value = db.precos[cod]; 
+            return;
+        }
 
         try {
             const resp = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cod}.json`);
             const data = await resp.json();
             if(data.status === 1) {
-                const nome = data.product.product_name || data.product.product_name_pt;
-                document.getElementById('nome_prod').value = nome;
-                db.precos[cod] = nome;
-                salvar();
+                const nome = data.product.product_name || data.product.product_name_pt || data.product.generic_name;
+                if(nome) {
+                    document.getElementById('nome_prod').value = nome;
+                    db.precos[cod] = nome;
+                    salvar();
+                    mostrarToast('Produto encontrado!');
+                }
             }
         } catch(e) { console.warn("Erro na busca remota"); }
     }
 
-    // FOTO
     function processarFoto(event) {
         const file = event.target.files[0];
         if(!file) return;
@@ -177,18 +472,19 @@
                 const canvas = document.createElement('canvas');
                 const MAX = 300;
                 const scale = MAX / img.width;
-                canvas.width = MAX; canvas.height = img.height * scale;
+                canvas.width = MAX; 
+                canvas.height = img.height * scale;
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
                 fotoTemp = canvas.toDataURL('image/jpeg', 0.6);
                 document.getElementById('img-preview').src = fotoTemp;
                 document.getElementById('img-preview').style.display = 'block';
+                mostrarToast('Foto capturada!');
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    // GESTÃO MASTER
     function abrirMaster() {
         mostrarTela('painel-master');
         const lista = document.getElementById('lista-usuarios-master');
@@ -197,84 +493,140 @@
             const u = db.usuarios[uid];
             lista.innerHTML += `
                 <div class="item-lista">
-                    <div><b>${u.nome}</b><br><small>${u.role}</small></div>
+                    <div>
+                        <b>${u.nome}</b><br>
+                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
+                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
+                    </div>
                     <div style="display:flex; gap:5px;">
-                        <button onclick="resetar('${uid}')" style="width:60px; height:30px; font-size:10px; background:orange; color:white; margin:0;">RESET</button>
-                        ${uid !== 'master' ? `<button onclick="excluir('${uid}')" style="width:35px; height:30px; background:red; color:white; margin:0;">X</button>` : ''}
+                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; font-size:10px; background:orange; color:white; margin:0;">RESET</button>
+                        ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:red; color:white; margin:0;">X</button>` : ''}
                     </div>
                 </div>`;
         });
     }
 
-    function resetar(uid) {
-        db.usuarios[uid].senha = SENHA_PADRAO;
-        db.usuarios[uid].reset = true;
-        salvar(); alert("Senha resetada para o padrão!");
+    function resetarSenha(uid) {
+        if(confirm(`Resetar senha de ${db.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
+            db.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
+            db.usuarios[uid].reset = true;
+            salvar(); 
+            mostrarToast(`Senha de ${db.usuarios[uid].nome} resetada!`);
+            abrirMaster();
+        }
     }
 
-    function excluir(uid) {
-        if(confirm("Deseja excluir este membro?")) { delete db.usuarios[uid]; salvar(); abrirMaster(); }
+    function excluirUsuario(uid) {
+        if(confirm(`Deseja excluir ${db.usuarios[uid].nome} permanentemente?`)) { 
+            delete db.usuarios[uid]; 
+            salvar(); 
+            mostrarToast('Usuário excluído!');
+            abrirMaster(); 
+        }
     }
 
-    // LOGIN E CADASTRO
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
-        if(!nome) return;
+        if(!nome) return alert("Digite um nome!");
         const id = nome.toLowerCase().replace(/\s/g, '');
         if(db.usuarios[id]) return alert("Usuário já existe!");
-        db.usuarios[id] = { nome: nome, senha: SENHA_PADRAO, role: "user", lista: [], reset: true };
-        salvar(); alert("Cadastrado com sucesso!"); mostrarTela('tela-login');
+        db.usuarios[id] = { 
+            nome: nome, 
+            senhaHash: hashSenha(SENHA_PADRAO), 
+            role: "user", 
+            lista: [], 
+            reset: true,
+            historico: []
+        };
+        salvar(); 
+        mostrarToast(`Usuário ${nome} cadastrado com sucesso!`);
+        mostrarTela('tela-login');
     }
 
     function tentarLogin() {
         const u = document.getElementById('login_user').value.toLowerCase().trim();
         const p = document.getElementById('login_pass').value;
-        if(db.usuarios[u] && db.usuarios[u].senha === p) {
+        const senhaHash = hashSenha(p);
+        
+        if(db.usuarios[u] && db.usuarios[u].senhaHash === senhaHash) {
             userLogado = u;
             sessionStorage.setItem('user', u);
-            if(db.usuarios[u].reset) mostrarTela('tela-trocar-senha');
+            if(db.usuarios[u].reset) {
+                mostrarToast('Por favor, crie uma nova senha!');
+                mostrarTela('tela-trocar-senha');
+            }
             else entrarApp();
         } else alert("Usuário ou senha incorretos!");
     }
 
     function entrarApp() {
         mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerText = "Oi, " + db.usuarios[userLogado].nome;
+        document.getElementById('boas_vindas').innerHTML = `Oi, ${db.usuarios[userLogado].nome} 👋`;
         document.getElementById('btn-master').style.display = db.usuarios[userLogado].role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = db.saldo;
         renderizar();
     }
 
     function adicionarItem() {
-        const nome = document.getElementById('nome_prod').value || "Produto";
-        const preco = parseFloat(document.getElementById('valor_prod').value) || 0;
+        const nome = document.getElementById('nome_prod').value.trim() || "Produto";
+        const preco = parseFloat(document.getElementById('valor_prod').value);
         const qtd = parseFloat(document.getElementById('qtd_prod').value) || 1;
         const met = document.getElementById('metodo_pagto').value;
-        if(preco <= 0) return alert("Insira o preço!");
+        
+        if(!validarPreco(preco)) {
+            alert("Por favor, insira um preço válido!");
+            return;
+        }
+        
+        if(preco <= 0) {
+            alert("Preço deve ser maior que zero!");
+            return;
+        }
 
-        db.usuarios[userLogado].lista.push({ nome, preco, qtd, met, total: preco * qtd, foto: fotoTemp });
+        db.usuarios[userLogado].lista.push({ 
+            nome, 
+            preco, 
+            qtd, 
+            met, 
+            total: preco * qtd, 
+            foto: fotoTemp,
+            data: new Date().toISOString()
+        });
+        
         fotoTemp = null;
         document.getElementById('img-preview').style.display = 'none';
-        document.getElementById('nome_prod').value = ""; document.getElementById('valor_prod').value = "";
-        salvar(); renderizar();
+        document.getElementById('nome_prod').value = ""; 
+        document.getElementById('valor_prod').value = "";
+        document.getElementById('codigo').value = "";
+        salvar(); 
+        renderizar();
+        mostrarToast('Item adicionado!');
     }
 
     function renderizar() {
         const div = document.getElementById('lista_itens');
         div.innerHTML = "";
         let tSaldo = 0, tExtra = 0;
-        db.usuarios[userLogado].lista.forEach((it, i) => {
-            if(it.met === 'saldo') tSaldo += it.total; else tExtra += it.total;
+        const itens = db.usuarios[userLogado].lista;
+        
+        if(itens.length === 0) {
+            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">Nenhum item adicionado ainda</div>';
+        }
+        
+        itens.forEach((it, i) => {
+            if(it.met === 'saldo') tSaldo += it.total; 
+            else tExtra += it.total;
             div.innerHTML += `
                 <div class="item-lista">
-                    <div style="display:flex; align-items:center;">
-                        <div class="thumb-lista">${it.foto ? `<img src="${it.foto}" style="width:100%">` : '📦'}</div>
-                        <div><b>${it.nome}</b><br><small>${it.qtd}x R$ ${it.preco.toFixed(2)}</small></div>
+                    <div style="display:flex; align-items:center; flex:1;">
+                        <div class="thumb-lista">${it.foto ? `<img src="${it.foto}" style="width:100%; height:100%; object-fit:cover;">` : '📦'}</div>
+                        <div style="flex:1;">
+                            <b>${it.nome.substring(0, 30)}</b><br>
+                            <small>${it.qtd}x R$ ${it.preco.toFixed(2)} = R$ ${it.total.toFixed(2)}</small>
+                            <br><small class="badge ${it.met === 'saldo' ? 'badge-success' : 'badge-warning'}">${it.met === 'saldo' ? 'Saldo' : 'Extra'}</small>
+                        </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <b>R$ ${it.total.toFixed(2)}</b>
-                        <button onclick="removerItem(${i})" style="width:30px; background:none; color:red; font-size:20px; margin:0;">&times;</button>
-                    </div>
+                    <button onclick="removerItemComConfirmacao(${i})" style="width:30px; background:none; color:red; font-size:20px; margin:0; height:30px;">&times;</button>
                 </div>`;
         });
         document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
@@ -282,16 +634,83 @@
         document.getElementById('res_saldo_sobra').innerText = "R$ " + (db.saldo - tSaldo).toFixed(2);
     }
 
-    function removerItem(i) { db.usuarios[userLogado].lista.splice(i, 1); salvar(); renderizar(); }
+    function removerItemComConfirmacao(i) {
+        if(confirm('Remover este item da lista?')) {
+            db.usuarios[userLogado].lista.splice(i, 1); 
+            salvar(); 
+            renderizar();
+            mostrarToast('Item removido');
+        }
+    }
 
     function finalizarCompra() {
-        if(confirm("Confirmar fechamento e descontar do saldo?")) {
-            let gasto = 0;
-            db.usuarios[userLogado].lista.forEach(it => { if(it.met === 'saldo') gasto += it.total; });
+        const itens = db.usuarios[userLogado].lista;
+        if(itens.length === 0) {
+            alert('Nenhum item para finalizar!');
+            return;
+        }
+        
+        let gasto = 0;
+        let extra = 0;
+        itens.forEach(it => { 
+            if(it.met === 'saldo') gasto += it.total;
+            else extra += it.total;
+        });
+        
+        if(gasto > db.saldo) {
+            alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)} | Disponível: R$ ${db.saldo.toFixed(2)}`);
+            return;
+        }
+        
+        if(confirm(`Confirmar compra?\n\nGasto do Saldo: R$ ${gasto.toFixed(2)}\nPagamento Extra: R$ ${extra.toFixed(2)}\nSaldo restante: R$ ${(db.saldo - gasto).toFixed(2)}`)) {
+            const compra = {
+                data: new Date().toISOString(),
+                itens: [...itens],
+                gastoSaldo: gasto,
+                pagamentoExtra: extra,
+                usuario: db.usuarios[userLogado].nome
+            };
+            db.usuarios[userLogado].historico = db.usuarios[userLogado].historico || [];
+            db.usuarios[userLogado].historico.push(compra);
+            
             db.saldo -= gasto;
             db.usuarios[userLogado].lista = [];
-            salvar(); entrarApp();
+            salvar(); 
+            mostrarToast('Compra finalizada com sucesso!');
+            entrarApp();
         }
+    }
+
+    function abrirRelatorio() {
+        const historico = db.usuarios[userLogado].historico || [];
+        const modal = document.getElementById('modal-relatorio');
+        const conteudo = document.getElementById('conteudo-relatorio');
+        
+        if(historico.length === 0) {
+            conteudo.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma compra registrada ainda</p>';
+        } else {
+            conteudo.innerHTML = historico.slice().reverse().map((compra, idx) => `
+                <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                    <small style="color:#666;">${new Date(compra.data).toLocaleString('pt-BR')}</small>
+                    <div><b>${compra.itens.length} itens</b></div>
+                    <div>💰 Saldo: R$ ${compra.gastoSaldo.toFixed(2)} | Extra: R$ ${compra.pagamentoExtra.toFixed(2)}</div>
+                    <details>
+                        <summary style="cursor:pointer; color: var(--primary);">Ver itens</summary>
+                        ${compra.itens.map(item => `
+                            <div style="font-size:12px; margin-left: 10px; margin-top: 5px;">
+                                • ${item.qtd}x ${item.nome} - R$ ${item.total.toFixed(2)} (${item.met === 'saldo' ? 'Saldo' : 'Extra'})
+                            </div>
+                        `).join('')}
+                    </details>
+                </div>
+            `).join('');
+        }
+        
+        modal.style.display = 'flex';
+    }
+    
+    function fecharModal() {
+        document.getElementById('modal-relatorio').style.display = 'none';
     }
 
     function alternarScanner() {
@@ -302,25 +721,57 @@
                 document.getElementById('codigo').value = txt;
                 buscarProduto(txt);
                 pararScanner();
-            }).catch(e => alert("Câmera bloqueada ou erro de permissão."));
+                mostrarToast('Código lido!');
+            }).catch(e => {
+                alert("Câmera bloqueada ou erro de permissão.");
+                pararScanner();
+            });
         } else pararScanner();
     }
 
     function pararScanner() {
-        if(scanner) { scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; }); }
+        if(scanner) { 
+            scanner.stop().then(() => { 
+                scanner = null; 
+                document.getElementById('reader').style.display = 'none'; 
+            }); 
+        }
     }
 
-    function atualizarSaldoGlobal() { db.saldo = parseFloat(document.getElementById('input_saldo').value) || 0; salvar(); renderizar(); }
-    function logout() { sessionStorage.clear(); location.reload(); }
+    function atualizarSaldoGlobal() { 
+        const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
+        if(!isNaN(novoSaldo) && novoSaldo >= 0) {
+            db.saldo = novoSaldo; 
+            salvar(); 
+            renderizar();
+            mostrarToast(`Saldo atualizado para R$ ${novoSaldo.toFixed(2)}`);
+        } else {
+            alert('Valor inválido!');
+        }
+    }
+    
+    function logout() { 
+        sessionStorage.clear(); 
+        location.reload(); 
+    }
+    
     function salvarNovaSenha() {
         const n = document.getElementById('nova_senha').value;
-        if(n.length < 4) return alert("Senha muito curta!");
-        db.usuarios[userLogado].senha = n;
+        if(n.length < 4) return alert("Senha deve ter no mínimo 4 caracteres!");
+        db.usuarios[userLogado].senhaHash = hashSenha(n);
         db.usuarios[userLogado].reset = false;
-        salvar(); entrarApp();
+        salvar(); 
+        mostrarToast('Senha alterada com sucesso!');
+        entrarApp();
     }
 
-    // Inicialização segura
+    window.onclick = (event) => {
+        const modal = document.getElementById('modal-relatorio');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+
     window.onload = () => {
         if(userLogado && db.usuarios[userLogado]) entrarApp();
         else mostrarTela('tela-login');
