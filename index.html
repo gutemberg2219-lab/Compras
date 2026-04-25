@@ -202,7 +202,7 @@
             background: #000;
         }
         
-        .searching-indicator, .removing-bg {
+        .searching-indicator {
             display: none;
             align-items: center;
             gap: 8px;
@@ -214,7 +214,7 @@
             color: white;
         }
         
-        .searching-indicator.active, .removing-bg.active { display: flex; }
+        .searching-indicator.active { display: flex; }
         
         .spinner {
             width: 16px;
@@ -298,49 +298,6 @@
             to { transform: scale(1) translateY(0); opacity: 1; }
         }
         
-        .preview-container {
-            margin: 15px 0;
-            text-align: center;
-        }
-        
-        .preview-container img {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .comparison {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-        
-        .comparison-item {
-            text-align: center;
-            flex: 1;
-        }
-        
-        .comparison-item small {
-            display: block;
-            margin-top: 5px;
-            color: #666;
-        }
-        
-        .comparison-item img {
-            width: 130px;
-            height: 130px;
-            object-fit: contain;
-            border-radius: 8px;
-            background: #f5f5f5;
-        }
-        
-        .btn-primary { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; }
-        .btn-secondary { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; }
-        .btn-cancel { background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white; }
-        
         .toast { 
             position: fixed; 
             bottom: 20px; 
@@ -361,23 +318,120 @@
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
         
+        /* Título com animação */
         .main-title {
             text-align: center;
             margin-bottom: 20px;
-            padding: 15px;
+            padding: 20px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            animation: floatTitle 3s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes floatTitle {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .main-title::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(102, 126, 234, 0.1) 50%, 
+                transparent 70%);
+            animation: shine 3s infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
         }
         
         .main-title h1 {
-            font-size: 28px;
+            font-size: 32px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             font-weight: bold;
+            letter-spacing: 2px;
+            animation: pulseText 2s ease-in-out infinite;
+            position: relative;
+            display: inline-block;
+        }
+        
+        @keyframes pulseText {
+            0%, 100% {
+                text-shadow: 0 0 0px rgba(102, 126, 234, 0);
+            }
+            50% {
+                text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+            }
+        }
+        
+        .main-title h1::before {
+            content: '🛒';
+            position: absolute;
+            left: -35px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 32px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(-50%) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-50%) rotate(15deg);
+            }
+        }
+        
+        .main-title h1::after {
+            content: '🛒';
+            position: absolute;
+            right: -35px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 32px;
+            animation: bounce 1s ease-in-out infinite reverse;
+        }
+        
+        .main-title p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 8px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .btn-voltar {
@@ -407,6 +461,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 10px;
         }
+        
+        /* Loading animation */
+        @keyframes loadingPulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
     </style>
 </head>
 <body>
@@ -415,7 +479,7 @@
     
     <div id="tela-login" class="tela card">
         <div class="main-title">
-            <h1>🛒 LISTA DE COMPRAS</h1>
+            <h1>LISTA DE COMPRAS</h1>
             <p>Sistema Familiar de Compras</p>
         </div>
         <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
@@ -433,7 +497,7 @@
 
     <div id="tela-cadastro" class="tela card">
         <div class="main-title">
-            <h1>🛒 LISTA DE COMPRAS</h1>
+            <h1>LISTA DE COMPRAS</h1>
             <p>Sistema Familiar de Compras</p>
         </div>
         <h2 style="text-align:center;">📝 Novo Membro</h2>
@@ -448,7 +512,7 @@
 
     <div id="painel-master" class="tela card">
         <div class="main-title">
-            <h1>🛒 LISTA DE COMPRAS</h1>
+            <h1>LISTA DE COMPRAS</h1>
             <p>Painel Administrativo</p>
         </div>
         <button class="btn-voltar" onclick="mostrarTela('app-principal')">⬅️ VOLTAR</button>
@@ -460,7 +524,7 @@
 
     <div id="app-principal" class="tela">
         <div class="main-title">
-            <h1>🛒 LISTA DE COMPRAS</h1>
+            <h1>LISTA DE COMPRAS</h1>
             <p id="boas_vindas" style="margin-top:8px;">Olá, usuário!</p>
         </div>
         
@@ -485,10 +549,6 @@
             </div>
             
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
-            <div class="removing-bg" id="removing-bg-indicator">
-                <div class="spinner"></div>
-                <span>🖌️ Removendo fundo da imagem...</span>
-            </div>
             <div style="text-align:center">
                 <img id="img-preview" style="max-height:100px; border-radius:12px; display:none; margin-bottom:10px; margin-inline: auto;">
             </div>
@@ -509,7 +569,7 @@
                 <option value="saldo">💳 Abater do Saldo</option>
                 <option value="extra">💵 Pagamento Extra</option>
             </select>
-            <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100()); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+            <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
             <button id="btn-buscar-manual" class="btn-buscar-manual" onclick="buscarProdutoManual()" style="display:none;">🔍 Buscar Produto Novamente</button>
         </div>
 
@@ -519,7 +579,7 @@
 
     <div id="tela-trocar-senha" class="tela card">
         <div class="main-title">
-            <h1>🛒 LISTA DE COMPRAS</h1>
+            <h1>LISTA DE COMPRAS</h1>
             <p>Alterar Senha</p>
         </div>
         <h3>🔒 Criar Nova Senha</h3>
@@ -535,28 +595,6 @@
             <h3 style="margin-bottom: 15px;">📊 Relatório de Compras</h3>
             <div id="conteudo-relatorio" style="max-height: 400px; overflow-y: auto;"></div>
             <button onclick="fecharModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-top: 15px;">FECHAR</button>
-        </div>
-    </div>
-
-    <!-- Modal de preview da imagem com/sem fundo -->
-    <div id="modal-preview" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px;">🖼️ Preview da Imagem</h3>
-            <div class="comparison">
-                <div class="comparison-item">
-                    <strong>📸 Original</strong>
-                    <img id="preview-original" src="" alt="Original">
-                </div>
-                <div class="comparison-item">
-                    <strong>✨ Sem Fundo</strong>
-                    <img id="preview-semfundo" src="" alt="Sem Fundo">
-                </div>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
-                <button class="btn-primary" onclick="aceitarImagemSemFundo()" style="flex:1;">✅ Aceitar sem fundo</button>
-                <button class="btn-secondary" onclick="usarImagemOriginal()" style="flex:1;">🖼️ Usar original</button>
-                <button class="btn-cancel" onclick="cancelarImagem()" style="flex:1;">❌ Cancelar</button>
-            </div>
         </div>
     </div>
 
@@ -582,10 +620,6 @@
 <script>
     const DB_KEY = "FAMILIA_DATA_V10";
     const SENHA_PADRAO = "Compras@2026";
-    
-    // IMPORTANTE: Cadastre-se em https://www.remove.bg/pt-br para obter sua chave API gratuita
-    // Após cadastrado, substitua a linha abaixo pela sua chave
-    const REMOVE_BG_API_KEY = "SUA_API_KEY_AQUI"; // <-- COLOQUE SUA CHAVE AQUI
     
     function hashSenha(senha) {
         let hash = 0;
@@ -617,8 +651,6 @@
     let fotoTemp = null;
     let buscaTimeout = null;
     let ultimoCodigoBuscado = '';
-    let imagemOriginalBase64 = null;
-    let imagemSemFundoBase64 = null;
 
     function salvar() { 
         localStorage.setItem(DB_KEY, JSON.stringify(db)); 
@@ -680,61 +712,6 @@
         if(mostrar) indicator.classList.add('active');
         else indicator.classList.remove('active');
     }
-    
-    function mostrarIndicadorRemocaoFundo(mostrar) {
-        const indicator = document.getElementById('removing-bg-indicator');
-        if(mostrar) indicator.classList.add('active');
-        else indicator.classList.remove('active');
-    }
-
-    // Função para remover fundo da imagem usando API Remove.bg
-    async function removerFundoImagem(base64Image) {
-        return new Promise((resolve, reject) => {
-            mostrarIndicadorRemocaoFundo(true);
-            
-            // Converter base64 para blob
-            fetch(base64Image)
-                .then(res => res.blob())
-                .then(blob => {
-                    const formData = new FormData();
-                    formData.append('image_file', blob, 'image.jpg');
-                    formData.append('size', 'auto');
-                    
-                    fetch('https://api.remove.bg/v1.0/removebg', {
-                        method: 'POST',
-                        headers: {
-                            'X-Api-Key': REMOVE_BG_API_KEY
-                        },
-                        body: formData
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Erro HTTP: ${response.status}`);
-                        }
-                        return response.blob();
-                    })
-                    .then(blob => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            mostrarIndicadorRemocaoFundo(false);
-                            resolve(reader.result);
-                        };
-                        reader.readAsDataURL(blob);
-                    })
-                    .catch(error => {
-                        console.error('Erro ao remover fundo:', error);
-                        mostrarIndicadorRemocaoFundo(false);
-                        mostrarToast('⚠️ Não foi possível remover o fundo. Usando imagem original.', 4000);
-                        resolve(base64Image);
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao converter imagem:', error);
-                    mostrarIndicadorRemocaoFundo(false);
-                    resolve(base64Image);
-                });
-        });
-    }
 
     function handleCodigoBarras(codigo) {
         if(buscaTimeout) clearTimeout(buscaTimeout);
@@ -789,69 +766,16 @@
         }
     }
 
-    function mostrarPreviewImagem(original, semFundo) {
-        document.getElementById('preview-original').src = original;
-        document.getElementById('preview-semfundo').src = semFundo;
-        document.getElementById('modal-preview').style.display = 'flex';
-    }
-    
-    function aceitarImagemSemFundo() {
-        fotoTemp = imagemSemFundoBase64;
-        document.getElementById('img-preview').src = fotoTemp;
-        document.getElementById('img-preview').style.display = 'block';
-        document.getElementById('modal-preview').style.display = 'none';
-        mostrarToast('✅ Foto sem fundo salva com sucesso!');
-        limparImagensTemporarias();
-    }
-    
-    function usarImagemOriginal() {
-        fotoTemp = imagemOriginalBase64;
-        document.getElementById('img-preview').src = fotoTemp;
-        document.getElementById('img-preview').style.display = 'block';
-        document.getElementById('modal-preview').style.display = 'none';
-        mostrarToast('📸 Foto original salva!');
-        limparImagensTemporarias();
-    }
-    
-    function cancelarImagem() {
-        document.getElementById('modal-preview').style.display = 'none';
-        mostrarToast('❌ Foto cancelada');
-        limparImagensTemporarias();
-    }
-    
-    function limparImagensTemporarias() {
-        imagemOriginalBase64 = null;
-        imagemSemFundoBase64 = null;
-    }
-
-    async function processarFoto(event) {
+    function processarFoto(event) {
         const file = event.target.files[0];
         if(!file) return;
         
         const reader = new FileReader();
-        reader.onload = async (e) => {
-            imagemOriginalBase64 = e.target.result;
-            
-            // Verificar se a API key foi configurada
-            if(REMOVE_BG_API_KEY === "SUA_API_KEY_AQUI") {
-                mostrarToast('⚠️ Configure a API Key do Remove.bg no código para remover fundo!', 5000);
-                fotoTemp = imagemOriginalBase64;
-                document.getElementById('img-preview').src = fotoTemp;
-                document.getElementById('img-preview').style.display = 'block';
-                return;
-            }
-            
-            try {
-                const imagemSemFundo = await removerFundoImagem(imagemOriginalBase64);
-                imagemSemFundoBase64 = imagemSemFundo;
-                mostrarPreviewImagem(imagemOriginalBase64, imagemSemFundoBase64);
-            } catch (error) {
-                console.error('Erro:', error);
-                mostrarToast('⚠️ Não foi possível remover o fundo. Usando imagem original.', 4000);
-                fotoTemp = imagemOriginalBase64;
-                document.getElementById('img-preview').src = fotoTemp;
-                document.getElementById('img-preview').style.display = 'block';
-            }
+        reader.onload = (e) => {
+            fotoTemp = e.target.result;
+            document.getElementById('img-preview').src = fotoTemp;
+            document.getElementById('img-preview').style.display = 'block';
+            mostrarToast('📸 Foto capturada!');
         };
         reader.readAsDataURL(file);
         event.target.value = '';
@@ -965,7 +889,7 @@
 
     function entrarApp() {
         mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerHTML = `Olá, ${db.usuarios[userLogado].nome}!`;
+        document.getElementById('boas_vindas').innerHTML = `Olá, ${db.usuarios[userLogado].nome}! 👋`;
         document.getElementById('btn-master').style.display = db.usuarios[userLogado].role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = db.saldo;
         renderizar();
@@ -1078,7 +1002,6 @@
     
     function fecharModal() {
         document.getElementById('modal-relatorio').style.display = 'none';
-        document.getElementById('modal-preview').style.display = 'none';
     }
 
     function alternarScanner() {
@@ -1125,9 +1048,6 @@
     }
 
     window.onload = () => {
-        if(REMOVE_BG_API_KEY === "SUA_API_KEY_AQUI") {
-            console.warn("⚠️ Configure sua API Key do Remove.bg para remover fundo das imagens!");
-        }
         if(userLogado && db.usuarios[userLogado]) entrarApp();
         else mostrarTela('tela-login');
     };
