@@ -590,7 +590,7 @@
         
         <h3 style="margin: 15px 0;">🛡️ Membros Cadastrados</h3>
         <div id="lista-usuarios-master"></div>
-        <button onclick="recarregarListaMaster()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">🔄 RECARREGAR</button>
+        <button onclick="carregarListaMaster()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">🔄 RECARREGAR LISTA</button>
         <button onclick="resetarTodosDados()" style="background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white; margin-top: 10px;">⚠️ RESETAR TUDO</button>
     </div>
 
@@ -692,8 +692,33 @@
 </div>
 
 <script>
-    const DB_KEY = "LISTA_COMPRAS_V17_FINAL";
+    const DB_KEY = "SISTEMA_COMPRAS_FAMILIAR";
     const SENHA_PADRAO = "Compras@2026";
+    
+    // DADOS PADRÃO (Garantir que sempre tenha o master)
+    const DADOS_PADRAO = {
+        usuarios: {
+            "master": {
+                id: "master",
+                nome: "Master",
+                senhaHash: (function() {
+                    let hash = 0;
+                    let senha = "Melissa@2016";
+                    for (let i = 0; i < senha.length; i++) {
+                        hash = ((hash << 5) - hash) + senha.charCodeAt(i);
+                    }
+                    return hash.toString();
+                })(),
+                role: "master",
+                lista: [],
+                reset: false,
+                historico: [],
+                foto: null
+            }
+        },
+        saldo: 0,
+        precos: {}
+    };
     
     let dadosApp = null;
     let userLogado = sessionStorage.getItem('user');
@@ -719,37 +744,13 @@
         return hash.toString();
     }
     
-    // DADOS PADRÃO
-    const DADOS_PADRAO = {
-        usuarios: { 
-            "master": { 
-                nome: "Master", 
-                senhaHash: hashSenha("Melissa@2016"), 
-                role: "master", 
-                lista: [], 
-                reset: false,
-                historico: [],
-                foto: null
-            } 
-        },
-        saldo: 0,
-        precos: {}
-    };
-    
-    function mostrarSaving(mostrar) {
-        const indicator = document.getElementById('saving-indicator');
-        if(mostrar) indicator.classList.add('active');
-        else indicator.classList.remove('active');
-    }
-    
-    // Carregar dados
+    // Carregar dados do localStorage
     function carregarDados() {
         const dadosSalvos = localStorage.getItem(DB_KEY);
         if (dadosSalvos) {
             try {
                 dadosApp = JSON.parse(dadosSalvos);
-                console.log("✅ Dados carregados!");
-                console.log("👥 Usuários:", Object.keys(dadosApp.usuarios));
+                console.log("✅ Dados carregados do localStorage");
             } catch(e) {
                 console.error("Erro ao carregar:", e);
                 dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
@@ -760,18 +761,19 @@
             salvarDados();
         }
         
-        // Garantir estrutura correta
-        Object.keys(dadosApp.usuarios).forEach(uid => {
-            if (!dadosApp.usuarios[uid].foto) dadosApp.usuarios[uid].foto = null;
-            if (!dadosApp.usuarios[uid].historico) dadosApp.usuarios[uid].historico = [];
-            if (!dadosApp.usuarios[uid].lista) dadosApp.usuarios[uid].lista = [];
-        });
+        // Garantir que o master existe
+        if (!dadosApp.usuarios["master"]) {
+            dadosApp.usuarios["master"] = DADOS_PADRAO.usuarios["master"];
+            salvarDados();
+        }
+        
+        console.log("👥 Total de usuários:", Object.keys(dadosApp.usuarios).length);
+        console.log("📋 Lista:", Object.keys(dadosApp.usuarios).map(k => dadosApp.usuarios[k].nome));
     }
     
     function salvarDados() {
         localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
-        console.log("💾 Dados salvos!");
-        console.log("👥 Total usuários:", Object.keys(dadosApp.usuarios).length);
+        console.log("💾 Dados salvos! Total usuários:", Object.keys(dadosApp.usuarios).length);
     }
     
     function mostrarToast(msg, duracao = 2000) {
@@ -782,9 +784,55 @@
         setTimeout(() => toast.remove(), duracao);
     }
     
-    function recarregarListaMaster() {
-        abrirMaster();
-        mostrarToast('🔄 Lista recarregada!');
+    function carregarListaMaster() {
+        const listaDiv = document.getElementById('lista-usuarios-master');
+        if (!listaDiv) return;
+        
+        listaDiv.innerHTML = '';
+        
+        if (!dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
+            listaDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Nenhum membro cadastrado</div>';
+            return;
+        }
+        
+        Object.keys(dadosApp.usuarios).forEach(uid => {
+            const u = dadosApp.usuarios[uid];
+            listaDiv.innerHTML += `
+                <div class="usuario-item">
+                    <div class="usuario-foto">
+                        ${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : u.nome.charAt(0).toUpperCase()}
+                    </div>
+                    <div style="flex:1;">
+                        <b>${u.nome}</b><br>
+                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
+                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; background:orange; color:white; margin:0; font-size:11px;">RESET</button>
+                        ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">X</button>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    function resetarSenha(uid) {
+        if(confirm(`Resetar senha de ${dadosApp.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
+            dadosApp.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
+            dadosApp.usuarios[uid].reset = true;
+            salvarDados();
+            mostrarToast(`✅ Senha resetada: ${SENHA_PADRAO}`);
+            carregarListaMaster();
+        }
+    }
+    
+    function excluirUsuario(uid) {
+        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome} permanentemente?`)) {
+            delete dadosApp.usuarios[uid];
+            salvarDados();
+            mostrarToast('🗑️ Usuário excluído');
+            carregarListaMaster();
+        }
     }
     
     function mostrarIndicadorBusca(mostrar) {
@@ -819,7 +867,7 @@
             dadosApp.precos[codigo] = produto.nome;
             salvarDados();
         } else {
-            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido.`;
+            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido. Preencha manualmente.`;
             infoDiv.classList.add('show');
             mostrarToast('🏷️ Código de balança - Preencha manualmente');
         }
@@ -959,70 +1007,28 @@
     
     function abrirMaster() {
         mostrarTela('painel-master');
-        const lista = document.getElementById('lista-usuarios-master');
-        lista.innerHTML = "";
-        
-        if (!dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
-            lista.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Nenhum membro cadastrado</div>';
-            return;
-        }
-        
-        Object.keys(dadosApp.usuarios).forEach(uid => {
-            const u = dadosApp.usuarios[uid];
-            lista.innerHTML += `
-                <div class="usuario-item">
-                    <div class="usuario-foto">${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : u.nome.charAt(0).toUpperCase()}</div>
-                    <div style="flex:1;">
-                        <b>${u.nome}</b><br>
-                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
-                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
-                    </div>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; background:orange; color:white; margin:0; font-size:11px;">RESET</button>
-                        ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">X</button>` : ''}
-                    </div>
-                </div>`;
-        });
-    }
-    
-    function resetarSenha(uid) {
-        if(confirm(`Resetar senha de ${dadosApp.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
-            dadosApp.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
-            dadosApp.usuarios[uid].reset = true;
-            salvarDados();
-            mostrarToast(`✅ Senha resetada: ${SENHA_PADRAO}`);
-            abrirMaster();
-        }
-    }
-    
-    function excluirUsuario(uid) {
-        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome} permanentemente?`)) {
-            delete dadosApp.usuarios[uid];
-            salvarDados();
-            mostrarToast('🗑️ Usuário excluído');
-            abrirMaster();
-        }
+        carregarListaMaster();
     }
     
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
         if(!nome) return alert("Digite um nome!");
         
-        // Verificar se já existe um usuário com este nome (case insensitive)
-        const nomeLower = nome.toLowerCase();
-        const existe = Object.keys(dadosApp.usuarios).some(uid => 
-            dadosApp.usuarios[uid].nome.toLowerCase() === nomeLower
+        // Verificar se já existe usuário com este nome (case insensitive)
+        const nomeExiste = Object.values(dadosApp.usuarios).some(
+            user => user.nome.toLowerCase() === nome.toLowerCase()
         );
         
-        if (existe) {
-            alert(`❌ Já existe um membro com o nome "${nome}"!`);
+        if (nomeExiste) {
+            alert(`❌ Já existe um membro com o nome "${nome}"!\n\nUse um nome diferente.`);
             return;
         }
         
-        // Gerar um ID único baseado no nome + timestamp
-        const id = nome.toLowerCase().replace(/\s/g, '') + '_' + Date.now();
+        // Criar ID único baseado no nome
+        const id = nome.toLowerCase().replace(/[^a-z]/g, '');
         
         dadosApp.usuarios[id] = { 
+            id: id,
             nome: nome, 
             senhaHash: hashSenha(SENHA_PADRAO), 
             role: "user", 
@@ -1033,7 +1039,7 @@
         };
         
         salvarDados();
-        mostrarToast(`✅ ${nome} cadastrado! Senha: ${SENHA_PADRAO}`, 3000);
+        mostrarToast(`✅ ${nome} cadastrado!\nSenha: ${SENHA_PADRAO}`, 4000);
         
         limparCadastroFoto();
         document.getElementById('novo_nome').value = '';
@@ -1041,37 +1047,48 @@
     }
     
     function tentarLogin() {
-        const u = document.getElementById('login_user').value.trim();
-        const p = document.getElementById('login_pass').value;
+        const nomeDigitado = document.getElementById('login_user').value.trim();
+        const senhaDigitada = document.getElementById('login_pass').value;
+        
+        if (!nomeDigitado) {
+            alert("Digite o nome do usuário!");
+            return;
+        }
         
         // Buscar usuário pelo nome (case insensitive)
         let usuarioEncontrado = null;
         let usuarioId = null;
         
         for (const [id, user] of Object.entries(dadosApp.usuarios)) {
-            if (user.nome.toLowerCase() === u.toLowerCase()) {
+            if (user.nome.toLowerCase() === nomeDigitado.toLowerCase()) {
                 usuarioEncontrado = user;
                 usuarioId = id;
                 break;
             }
         }
         
-        if (usuarioEncontrado && usuarioEncontrado.senhaHash === hashSenha(p)) {
+        if (!usuarioEncontrado) {
+            alert(`❌ Usuário "${nomeDigitado}" não encontrado!\n\nSenha padrão: ${SENHA_PADRAO}`);
+            return;
+        }
+        
+        if (usuarioEncontrado.senhaHash === hashSenha(senhaDigitada)) {
             userLogado = usuarioId;
             sessionStorage.setItem('user', usuarioId);
+            
             if (usuarioEncontrado.reset) {
-                mostrarToast('⚠️ Crie uma nova senha!');
+                mostrarToast('⚠️ Esta é a senha padrão. Crie uma nova senha!');
                 const novaSenha = prompt("Digite sua nova senha (mínimo 4 caracteres):");
                 if (novaSenha && novaSenha.length >= 4) {
                     dadosApp.usuarios[usuarioId].senhaHash = hashSenha(novaSenha);
                     dadosApp.usuarios[usuarioId].reset = false;
                     salvarDados();
-                    mostrarToast('✅ Senha alterada!');
+                    mostrarToast('✅ Senha alterada com sucesso!');
                 }
             }
             entrarApp();
         } else {
-            alert(`❌ Usuário ou senha incorretos!\n\nSenha padrão: ${SENHA_PADRAO}`);
+            alert(`❌ Senha incorreta!\n\nSenha padrão: ${SENHA_PADRAO}`);
         }
     }
     
@@ -1142,7 +1159,7 @@
                 <div class="item-lista">
                     <div style="display:flex; flex:1; align-items:center;">
                         <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
-                        <div><b>${it.nome.substring(0, 25)}</b><br><small>${it.qtd.toFixed(3)}kg x R$ ${(it.total/it.qtd).toFixed(2)}/kg = R$ ${it.total.toFixed(2)}</small></div>
+                        <div><b>${it.nome.substring(0, 25)}</b><br><small>${it.qtd.toFixed(3)} x R$ ${(it.total/it.qtd).toFixed(2)} = R$ ${it.total.toFixed(2)}</small></div>
                     </div>
                     <button onclick="removerItem(${i})" style="width:30px; color:#ff1744; font-size:20px;">&times;</button>
                 </div>`;
@@ -1366,7 +1383,7 @@
     window.onload = () => {
         console.log("🚀 Sistema iniciado!");
         console.log("👥 Usuários cadastrados:", Object.keys(dadosApp.usuarios).length);
-        console.log("📋 Lista de usuários:", Object.keys(dadosApp.usuarios).map(uid => dadosApp.usuarios[uid].nome));
+        console.log("📋 Lista de nomes:", Object.values(dadosApp.usuarios).map(u => u.nome));
         
         if(userLogado && dadosApp.usuarios[userLogado]) {
             entrarApp();
