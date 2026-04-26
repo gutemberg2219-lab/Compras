@@ -507,7 +507,6 @@
         
         .info-balanca.show { display: block; }
         
-        /* Lista de usuários na tela de login */
         .usuarios-disponiveis {
             margin: 15px 0;
             padding: 10px;
@@ -541,19 +540,15 @@
             transform: scale(1.05);
         }
         
-        ::-webkit-scrollbar {
-            width: 8px;
+        .btn-recriar {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            margin-top: 10px;
         }
         
-        ::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -573,10 +568,11 @@
         </div>
         <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
         
-        <!-- Lista de usuários disponíveis -->
         <div class="usuarios-disponiveis" id="usuarios-disponiveis">
             <h4>👥 MEMBROS DISPONÍVEIS:</h4>
-            <div class="lista-nomes" id="lista-nomes-login"></div>
+            <div class="lista-nomes" id="lista-nomes-login">
+                <span style="font-size:12px; color:#999;">Carregando...</span>
+            </div>
         </div>
         
         <input type="text" id="login_user" placeholder="👤 Digite o nome do usuário">
@@ -586,6 +582,7 @@
         </div>
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="tentarLogin()">🚀 ENTRAR</button>
         <button style="background: transparent; color: #667eea; border: 2px solid #667eea;" onclick="mostrarTela('tela-cadastro')">✨ CRIAR NOVO ACESSO</button>
+        <button class="btn-recriar" onclick="recriarMaster()">🔄 RECRIAR MASTER</button>
     </div>
 
     <!-- TELA DE CADASTRO COM FOTO -->
@@ -734,10 +731,9 @@
 </div>
 
 <script>
-    const DB_KEY = "SISTEMA_COMPRAS_FAMILIAR_V3";
+    const DB_KEY = "LISTA_COMPRAS_FINAL";
     const SENHA_PADRAO = "Compras@2026";
     
-    // DADOS PADRÃO - APENAS MASTER
     function criarMaster() {
         let hash = 0;
         let senha = "Melissa@2016";
@@ -767,8 +763,7 @@
     
     const BALANCA_PRODUTOS = {
         '2006200036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 },
-        '2037740124046': { nome: 'CARNE BOVINA', peso: 3.266, precoKg: 37.9, total: 124.04 },
-        '200620036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 }
+        '2037740124046': { nome: 'CARNE BOVINA', peso: 3.266, precoKg: 37.9, total: 124.04 }
     };
     
     function hashSenha(senha) {
@@ -779,31 +774,42 @@
         return hash.toString();
     }
     
+    function recriarMaster() {
+        if(confirm("⚠️ Isso irá recriar apenas o usuário Master. Continuar?")) {
+            dadosApp = { usuarios: {}, saldo: 0, precos: {} };
+            dadosApp.usuarios["master"] = criarMaster();
+            salvarDados();
+            mostrarToast("✅ Master recriado com sucesso!");
+            setTimeout(() => location.reload(), 1000);
+        }
+    }
+    
     function carregarDados() {
-        const dadosSalvos = localStorage.getItem(DB_KEY);
-        if (dadosSalvos) {
-            try {
+        try {
+            const dadosSalvos = localStorage.getItem(DB_KEY);
+            if (dadosSalvos) {
                 dadosApp = JSON.parse(dadosSalvos);
-                console.log("✅ Dados carregados");
-            } catch(e) {
-                console.error("Erro:", e);
+                console.log("✅ Dados carregados:", dadosApp);
+            } else {
+                console.log("📦 Criando novos dados");
                 dadosApp = { usuarios: {}, saldo: 0, precos: {} };
                 dadosApp.usuarios["master"] = criarMaster();
+                salvarDados();
             }
-        } else {
-            console.log("📦 Criando dados padrão - Apenas Master");
+            
+            if (!dadosApp.usuarios["master"]) {
+                dadosApp.usuarios["master"] = criarMaster();
+                salvarDados();
+            }
+            
+            console.log("👥 Usuários:", Object.values(dadosApp.usuarios).map(u => u.nome));
+            atualizarListaUsuariosLogin();
+        } catch(e) {
+            console.error("Erro crítico:", e);
             dadosApp = { usuarios: {}, saldo: 0, precos: {} };
             dadosApp.usuarios["master"] = criarMaster();
             salvarDados();
         }
-        
-        if (!dadosApp.usuarios["master"]) {
-            dadosApp.usuarios["master"] = criarMaster();
-            salvarDados();
-        }
-        
-        console.log("👥 Usuários:", Object.values(dadosApp.usuarios).map(u => u.nome));
-        atualizarListaUsuariosLogin();
     }
     
     function salvarDados() {
@@ -817,13 +823,13 @@
         if (!listaDiv) return;
         
         listaDiv.innerHTML = '';
-        const usuarios = Object.values(dadosApp.usuarios);
         
-        if (usuarios.length === 0) {
+        if (!dadosApp || !dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
             listaDiv.innerHTML = '<span style="font-size:12px; color:#999;">Nenhum membro cadastrado</span>';
             return;
         }
         
+        const usuarios = Object.values(dadosApp.usuarios);
         usuarios.forEach(user => {
             const span = document.createElement('span');
             span.className = 'nome-usuario';
@@ -1090,7 +1096,6 @@
             return;
         }
         
-        // Verificar se já existe usuário com este nome
         let nomeExiste = false;
         for (const id in dadosApp.usuarios) {
             if (dadosApp.usuarios[id].nome.toLowerCase() === nome.toLowerCase()) {
