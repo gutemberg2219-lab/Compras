@@ -507,6 +507,40 @@
         
         .info-balanca.show { display: block; }
         
+        /* Lista de usuários na tela de login */
+        .usuarios-disponiveis {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+        }
+        
+        .usuarios-disponiveis h4 {
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: #667eea;
+        }
+        
+        .lista-nomes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .nome-usuario {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nome-usuario:hover {
+            background: rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+        }
+        
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -538,7 +572,14 @@
             <p>Sistema Familiar de Compras</p>
         </div>
         <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
-        <input type="text" id="login_user" placeholder="👤 Usuário">
+        
+        <!-- Lista de usuários disponíveis -->
+        <div class="usuarios-disponiveis" id="usuarios-disponiveis">
+            <h4>👥 MEMBROS DISPONÍVEIS:</h4>
+            <div class="lista-nomes" id="lista-nomes-login"></div>
+        </div>
+        
+        <input type="text" id="login_user" placeholder="👤 Digite o nome do usuário">
         <div class="password-wrapper">
             <input type="password" id="login_pass" placeholder="🔒 Senha">
             <button type="button" class="toggle-password" onclick="toggleSenha('login_pass', this)">👁️</button>
@@ -693,17 +734,10 @@
 </div>
 
 <script>
-    const DB_KEY = "SISTEMA_COMPRAS_FAMILIAR_V2";
+    const DB_KEY = "SISTEMA_COMPRAS_FAMILIAR_V3";
     const SENHA_PADRAO = "Compras@2026";
     
-    // DADOS PADRÃO
-    const DADOS_PADRAO = {
-        usuarios: {},
-        saldo: 0,
-        precos: {}
-    };
-    
-    // Criar master
+    // DADOS PADRÃO - APENAS MASTER
     function criarMaster() {
         let hash = 0;
         let senha = "Melissa@2016";
@@ -731,7 +765,6 @@
     let ultimoCodigoBuscado = '';
     let supermercadoAtual = '';
     
-    // Mapeamento de códigos de balança
     const BALANCA_PRODUTOS = {
         '2006200036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 },
         '2037740124046': { nome: 'CARNE BOVINA', peso: 3.266, precoKg: 37.9, total: 124.04 },
@@ -746,38 +779,61 @@
         return hash.toString();
     }
     
-    // Carregar dados do localStorage
     function carregarDados() {
         const dadosSalvos = localStorage.getItem(DB_KEY);
         if (dadosSalvos) {
             try {
                 dadosApp = JSON.parse(dadosSalvos);
-                console.log("✅ Dados carregados do localStorage");
+                console.log("✅ Dados carregados");
             } catch(e) {
-                console.error("Erro ao carregar:", e);
-                dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
+                console.error("Erro:", e);
+                dadosApp = { usuarios: {}, saldo: 0, precos: {} };
                 dadosApp.usuarios["master"] = criarMaster();
             }
         } else {
-            console.log("📦 Criando dados padrão");
-            dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
+            console.log("📦 Criando dados padrão - Apenas Master");
+            dadosApp = { usuarios: {}, saldo: 0, precos: {} };
             dadosApp.usuarios["master"] = criarMaster();
             salvarDados();
         }
         
-        // Garantir que o master existe
         if (!dadosApp.usuarios["master"]) {
             dadosApp.usuarios["master"] = criarMaster();
             salvarDados();
         }
         
-        console.log("👥 Total de usuários:", Object.keys(dadosApp.usuarios).length);
-        console.log("📋 Lista de nomes:", Object.values(dadosApp.usuarios).map(u => u.nome));
+        console.log("👥 Usuários:", Object.values(dadosApp.usuarios).map(u => u.nome));
+        atualizarListaUsuariosLogin();
     }
     
     function salvarDados() {
         localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
-        console.log("💾 Dados salvos! Total usuários:", Object.keys(dadosApp.usuarios).length);
+        console.log("💾 Dados salvos!");
+        atualizarListaUsuariosLogin();
+    }
+    
+    function atualizarListaUsuariosLogin() {
+        const listaDiv = document.getElementById('lista-nomes-login');
+        if (!listaDiv) return;
+        
+        listaDiv.innerHTML = '';
+        const usuarios = Object.values(dadosApp.usuarios);
+        
+        if (usuarios.length === 0) {
+            listaDiv.innerHTML = '<span style="font-size:12px; color:#999;">Nenhum membro cadastrado</span>';
+            return;
+        }
+        
+        usuarios.forEach(user => {
+            const span = document.createElement('span');
+            span.className = 'nome-usuario';
+            span.textContent = user.nome;
+            span.onclick = () => {
+                document.getElementById('login_user').value = user.nome;
+                document.getElementById('login_pass').focus();
+            };
+            listaDiv.appendChild(span);
+        });
     }
     
     function mostrarToast(msg, duracao = 3000) {
@@ -793,7 +849,7 @@
         console.log("Usuários:", dadosApp.usuarios);
         console.log("Total:", Object.keys(dadosApp.usuarios).length);
         console.log("Lista:", Object.values(dadosApp.usuarios).map(u => u.nome));
-        alert(`Total de usuários: ${Object.keys(dadosApp.usuarios).length}\n\nVerifique o console do navegador (F12) para mais detalhes.`);
+        alert(`Total de usuários: ${Object.keys(dadosApp.usuarios).length}\n\nMembros: ${Object.values(dadosApp.usuarios).map(u => u.nome).join(', ')}`);
     }
     
     function carregarListaMaster() {
@@ -848,6 +904,7 @@
             salvarDados();
             mostrarToast('🗑️ Usuário excluído');
             carregarListaMaster();
+            atualizarListaUsuariosLogin();
         }
     }
     
@@ -1033,7 +1090,7 @@
             return;
         }
         
-        // Verificar se já existe usuário com este nome (case insensitive)
+        // Verificar se já existe usuário com este nome
         let nomeExiste = false;
         for (const id in dadosApp.usuarios) {
             if (dadosApp.usuarios[id].nome.toLowerCase() === nome.toLowerCase()) {
@@ -1047,7 +1104,6 @@
             return;
         }
         
-        // Criar ID único
         const id = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
         
         dadosApp.usuarios[id] = { 
@@ -1069,7 +1125,6 @@
         document.getElementById('foto-preview-cadastro').style.display = 'none';
         document.getElementById('foto-placeholder').style.display = 'block';
         
-        // Voltar para tela de login
         mostrarTela('tela-login');
     }
     
@@ -1078,11 +1133,10 @@
         const senhaDigitada = document.getElementById('login_pass').value;
         
         if (!nomeDigitado) {
-            alert("Digite o nome do usuário!");
+            alert("Digite o nome do usuário ou clique em um nome da lista!");
             return;
         }
         
-        // Buscar usuário pelo nome (case insensitive)
         let usuarioEncontrado = null;
         let usuarioId = null;
         
@@ -1095,7 +1149,7 @@
         }
         
         if (!usuarioEncontrado) {
-            alert(`❌ Usuário "${nomeDigitado}" não encontrado!\n\nVerifique o nome ou faça o cadastro.`);
+            alert(`❌ Usuário "${nomeDigitado}" não encontrado!\n\nUsuários disponíveis: ${Object.values(dadosApp.usuarios).map(u => u.nome).join(', ')}`);
             return;
         }
         
@@ -1393,10 +1447,10 @@
     function resetarTodosDados() {
         if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!')) {
             if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários serão perdidos!')) {
-                dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
+                dadosApp = { usuarios: {}, saldo: 0, precos: {} };
                 dadosApp.usuarios["master"] = criarMaster();
                 salvarDados();
-                mostrarToast('🗑️ Dados resetados!');
+                mostrarToast('🗑️ Dados resetados! Apenas o Master permanece.');
                 setTimeout(() => location.reload(), 1500);
             }
         }
@@ -1406,13 +1460,11 @@
         if (event.target.classList.contains('modal')) event.target.style.display = 'none';
     }
     
-    // Inicialização
     carregarDados();
     
     window.onload = () => {
         console.log("🚀 Sistema iniciado!");
-        console.log("👥 Usuários cadastrados:", Object.keys(dadosApp.usuarios).length);
-        console.log("📋 Lista de nomes:", Object.values(dadosApp.usuarios).map(u => u.nome));
+        console.log("👥 Usuários cadastrados:", Object.values(dadosApp.usuarios).map(u => u.nome));
         
         if(userLogado && dadosApp.usuarios[userLogado]) {
             entrarApp();
