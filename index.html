@@ -586,9 +586,10 @@
             <button onclick="mostrarComparativoPrecos()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white;">💰 COMPARAR</button>
             <button onclick="exportarBackup()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white;">💾 BACKUP</button>
             <button onclick="importarBackup()" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white;">📥 RESTAURAR</button>
+            <button onclick="verDadosNoConsole()" style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color:white;">🔍 DEBUG</button>
         </div>
         
-        <h3 style="margin: 15px 0;">🛡️ Membros Cadastrados</h3>
+        <h3 style="margin: 15px 0;">🛡️ Membros Cadastrados (<span id="total-membros">0</span>)</h3>
         <div id="lista-usuarios-master"></div>
         <button onclick="carregarListaMaster()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">🔄 RECARREGAR LISTA</button>
         <button onclick="resetarTodosDados()" style="background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white; margin-top: 10px;">⚠️ RESETAR TUDO</button>
@@ -692,33 +693,34 @@
 </div>
 
 <script>
-    const DB_KEY = "SISTEMA_COMPRAS_FAMILIAR";
+    const DB_KEY = "SISTEMA_COMPRAS_FAMILIAR_V2";
     const SENHA_PADRAO = "Compras@2026";
     
-    // DADOS PADRÃO (Garantir que sempre tenha o master)
+    // DADOS PADRÃO
     const DADOS_PADRAO = {
-        usuarios: {
-            "master": {
-                id: "master",
-                nome: "Master",
-                senhaHash: (function() {
-                    let hash = 0;
-                    let senha = "Melissa@2016";
-                    for (let i = 0; i < senha.length; i++) {
-                        hash = ((hash << 5) - hash) + senha.charCodeAt(i);
-                    }
-                    return hash.toString();
-                })(),
-                role: "master",
-                lista: [],
-                reset: false,
-                historico: [],
-                foto: null
-            }
-        },
+        usuarios: {},
         saldo: 0,
         precos: {}
     };
+    
+    // Criar master
+    function criarMaster() {
+        let hash = 0;
+        let senha = "Melissa@2016";
+        for (let i = 0; i < senha.length; i++) {
+            hash = ((hash << 5) - hash) + senha.charCodeAt(i);
+        }
+        return {
+            id: "master",
+            nome: "Master",
+            senhaHash: hash.toString(),
+            role: "master",
+            lista: [],
+            reset: false,
+            historico: [],
+            foto: null
+        };
+    }
     
     let dadosApp = null;
     let userLogado = sessionStorage.getItem('user');
@@ -754,21 +756,23 @@
             } catch(e) {
                 console.error("Erro ao carregar:", e);
                 dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
+                dadosApp.usuarios["master"] = criarMaster();
             }
         } else {
             console.log("📦 Criando dados padrão");
             dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
+            dadosApp.usuarios["master"] = criarMaster();
             salvarDados();
         }
         
         // Garantir que o master existe
         if (!dadosApp.usuarios["master"]) {
-            dadosApp.usuarios["master"] = DADOS_PADRAO.usuarios["master"];
+            dadosApp.usuarios["master"] = criarMaster();
             salvarDados();
         }
         
         console.log("👥 Total de usuários:", Object.keys(dadosApp.usuarios).length);
-        console.log("📋 Lista:", Object.keys(dadosApp.usuarios).map(k => dadosApp.usuarios[k].nome));
+        console.log("📋 Lista de nomes:", Object.values(dadosApp.usuarios).map(u => u.nome));
     }
     
     function salvarDados() {
@@ -776,7 +780,7 @@
         console.log("💾 Dados salvos! Total usuários:", Object.keys(dadosApp.usuarios).length);
     }
     
-    function mostrarToast(msg, duracao = 2000) {
+    function mostrarToast(msg, duracao = 3000) {
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.textContent = msg;
@@ -784,19 +788,31 @@
         setTimeout(() => toast.remove(), duracao);
     }
     
+    function verDadosNoConsole() {
+        console.log("=== DADOS COMPLETOS ===");
+        console.log("Usuários:", dadosApp.usuarios);
+        console.log("Total:", Object.keys(dadosApp.usuarios).length);
+        console.log("Lista:", Object.values(dadosApp.usuarios).map(u => u.nome));
+        alert(`Total de usuários: ${Object.keys(dadosApp.usuarios).length}\n\nVerifique o console do navegador (F12) para mais detalhes.`);
+    }
+    
     function carregarListaMaster() {
         const listaDiv = document.getElementById('lista-usuarios-master');
+        const totalSpan = document.getElementById('total-membros');
         if (!listaDiv) return;
         
         listaDiv.innerHTML = '';
         
         if (!dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
             listaDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Nenhum membro cadastrado</div>';
+            if(totalSpan) totalSpan.innerText = '0';
             return;
         }
         
-        Object.keys(dadosApp.usuarios).forEach(uid => {
-            const u = dadosApp.usuarios[uid];
+        const usuariosArray = Object.values(dadosApp.usuarios);
+        if(totalSpan) totalSpan.innerText = usuariosArray.length;
+        
+        usuariosArray.forEach(u => {
             listaDiv.innerHTML += `
                 <div class="usuario-item">
                     <div class="usuario-foto">
@@ -808,8 +824,8 @@
                         ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
                     </div>
                     <div style="display:flex; gap:5px;">
-                        <button onclick="resetarSenha('${uid}')" style="width:60px; height:30px; background:orange; color:white; margin:0; font-size:11px;">RESET</button>
-                        ${uid !== 'master' ? `<button onclick="excluirUsuario('${uid}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">X</button>` : ''}
+                        <button onclick="resetarSenha('${u.id}')" style="width:60px; height:30px; background:orange; color:white; margin:0; font-size:11px;">RESET</button>
+                        ${u.id !== 'master' ? `<button onclick="excluirUsuario('${u.id}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">X</button>` : ''}
                     </div>
                 </div>
             `;
@@ -1012,20 +1028,27 @@
     
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
-        if(!nome) return alert("Digite um nome!");
+        if(!nome) {
+            alert("❌ Digite o nome do membro!");
+            return;
+        }
         
         // Verificar se já existe usuário com este nome (case insensitive)
-        const nomeExiste = Object.values(dadosApp.usuarios).some(
-            user => user.nome.toLowerCase() === nome.toLowerCase()
-        );
+        let nomeExiste = false;
+        for (const id in dadosApp.usuarios) {
+            if (dadosApp.usuarios[id].nome.toLowerCase() === nome.toLowerCase()) {
+                nomeExiste = true;
+                break;
+            }
+        }
         
         if (nomeExiste) {
             alert(`❌ Já existe um membro com o nome "${nome}"!\n\nUse um nome diferente.`);
             return;
         }
         
-        // Criar ID único baseado no nome
-        const id = nome.toLowerCase().replace(/[^a-z]/g, '');
+        // Criar ID único
+        const id = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
         
         dadosApp.usuarios[id] = { 
             id: id,
@@ -1039,10 +1062,14 @@
         };
         
         salvarDados();
-        mostrarToast(`✅ ${nome} cadastrado!\nSenha: ${SENHA_PADRAO}`, 4000);
+        mostrarToast(`✅ ${nome} cadastrado com sucesso!\n📝 Senha: ${SENHA_PADRAO}`, 5000);
         
         limparCadastroFoto();
         document.getElementById('novo_nome').value = '';
+        document.getElementById('foto-preview-cadastro').style.display = 'none';
+        document.getElementById('foto-placeholder').style.display = 'block';
+        
+        // Voltar para tela de login
         mostrarTela('tela-login');
     }
     
@@ -1068,7 +1095,7 @@
         }
         
         if (!usuarioEncontrado) {
-            alert(`❌ Usuário "${nomeDigitado}" não encontrado!\n\nSenha padrão: ${SENHA_PADRAO}`);
+            alert(`❌ Usuário "${nomeDigitado}" não encontrado!\n\nVerifique o nome ou faça o cadastro.`);
             return;
         }
         
@@ -1077,7 +1104,7 @@
             sessionStorage.setItem('user', usuarioId);
             
             if (usuarioEncontrado.reset) {
-                mostrarToast('⚠️ Esta é a senha padrão. Crie uma nova senha!');
+                mostrarToast('⚠️ Esta é a senha padrão. Crie uma nova senha!', 4000);
                 const novaSenha = prompt("Digite sua nova senha (mínimo 4 caracteres):");
                 if (novaSenha && novaSenha.length >= 4) {
                     dadosApp.usuarios[usuarioId].senhaHash = hashSenha(novaSenha);
@@ -1231,8 +1258,8 @@
         let totalGeral = 0;
         let comprasPorUsuario = {};
         
-        Object.keys(dadosApp.usuarios).forEach(uid => {
-            const user = dadosApp.usuarios[uid];
+        for (const id in dadosApp.usuarios) {
+            const user = dadosApp.usuarios[id];
             if(user.historico) {
                 user.historico.forEach(compra => {
                     todasCompras.push({ ...compra, usuarioNome: user.nome });
@@ -1240,7 +1267,7 @@
                     comprasPorUsuario[user.nome] = (comprasPorUsuario[user.nome] || 0) + compra.gastoSaldo;
                 });
             }
-        });
+        }
         
         todasCompras.sort((a,b) => new Date(b.data) - new Date(a.data));
         
@@ -1264,8 +1291,8 @@
     
     function mostrarComparativoPrecos() {
         let produtos = {};
-        Object.keys(dadosApp.usuarios).forEach(uid => {
-            const user = dadosApp.usuarios[uid];
+        for (const id in dadosApp.usuarios) {
+            const user = dadosApp.usuarios[id];
             if(user.historico) {
                 user.historico.forEach(compra => {
                     compra.itens.forEach(item => {
@@ -1275,14 +1302,15 @@
                     });
                 });
             }
-        });
+        }
         
         let html = '<table class="comparison-table"><tr><th>Produto</th><th>Menor</th><th>Maior</th></tr>';
-        Object.values(produtos).forEach(prod => {
+        for (const key in produtos) {
+            const prod = produtos[key];
             const menor = Math.min(...prod.precos);
             const maior = Math.max(...prod.precos);
             html += `<tr><td><b>${prod.nome}</b></td><td style="color:green">R$ ${menor.toFixed(2)}</td><td style="color:red">R$ ${maior.toFixed(2)}</td></tr>`;
-        });
+        }
         html += '</table>';
         
         document.getElementById('conteudo-comparativo').innerHTML = html || '<p>Nenhum produto registrado</p>';
@@ -1366,6 +1394,7 @@
         if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!')) {
             if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários serão perdidos!')) {
                 dadosApp = JSON.parse(JSON.stringify(DADOS_PADRAO));
+                dadosApp.usuarios["master"] = criarMaster();
                 salvarDados();
                 mostrarToast('🗑️ Dados resetados!');
                 setTimeout(() => location.reload(), 1500);
