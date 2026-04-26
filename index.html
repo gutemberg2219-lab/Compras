@@ -234,6 +234,15 @@
             font-size: 14px;
         }
         
+        /* Botão para alternar câmera */
+        .btn-switch-camera {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            height: 40px;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
         #reader { 
             width: 100%; 
             border-radius: 12px; 
@@ -507,9 +516,47 @@
         
         .info-balanca.show { display: block; }
         
-        /* Esconder elementos - mantidos no HTML mas invisíveis */
+        /* Esconder elementos */
         .hidden-section {
             display: none !important;
+        }
+        
+        /* Container do vídeo da câmera */
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .video-container.active {
+            display: flex;
+        }
+        
+        #cameraVideo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            border: 3px solid white;
+        }
+        
+        .video-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .video-controls button {
+            width: auto;
+            padding: 0 25px;
+            margin: 0;
         }
         
         ::-webkit-scrollbar { width: 8px; }
@@ -534,12 +581,6 @@
         </div>
         <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
         
-        <!-- Seção oculta - MEMBROS DISPONÍVEIS (escondida) -->
-        <div id="usuarios-disponiveis" class="hidden-section">
-            <h4>👥 MEMBROS DISPONÍVEIS:</h4>
-            <div class="lista-nomes" id="lista-nomes-login"></div>
-        </div>
-        
         <input type="text" id="login_user" placeholder="👤 Digite o nome do usuário">
         <div class="password-wrapper">
             <input type="password" id="login_pass" placeholder="🔒 Senha">
@@ -547,9 +588,6 @@
         </div>
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="tentarLogin()">🚀 ENTRAR</button>
         <button style="background: transparent; color: #667eea; border: 2px solid #667eea;" onclick="mostrarTela('tela-cadastro')">✨ CRIAR NOVO ACESSO</button>
-        
-        <!-- Botão RECRIAR MASTER (escondido) -->
-        <button id="btn-recriar" class="btn-recriar hidden-section" onclick="recriarMaster()">🔄 RECRIAR MASTER</button>
     </div>
 
     <!-- TELA DE CADASTRO COM FOTO -->
@@ -561,12 +599,11 @@
         <h2 style="text-align:center;">📝 Novo Membro</h2>
         
         <div class="photo-upload-area">
-            <div class="photo-preview-circle" onclick="document.getElementById('cadastro-foto-input').click()">
+            <div class="photo-preview-circle" id="fotoPreviewCircle" onclick="abrirCameraFrontal()">
                 <span id="foto-placeholder">📸</span>
                 <img id="foto-preview-cadastro" style="display:none;">
             </div>
-            <button type="button" class="btn-camera" onclick="document.getElementById('cadastro-foto-input').click()">📷 Tirar Foto</button>
-            <input type="file" id="cadastro-foto-input" accept="image/*" capture="environment" style="display:none" onchange="processarFotoCadastro(event)">
+            <button type="button" class="btn-camera" onclick="abrirCameraFrontal()">📷 Tirar Foto (Selfie)</button>
         </div>
         
         <input type="text" id="novo_nome" placeholder="👤 Nome do Membro">
@@ -681,6 +718,16 @@
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:18px;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
 
+    <!-- Container da Câmera Frontal -->
+    <div id="cameraContainer" class="video-container">
+        <video id="cameraVideo" autoplay playsinline></video>
+        <canvas id="cameraCanvas" style="display:none;"></canvas>
+        <div class="video-controls">
+            <button onclick="tirarFotoCamera()" style="background: #4caf50;">📸 TIRAR FOTO</button>
+            <button onclick="fecharCamera()" style="background: #ff1744;">❌ FECHAR</button>
+        </div>
+    </div>
+
     <!-- MODAIS -->
     <div id="modal-relatorio-geral" class="modal"><div class="modal-content"><h3>📊 Relatório Geral</h3><div id="conteudo-relatorio-geral"></div><button onclick="fecharModal('modal-relatorio-geral')">FECHAR</button></div></div>
     <div id="modal-comparativo" class="modal"><div class="modal-content"><h3>💰 Comparativo de Preços</h3><input type="text" id="filtro-produto" placeholder="Filtrar..." oninput="filtrarComparativo()"><div id="conteudo-comparativo"></div><button onclick="fecharModal('modal-comparativo')">FECHAR</button></div></div>
@@ -699,6 +746,9 @@
 <script>
     const DB_KEY = "LISTA_COMPRAS_FINAL";
     const SENHA_PADRAO = "Compras@2026";
+    
+    let cameraStream = null;
+    let fotoCadastroTemp = null;
     
     function criarMaster() {
         let hash = 0;
@@ -722,7 +772,6 @@
     let userLogado = sessionStorage.getItem('user');
     let scanner = null;
     let fotoTemp = null;
-    let fotoCadastroTemp = null;
     let buscaTimeout = null;
     let ultimoCodigoBuscado = '';
     let supermercadoAtual = '';
@@ -740,14 +789,75 @@
         return hash.toString();
     }
     
-    function recriarMaster() {
-        if(confirm("⚠️ Isso irá recriar apenas o usuário Master. Continuar?")) {
-            dadosApp = { usuarios: {}, saldo: 0, precos: {} };
-            dadosApp.usuarios["master"] = criarMaster();
-            salvarDados();
-            mostrarToast("✅ Master recriado com sucesso!");
-            setTimeout(() => location.reload(), 1000);
+    // Função para abrir câmera frontal
+    async function abrirCameraFrontal() {
+        const video = document.getElementById('cameraVideo');
+        const container = document.getElementById('cameraContainer');
+        
+        // Fechar stream existente
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
         }
+        
+        try {
+            // Solicitar câmera frontal (user)
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { exact: "user" } }
+            });
+            video.srcObject = cameraStream;
+            container.classList.add('active');
+        } catch (err) {
+            // Se falhar, tentar qualquer câmera
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = cameraStream;
+                container.classList.add('active');
+                mostrarToast("⚠️ Usando câmera padrão (frontal não disponível)");
+            } catch (err2) {
+                mostrarToast("❌ Erro ao acessar a câmera!");
+                console.error("Erro câmera:", err2);
+            }
+        }
+    }
+    
+    function fecharCamera() {
+        const container = document.getElementById('cameraContainer');
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        container.classList.remove('active');
+    }
+    
+    function tirarFotoCamera() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('cameraCanvas');
+        const context = canvas.getContext('2d');
+        
+        // Definir tamanho do canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Desenhar o frame do vídeo no canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Converter para base64
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Salvar a foto
+        fotoCadastroTemp = imageData;
+        
+        // Mostrar preview
+        const preview = document.getElementById('foto-preview-cadastro');
+        const placeholder = document.getElementById('foto-placeholder');
+        preview.src = imageData;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        
+        // Fechar câmera
+        fecharCamera();
+        
+        mostrarToast('📸 Selfie capturada com sucesso!');
     }
     
     function carregarDados() {
@@ -769,7 +879,6 @@
             }
             
             console.log("👥 Usuários:", Object.values(dadosApp.usuarios).map(u => u.nome));
-            atualizarListaUsuariosLogin();
         } catch(e) {
             console.error("Erro crítico:", e);
             dadosApp = { usuarios: {}, saldo: 0, precos: {} };
@@ -781,12 +890,6 @@
     function salvarDados() {
         localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
         console.log("💾 Dados salvos!");
-        atualizarListaUsuariosLogin();
-    }
-    
-    function atualizarListaUsuariosLogin() {
-        // Função mantida para compatibilidade, mas não exibe nada
-        // Os dados ainda são armazenados para uso interno
     }
     
     function mostrarToast(msg, duracao = 3000) {
@@ -959,21 +1062,6 @@
             mostrarIndicadorBusca(false);
             setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
         }
-    }
-    
-    function processarFotoCadastro(event) {
-        const file = event.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            fotoCadastroTemp = e.target.result;
-            document.getElementById('foto-preview-cadastro').src = fotoCadastroTemp;
-            document.getElementById('foto-preview-cadastro').style.display = 'block';
-            document.getElementById('foto-placeholder').style.display = 'none';
-            mostrarToast('📸 Foto capturada!');
-        };
-        reader.readAsDataURL(file);
-        event.target.value = '';
     }
     
     function limparCadastroFoto() {
