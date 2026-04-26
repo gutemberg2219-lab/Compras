@@ -507,43 +507,9 @@
         
         .info-balanca.show { display: block; }
         
-        .usuarios-disponiveis {
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 12px;
-        }
-        
-        .usuarios-disponiveis h4 {
-            font-size: 12px;
-            margin-bottom: 8px;
-            color: #667eea;
-        }
-        
-        .lista-nomes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .nome-usuario {
-            background: rgba(102, 126, 234, 0.2);
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .nome-usuario:hover {
-            background: rgba(102, 126, 234, 0.4);
-            transform: scale(1.05);
-        }
-        
-        .btn-recriar {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-            color: white;
-            margin-top: 10px;
+        /* Esconder elementos - mantidos no HTML mas invisíveis */
+        .hidden-section {
+            display: none !important;
         }
         
         ::-webkit-scrollbar { width: 8px; }
@@ -568,11 +534,10 @@
         </div>
         <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
         
-        <div class="usuarios-disponiveis" id="usuarios-disponiveis">
+        <!-- Seção oculta - MEMBROS DISPONÍVEIS (escondida) -->
+        <div id="usuarios-disponiveis" class="hidden-section">
             <h4>👥 MEMBROS DISPONÍVEIS:</h4>
-            <div class="lista-nomes" id="lista-nomes-login">
-                <span style="font-size:12px; color:#999;">Carregando...</span>
-            </div>
+            <div class="lista-nomes" id="lista-nomes-login"></div>
         </div>
         
         <input type="text" id="login_user" placeholder="👤 Digite o nome do usuário">
@@ -582,7 +547,9 @@
         </div>
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="tentarLogin()">🚀 ENTRAR</button>
         <button style="background: transparent; color: #667eea; border: 2px solid #667eea;" onclick="mostrarTela('tela-cadastro')">✨ CRIAR NOVO ACESSO</button>
-        <button class="btn-recriar" onclick="recriarMaster()">🔄 RECRIAR MASTER</button>
+        
+        <!-- Botão RECRIAR MASTER (escondido) -->
+        <button id="btn-recriar" class="btn-recriar hidden-section" onclick="recriarMaster()">🔄 RECRIAR MASTER</button>
     </div>
 
     <!-- TELA DE CADASTRO COM FOTO -->
@@ -624,7 +591,6 @@
             <button onclick="mostrarComparativoPrecos()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white;">💰 COMPARAR</button>
             <button onclick="exportarBackup()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white;">💾 BACKUP</button>
             <button onclick="importarBackup()" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white;">📥 RESTAURAR</button>
-            <button onclick="verDadosNoConsole()" style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color:white;">🔍 DEBUG</button>
         </div>
         
         <h3 style="margin: 15px 0;">🛡️ Membros Cadastrados (<span id="total-membros">0</span>)</h3>
@@ -819,27 +785,8 @@
     }
     
     function atualizarListaUsuariosLogin() {
-        const listaDiv = document.getElementById('lista-nomes-login');
-        if (!listaDiv) return;
-        
-        listaDiv.innerHTML = '';
-        
-        if (!dadosApp || !dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
-            listaDiv.innerHTML = '<span style="font-size:12px; color:#999;">Nenhum membro cadastrado</span>';
-            return;
-        }
-        
-        const usuarios = Object.values(dadosApp.usuarios);
-        usuarios.forEach(user => {
-            const span = document.createElement('span');
-            span.className = 'nome-usuario';
-            span.textContent = user.nome;
-            span.onclick = () => {
-                document.getElementById('login_user').value = user.nome;
-                document.getElementById('login_pass').focus();
-            };
-            listaDiv.appendChild(span);
-        });
+        // Função mantida para compatibilidade, mas não exibe nada
+        // Os dados ainda são armazenados para uso interno
     }
     
     function mostrarToast(msg, duracao = 3000) {
@@ -848,14 +795,6 @@
         toast.textContent = msg;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), duracao);
-    }
-    
-    function verDadosNoConsole() {
-        console.log("=== DADOS COMPLETOS ===");
-        console.log("Usuários:", dadosApp.usuarios);
-        console.log("Total:", Object.keys(dadosApp.usuarios).length);
-        console.log("Lista:", Object.values(dadosApp.usuarios).map(u => u.nome));
-        alert(`Total de usuários: ${Object.keys(dadosApp.usuarios).length}\n\nMembros: ${Object.values(dadosApp.usuarios).map(u => u.nome).join(', ')}`);
     }
     
     function carregarListaMaster() {
@@ -910,7 +849,6 @@
             salvarDados();
             mostrarToast('🗑️ Usuário excluído');
             carregarListaMaster();
-            atualizarListaUsuariosLogin();
         }
     }
     
@@ -1138,7 +1076,7 @@
         const senhaDigitada = document.getElementById('login_pass').value;
         
         if (!nomeDigitado) {
-            alert("Digite o nome do usuário ou clique em um nome da lista!");
+            alert("Digite o nome do usuário!");
             return;
         }
         
@@ -1154,7 +1092,7 @@
         }
         
         if (!usuarioEncontrado) {
-            alert(`❌ Usuário "${nomeDigitado}" não encontrado!\n\nUsuários disponíveis: ${Object.values(dadosApp.usuarios).map(u => u.nome).join(', ')}`);
+            alert(`❌ Usuário "${nomeDigitado}" não encontrado!`);
             return;
         }
         
