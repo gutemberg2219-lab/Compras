@@ -517,6 +517,7 @@
             align-items: center;
             justify-content: center;
             margin: 0;
+            cursor: pointer;
         }
         
         .btn-delete {
@@ -530,6 +531,7 @@
             align-items: center;
             justify-content: center;
             margin: 0;
+            cursor: pointer;
         }
         
         .photo-preview-item {
@@ -539,6 +541,18 @@
             object-fit: cover;
             margin: 10px auto;
             border: 2px solid #ddd;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
         }
     </style>
 </head>
@@ -693,6 +707,52 @@
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:18px;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
 
+    <!-- MODAL DE EDIÇÃO DE ITEM -->
+    <div id="modal-editar" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;">✏️ Editar Produto</h3>
+            
+            <div class="form-group">
+                <label>📷 Foto do Produto</label>
+                <div style="text-align:center;">
+                    <img id="edit-foto-preview" class="photo-preview-item" style="display:none;">
+                    <div style="display:flex; gap:8px; margin-top:10px;">
+                        <button type="button" class="btn-camera" style="flex:1; margin:0;" onclick="abrirCameraProdutoEdicao()">📸 Nova Foto</button>
+                        <button type="button" style="flex:1; margin:0; background:#f44336; color:white;" onclick="removerFotoEdicao()">🗑️ Remover</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>📦 Nome do Produto</label>
+                <input type="text" id="edit-nome" placeholder="Nome do produto">
+            </div>
+            
+            <div class="form-group">
+                <label>⚖️ Quantidade</label>
+                <input type="number" id="edit-qtd" step="0.001" placeholder="Quantidade">
+            </div>
+            
+            <div class="form-group">
+                <label>💰 Preço Total (R$)</label>
+                <input type="number" id="edit-preco" step="0.01" placeholder="Preço total">
+            </div>
+            
+            <div class="form-group">
+                <label>💳 Método de Pagamento</label>
+                <select id="edit-metodo">
+                    <option value="saldo">Abater do Saldo</option>
+                    <option value="extra">Pagamento Extra</option>
+                </select>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="salvarEdicaoItem()" style="background: #4caf50; color:white;">💾 SALVAR</button>
+                <button onclick="fecharModalEdicao()" style="background: #999; color:white;">❌ CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Câmera Frontal -->
     <div id="cameraContainer" class="video-container">
         <video id="cameraVideo" autoplay playsinline></video>
@@ -744,8 +804,11 @@
     let supermercadoAtual = '';
     let fotoCadastroTemp = null;
     let fotoProdutoTemp = null;
+    let fotoEdicaoTemp = null;
+    let editandoIndex = null;
     let cameraStream = null;
     let cameraProdutoStream = null;
+    let isEdicaoMode = false;
     
     const BALANCA_PRODUTOS = {
         '2006200036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 }
@@ -875,12 +938,18 @@
             .catch(() => mostrarToast("❌ Erro na câmera"));
     }
     
+    function abrirCameraProdutoEdicao() {
+        isEdicaoMode = true;
+        abrirCameraProduto();
+    }
+    
     function fecharCameraProduto() {
         if (cameraProdutoStream) {
             cameraProdutoStream.getTracks().forEach(track => track.stop());
             cameraProdutoStream = null;
         }
         document.getElementById('cameraProdutoContainer').classList.remove('active');
+        isEdicaoMode = false;
     }
     
     async function tirarFotoProduto() {
@@ -890,12 +959,22 @@
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
         const imageData = canvas.toDataURL('image/jpeg', 0.7);
-        fotoProdutoTemp = imageData;
-        const preview = document.getElementById('img-preview');
-        preview.src = imageData;
-        preview.style.display = 'block';
+        
+        if (isEdicaoMode) {
+            fotoEdicaoTemp = imageData;
+            const preview = document.getElementById('edit-foto-preview');
+            preview.src = imageData;
+            preview.style.display = 'block';
+            mostrarToast('📸 Nova foto para edição capturada!');
+        } else {
+            fotoProdutoTemp = imageData;
+            const preview = document.getElementById('img-preview');
+            preview.src = imageData;
+            preview.style.display = 'block';
+            mostrarToast('📸 Foto do produto capturada!');
+        }
+        
         fecharCameraProduto();
-        mostrarToast('📸 Foto do produto capturada!');
     }
     
     function processarFoto(event) {
@@ -1086,10 +1165,15 @@
                 <div class="item-lista">
                     <div style="display:flex; flex:1; align-items:center;">
                         <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
-                        <div><b>${it.nome}</b><br><small>${it.qtd} x R$ ${(it.total/it.qtd).toFixed(2)} = R$ ${it.total.toFixed(2)}</small></div>
+                        <div>
+                            <b>${it.nome.substring(0, 30)}</b><br>
+                            <small>${it.qtd} x R$ ${(it.total/it.qtd).toFixed(2)} = R$ ${it.total.toFixed(2)}</small>
+                            <br><small class="badge ${it.met === 'saldo' ? 'badge-success' : 'badge-warning'}">${it.met === 'saldo' ? '💰 Saldo' : '💵 Extra'}</small>
+                        </div>
                     </div>
                     <div class="item-actions">
-                        <button class="btn-delete" onclick="removerItem(${i})">&times;</button>
+                        <button class="btn-edit" onclick="abrirEditarItem(${i})">✏️</button>
+                        <button class="btn-delete" onclick="removerItem(${i})">✖</button>
                     </div>
                 </div>`;
         });
@@ -1098,21 +1182,86 @@
         document.getElementById('res_saldo_sobra').innerText = "R$ " + (dadosApp.saldo - tSaldo).toFixed(2);
     }
     
+    function abrirEditarItem(index) {
+        editandoIndex = index;
+        const item = dadosApp.usuarios[userLogado].lista[index];
+        
+        document.getElementById('edit-nome').value = item.nome;
+        document.getElementById('edit-qtd').value = item.qtd;
+        document.getElementById('edit-preco').value = item.preco;
+        document.getElementById('edit-metodo').value = item.met;
+        
+        const preview = document.getElementById('edit-foto-preview');
+        if (item.foto) {
+            preview.src = item.foto;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+        
+        fotoEdicaoTemp = null;
+        document.getElementById('modal-editar').style.display = 'flex';
+    }
+    
+    function salvarEdicaoItem() {
+        if (editandoIndex === null) return;
+        
+        const item = dadosApp.usuarios[userLogado].lista[editandoIndex];
+        const novoNome = document.getElementById('edit-nome').value.trim();
+        const novaQtd = parseFloat(document.getElementById('edit-qtd').value);
+        const novoPreco = parseFloat(document.getElementById('edit-preco').value);
+        const novoMetodo = document.getElementById('edit-metodo').value;
+        
+        if (!novoNome) { alert("Digite o nome do produto!"); return; }
+        if (isNaN(novaQtd) || novaQtd <= 0) { alert("Quantidade inválida!"); return; }
+        if (isNaN(novoPreco) || novoPreco <= 0) { alert("Preço inválido!"); return; }
+        
+        item.nome = novoNome;
+        item.qtd = novaQtd;
+        item.preco = novoPreco;
+        item.met = novoMetodo;
+        item.total = novoPreco * novaQtd;
+        
+        if (fotoEdicaoTemp !== null) {
+            item.foto = fotoEdicaoTemp;
+        }
+        
+        salvarDados();
+        renderizar();
+        fecharModalEdicao();
+        mostrarToast('✅ Produto editado com sucesso!');
+    }
+    
+    function removerFotoEdicao() {
+        fotoEdicaoTemp = null;
+        const preview = document.getElementById('edit-foto-preview');
+        preview.style.display = 'none';
+        preview.src = '';
+        mostrarToast('🗑️ Foto removida');
+    }
+    
+    function fecharModalEdicao() {
+        document.getElementById('modal-editar').style.display = 'none';
+        editandoIndex = null;
+        fotoEdicaoTemp = null;
+    }
+    
     function removerItem(i) {
-        if(confirm('Remover item?')) {
+        if(confirm('Remover este item da lista?')) {
             dadosApp.usuarios[userLogado].lista.splice(i, 1);
             salvarDados();
             renderizar();
+            mostrarToast('🗑️ Item removido');
         }
     }
     
     function finalizarCompra() {
         const itens = dadosApp.usuarios[userLogado].lista;
-        if(itens.length === 0) { alert('Nenhum item!'); return; }
+        if(itens.length === 0) { alert('Nenhum item na lista!'); return; }
         let gasto = 0, extra = 0;
         itens.forEach(it => { if(it.met === 'saldo') gasto += it.total; else extra += it.total; });
-        if(gasto > dadosApp.saldo) { alert(`Saldo insuficiente!`); return; }
-        if(confirm(`Confirmar compra?\n💰 Saldo: R$ ${gasto.toFixed(2)}\n💵 Extra: R$ ${extra.toFixed(2)}`)) {
+        if(gasto > dadosApp.saldo) { alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)}`); return; }
+        if(confirm(`Confirmar compra?\n\n💰 Gasto do Saldo: R$ ${gasto.toFixed(2)}\n💵 Pagamento Extra: R$ ${extra.toFixed(2)}\n✅ Saldo restante: R$ ${(dadosApp.saldo - gasto).toFixed(2)}\n\nDeseja finalizar?`)) {
             dadosApp.usuarios[userLogado].historico.push({
                 data: new Date().toISOString(),
                 itens: [...itens],
@@ -1123,7 +1272,7 @@
             dadosApp.saldo -= gasto;
             dadosApp.usuarios[userLogado].lista = [];
             salvarDados();
-            mostrarToast('✅ Compra finalizada!');
+            mostrarToast('✅ Compra finalizada com sucesso!');
             entrarApp();
         }
     }
@@ -1142,19 +1291,22 @@
         usuarios.forEach(u => {
             listaDiv.innerHTML += `
                 <div class="usuario-item">
-                    <div class="usuario-foto">${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%;">` : u.nome.charAt(0)}</div>
-                    <div style="flex:1;"><b>${u.nome}</b><br><small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small></div>
-                    ${u.id !== 'master' ? `<button onclick="excluirUsuario('${u.id}')" style="width:35px; height:35px; background:#ff1744; color:white;">X</button>` : ''}
+                    <div class="usuario-foto">${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : u.nome.charAt(0).toUpperCase()}</div>
+                    <div style="flex:1;">
+                        <b>${u.nome}</b><br>
+                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
+                    </div>
+                    ${u.id !== 'master' ? `<button onclick="excluirUsuario('${u.id}')" style="width:35px; height:35px; background:#ff1744; color:white; border-radius:8px;">🗑️</button>` : ''}
                 </div>`;
         });
     }
     
     function excluirUsuario(uid) {
-        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome}?`)) {
+        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome} permanentemente?`)) {
             delete dadosApp.usuarios[uid];
             salvarDados();
             carregarListaMaster();
-            mostrarToast('Usuário excluído');
+            mostrarToast('✅ Usuário excluído');
         }
     }
     
@@ -1171,15 +1323,24 @@
             }
         }
         const conteudo = document.getElementById('conteudo-relatorio');
-        conteudo.innerHTML = `
-            <div style="margin-bottom:20px;"><b>💰 Total Geral: R$ ${totalGeral.toFixed(2)}</b></div>
-            ${todasCompras.slice().reverse().slice(0, 20).map(compra => `
-                <div style="border-bottom:1px solid #eee; padding:8px;">
-                    <small>${new Date(compra.data).toLocaleString()}</small>
-                    <div><b>${compra.usuarioNome}</b> - R$ ${compra.gastoSaldo.toFixed(2)}</div>
+        if(todasCompras.length === 0) {
+            conteudo.innerHTML = '<p style="text-align:center;">Nenhuma compra registrada ainda.</p>';
+        } else {
+            conteudo.innerHTML = `
+                <div style="margin-bottom:20px; padding:10px; background:linear-gradient(135deg, #667eea20, #764ba220); border-radius:12px; text-align:center;">
+                    <b>💰 Total Geral Gasto: R$ ${totalGeral.toFixed(2)}</b>
                 </div>
-            `).join('') || '<div>Sem compras</div>'}
-        `;
+                ${todasCompras.slice().reverse().slice(0, 30).map(compra => `
+                    <div style="border-bottom:1px solid #eee; padding:10px;">
+                        <small>📅 ${new Date(compra.data).toLocaleString()}</small>
+                        <div><b>👤 ${compra.usuarioNome}</b></div>
+                        <div>💰 Saldo: R$ ${compra.gastoSaldo.toFixed(2)} | 💵 Extra: R$ ${compra.pagamentoExtra.toFixed(2)}</div>
+                        ${compra.supermercado ? `<div>🏪 ${compra.supermercado}</div>` : ''}
+                        <small>📦 ${compra.itens.length} itens</small>
+                    </div>
+                `).join('')}
+            `;
+        }
         document.getElementById('modal-relatorio').style.display = 'flex';
     }
     
@@ -1210,7 +1371,9 @@
             dadosApp.saldo = novoSaldo;
             salvarDados();
             renderizar();
-            mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
+            mostrarToast(`💰 Saldo atualizado: R$ ${novoSaldo.toFixed(2)}`);
+        } else {
+            alert("Digite um valor válido!");
         }
     }
     
@@ -1220,7 +1383,7 @@
         link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         link.download = `backup_compras_${new Date().toISOString().slice(0,19)}.json`;
         link.click();
-        mostrarToast('💾 Backup exportado!');
+        mostrarToast('💾 Backup exportado com sucesso!');
     }
     
     function importarBackup() {
@@ -1233,10 +1396,10 @@
             reader.onload = (event) => {
                 try {
                     const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá todos os dados. Continuar?')) {
+                    if(confirm('⚠️ Isso substituirá TODOS os dados atuais. Continuar?')) {
                         dadosApp = backup;
                         salvarDados();
-                        mostrarToast('✅ Backup restaurado!');
+                        mostrarToast('✅ Backup restaurado com sucesso!');
                         location.reload();
                     }
                 } catch(err) { mostrarToast('❌ Arquivo inválido!'); }
@@ -1247,18 +1410,28 @@
     }
     
     function resetarTodosDados() {
-        if(confirm('⚠️ ATENÇÃO! Isso apagará TODOS os dados!')) {
-            dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
-            dadosApp.usuarios["master"] = criarMaster();
-            salvarDados();
-            mostrarToast('🗑️ Dados resetados!');
-            setTimeout(() => location.reload(), 1500);
+        if(confirm('⚠️ ATENÇÃO! Isso apagará TODOS os dados permanentemente!')) {
+            if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários e compras serão perdidos!')) {
+                dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
+                dadosApp.usuarios["master"] = criarMaster();
+                salvarDados();
+                mostrarToast('🗑️ Dados resetados! Apenas o Master permanece.');
+                setTimeout(() => location.reload(), 1500);
+            }
         }
     }
     
     function logout() { sessionStorage.clear(); location.reload(); }
     
-    window.onclick = (event) => { if (event.target.classList.contains('modal')) event.target.style.display = 'none'; }
+    window.onclick = (event) => { 
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+            if (event.target.id === 'modal-editar') {
+                editandoIndex = null;
+                fotoEdicaoTemp = null;
+            }
+        }
+    }
     
     carregarDados();
     
