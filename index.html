@@ -45,15 +45,9 @@
         }
         
         @keyframes zoomBackground {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-            100% {
-                transform: scale(1);
-            }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
         
         /* CAMADA ESCURA COM FADE */
@@ -70,17 +64,13 @@
         }
         
         @keyframes fadeOverlay {
-            0%, 100% {
-                background: rgba(0, 0, 0, 0.5);
-            }
-            50% {
-                background: rgba(0, 0, 0, 0.4);
-            }
+            0%, 100% { background: rgba(0, 0, 0, 0.5); }
+            50% { background: rgba(0, 0, 0, 0.4); }
         }
         
         .body-com-resumo { padding-bottom: 160px; }
         
-        /* CARDS COM ANIMAÇÃO DE ENTRADA */
+        /* CARDS COM ANIMAÇÃO */
         .card { 
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -94,14 +84,8 @@
         }
         
         @keyframes cardSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .card:hover {
@@ -149,9 +133,7 @@
             transition: color 0.3s;
         }
         
-        .toggle-password:hover {
-            color: #667eea;
-        }
+        .toggle-password:hover { color: #667eea; }
         
         input, select { 
             width: 100%; 
@@ -228,14 +210,8 @@
         }
         
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         
         .thumb-lista { 
@@ -253,9 +229,7 @@
             transition: transform 0.3s;
         }
         
-        .thumb-lista:hover {
-            transform: scale(1.05);
-        }
+        .thumb-lista:hover { transform: scale(1.05); }
         
         .thumb-lista img {
             width: 100%;
@@ -280,12 +254,8 @@
         }
         
         @keyframes pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
-            }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
         }
         
         .user-photo-circle:hover {
@@ -298,24 +268,31 @@
             gap: 15px;
             margin-bottom: 15px;
             padding: 10px;
-            background: rgba(102, 126, 234, 0.1);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(118, 75, 162, 0.4));
             border-radius: 12px;
             animation: fadeInLeft 0.5s ease-out;
+            backdrop-filter: blur(5px);
         }
         
         @keyframes fadeInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         
-        .user-details {
-            flex: 1;
+        .user-details { flex: 1; }
+        
+        /* NOME DO USUÁRIO EM BRANCO */
+        .user-details h4 {
+            color: white !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .user-details small {
+            color: rgba(255, 255, 255, 0.95) !important;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
         .photo-upload-area {
@@ -343,12 +320,8 @@
         }
         
         @keyframes float {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-8px);
-            }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
         }
         
         .photo-preview-circle:hover { 
@@ -422,12 +395,8 @@
         }
         
         @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
         
         .tela { display: none; animation: fadeIn 0.4s ease-out; }
@@ -446,21 +415,10 @@
             transition: all 0.3s;
         }
         
-        .badge:hover {
-            transform: scale(1.05);
-        }
+        .badge:hover { transform: scale(1.05); }
         
-        .badge-success { background: #4caf50; color: white; animation: badgePulse 2s ease-in-out infinite; }
+        .badge-success { background: #4caf50; color: white; }
         .badge-warning { background: #ff9800; color: white; }
-        
-        @keyframes badgePulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 0 5px rgba(76, 175, 80, 0);
-            }
-        }
         
         .modal { 
             display: none; 
@@ -489,14 +447,8 @@
         }
         
         @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
+            from { opacity: 0; transform: scale(0.8) translateY(-50px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
         
         .toast { 
@@ -528,17 +480,11 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             animation: titleGlow 3s ease-in-out infinite;
-            position: relative;
-            overflow: hidden;
         }
         
         @keyframes titleGlow {
-            0%, 100% {
-                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-            }
-            50% {
-                box-shadow: 0 5px 30px rgba(102, 126, 234, 0.5);
-            }
+            0%, 100% { box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2); }
+            50% { box-shadow: 0 5px 30px rgba(102, 126, 234, 0.5); }
         }
         
         .main-title h1 {
@@ -548,18 +494,6 @@
             background-clip: text;
             color: transparent;
             font-weight: bold;
-            animation: textShine 2s ease-in-out infinite;
-        }
-        
-        @keyframes textShine {
-            0%, 100% {
-                background-size: 200% 200%;
-                background-position: left center;
-            }
-            50% {
-                background-size: 200% 200%;
-                background-position: right center;
-            }
         }
         
         .btn-voltar {
@@ -573,16 +507,6 @@
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
-            animation: borderGlow 2s ease-in-out infinite;
-        }
-        
-        @keyframes borderGlow {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.2);
-            }
-            50% {
-                box-shadow: 0 0 0 5px rgba(255, 152, 0, 0.1);
-            }
         }
         
         .supermercado-simple {
@@ -592,7 +516,7 @@
         }
         
         .supermercado-simple input { flex: 1; margin: 0; }
-        .supermercado-simple button { width: auto; padding: 0 15px; margin: 0; height: 50px; }
+        .supermercado-simple button { width: auto; padding: 0 15px; margin: 0; height: 50px; background: #2e7d32; color: white; }
         
         .local-atual {
             margin-top: 8px;
@@ -605,9 +529,7 @@
             transition: all 0.3s;
         }
         
-        .local-atual:hover {
-            background: rgba(102, 126, 234, 0.2);
-        }
+        .local-atual:hover { background: rgba(102, 126, 234, 0.2); }
         
         .saving-indicator {
             position: fixed;
@@ -626,12 +548,8 @@
         }
         
         @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-            }
-            to {
-                transform: translateX(0);
-            }
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
         }
         
         .saving-indicator.active { display: flex; }
@@ -665,9 +583,7 @@
             transition: transform 0.3s;
         }
         
-        .usuario-foto:hover {
-            transform: scale(1.1);
-        }
+        .usuario-foto:hover { transform: scale(1.1); }
         
         .codigo-info {
             font-size: 11px;
@@ -719,16 +635,13 @@
             animation: fadeIn 0.3s ease-out;
         }
         
-        .video-container.active {
-            display: flex;
-        }
+        .video-container.active { display: flex; }
         
         #cameraVideo, #cameraProdutoVideo {
             width: 100%;
             max-width: 400px;
             border-radius: 20px;
             border: 3px solid white;
-            animation: pulse 2s ease-in-out infinite;
         }
         
         .video-controls {
@@ -803,9 +716,7 @@
             border-color: #667eea;
         }
         
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .form-group { margin-bottom: 15px; }
         
         .form-group label {
             display: block;
@@ -815,41 +726,10 @@
             color: #333;
         }
         
-        /* SCROLLBAR PERSONALIZADA */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-        
-        /* LOADING ANIMATION */
-        @keyframes shimmer {
-            0% {
-                background-position: -1000px 0;
-            }
-            100% {
-                background-position: 1000px 0;
-            }
-        }
-        
-        .loading {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); }
     </style>
 </head>
 <body>
@@ -946,7 +826,7 @@
             <small>🏪 LOCAL DA COMPRA</small>
             <div class="supermercado-simple">
                 <input type="text" id="input_supermercado" placeholder="Digite o nome do supermercado...">
-                <button onclick="salvarSupermercado()" style="background: #2e7d32; color:white;">✅</button>
+                <button onclick="salvarSupermercado()">✅</button>
             </div>
             <div id="supermercado_atual" class="local-atual"></div>
         </div>
@@ -1349,6 +1229,8 @@
         if(supermercadoAtual) {
             document.getElementById('supermercado_atual').innerHTML = `📍 ${supermercadoAtual}`;
             mostrarToast(`Supermercado: ${supermercadoAtual}`);
+        } else {
+            document.getElementById('supermercado_atual').innerHTML = '';
         }
     }
     
@@ -1445,6 +1327,7 @@
         document.getElementById('nome_prod').value = "";
         document.getElementById('valor_prod').value = "";
         document.getElementById('codigo').value = "";
+        document.getElementById('codigo_balanca').value = "";
         renderizar();
         mostrarToast('➕ Item adicionado!');
     }
@@ -1454,6 +1337,9 @@
         div.innerHTML = "";
         let tSaldo = 0, tExtra = 0;
         const itens = dadosApp.usuarios[userLogado]?.lista || [];
+        if(itens.length === 0) {
+            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item na lista</div>';
+        }
         itens.forEach((it, i) => {
             if(it.met === 'saldo') tSaldo += it.total; 
             else tExtra += it.total;
@@ -1563,7 +1449,8 @@
                 itens: [...itens],
                 gastoSaldo: gasto,
                 pagamentoExtra: extra,
-                supermercado: supermercadoAtual
+                supermercado: supermercadoAtual,
+                usuario: dadosApp.usuarios[userLogado].nome
             });
             dadosApp.saldo -= gasto;
             dadosApp.usuarios[userLogado].lista = [];
@@ -1609,12 +1496,14 @@
     function mostrarRelatorioGeral() {
         let todasCompras = [];
         let totalGeral = 0;
+        let comprasPorUsuario = {};
         for (const id in dadosApp.usuarios) {
             const user = dadosApp.usuarios[id];
             if(user.historico) {
                 user.historico.forEach(compra => {
                     todasCompras.push({ ...compra, usuarioNome: user.nome });
                     totalGeral += compra.gastoSaldo;
+                    comprasPorUsuario[user.nome] = (comprasPorUsuario[user.nome] || 0) + compra.gastoSaldo;
                 });
             }
         }
@@ -1626,7 +1515,10 @@
                 <div style="margin-bottom:20px; padding:10px; background:linear-gradient(135deg, #667eea20, #764ba220); border-radius:12px; text-align:center;">
                     <b>💰 Total Geral Gasto: R$ ${totalGeral.toFixed(2)}</b>
                 </div>
-                ${todasCompras.slice().reverse().slice(0, 30).map(compra => `
+                <h4>👥 Gastos por Membro</h4>
+                ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${nome}: R$ ${valor.toFixed(2)}</div>`).join('')}
+                <h4 style="margin-top:15px;">📋 Últimas Compras</h4>
+                ${todasCompras.slice().reverse().slice(0, 20).map(compra => `
                     <div style="border-bottom:1px solid #eee; padding:10px; animation: fadeIn 0.3s ease-out;">
                         <small>📅 ${new Date(compra.data).toLocaleString()}</small>
                         <div><b>👤 ${compra.usuarioNome}</b></div>
