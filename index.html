@@ -234,14 +234,6 @@
             font-size: 14px;
         }
         
-        .btn-switch-camera {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-            color: white;
-            height: 40px;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        
         #reader { 
             width: 100%; 
             border-radius: 12px; 
@@ -306,7 +298,6 @@
         
         .badge-success { background: #4caf50; color: white; }
         .badge-warning { background: #ff9800; color: white; }
-        .badge-info { background: #2196f3; color: white; }
         
         .modal { 
             display: none; 
@@ -320,7 +311,6 @@
             z-index: 1000; 
             justify-content: center; 
             align-items: center; 
-            overflow-y: auto;
         }
         
         .modal-content { 
@@ -360,14 +350,6 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            animation: floatTitle 3s ease-in-out infinite;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        @keyframes floatTitle {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
         }
         
         .main-title h1 {
@@ -411,27 +393,6 @@
             border-radius: 8px;
         }
         
-        .stat-card {
-            text-align: center;
-            padding: 10px;
-            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
-            border-radius: 12px;
-        }
-        
-        .filtro-periodo {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .filtro-periodo button {
-            flex: 1;
-            height: 35px;
-            font-size: 12px;
-            margin: 0;
-        }
-        
         .saving-indicator {
             position: fixed;
             top: 10px;
@@ -448,18 +409,6 @@
         }
         
         .saving-indicator.active { display: flex; }
-        
-        .comparison-table {
-            width: 100%;
-            font-size: 12px;
-            border-collapse: collapse;
-        }
-        
-        .comparison-table td, .comparison-table th {
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
         
         .usuario-item {
             display: flex;
@@ -515,10 +464,6 @@
         
         .info-balanca.show { display: block; }
         
-        .hidden-section {
-            display: none !important;
-        }
-        
         .video-container {
             position: fixed;
             top: 0;
@@ -537,7 +482,7 @@
             display: flex;
         }
         
-        #cameraVideo {
+        #cameraVideo, #cameraProdutoVideo {
             width: 100%;
             max-width: 400px;
             border-radius: 20px;
@@ -587,10 +532,6 @@
             margin: 0;
         }
         
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
-        
         .photo-preview-item {
             width: 80px;
             height: 80px;
@@ -606,7 +547,7 @@
 <div id="app" style="max-width:500px; margin: auto;">
     
     <div class="saving-indicator" id="saving-indicator">
-        <div class="spinner" style="width:12px; height:12px;"></div>
+        <div class="spinner"></div>
         <span>Salvando...</span>
     </div>
     
@@ -627,7 +568,7 @@
         <button style="background: transparent; color: #667eea; border: 2px solid #667eea;" onclick="mostrarTela('tela-cadastro')">✨ CRIAR NOVO ACESSO</button>
     </div>
 
-    <!-- TELA DE CADASTRO COM FOTO -->
+    <!-- TELA DE CADASTRO -->
     <div id="tela-cadastro" class="tela card">
         <div class="main-title">
             <h1>🛒 LISTA DE COMPRAS</h1>
@@ -661,26 +602,24 @@
         <button class="btn-voltar" onclick="mostrarTela('app-principal')">⬅️ VOLTAR</button>
         
         <div style="display:flex; gap:8px; margin:15px 0; flex-wrap:wrap;">
-            <button onclick="mostrarRelatorioGeral()" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white;">📊 RELATÓRIO</button>
-            <button onclick="mostrarComparativoPrecos()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white;">💰 COMPARAR</button>
-            <button onclick="exportarBackup()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white;">💾 BACKUP</button>
-            <button onclick="importarBackup()" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white;">📥 RESTAURAR</button>
+            <button onclick="mostrarRelatorioGeral()" style="background: #2196f3; color:white;">📊 RELATÓRIO</button>
+            <button onclick="exportarBackup()" style="background: #4caf50; color:white;">💾 BACKUP</button>
+            <button onclick="importarBackup()" style="background: #ff9800; color:white;">📥 RESTAURAR</button>
         </div>
         
-        <h3 style="margin: 15px 0;">🛡️ Membros Cadastrados (<span id="total-membros">0</span>)</h3>
+        <h3>🛡️ Membros Cadastrados (<span id="total-membros">0</span>)</h3>
         <div id="lista-usuarios-master"></div>
-        <button onclick="carregarListaMaster()" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;">🔄 RECARREGAR LISTA</button>
-        <button onclick="resetarTodosDados()" style="background: linear-gradient(135deg, #ff1744 0%, #d50000 100%); color: white; margin-top: 10px;">⚠️ RESETAR TUDO</button>
+        <button onclick="resetarTodosDados()" style="background: #ff1744; color: white;">⚠️ RESETAR TUDO</button>
     </div>
 
     <!-- APP PRINCIPAL -->
     <div id="app-principal" class="tela">
         <div class="main-title">
             <h1>🛒 LISTA DE COMPRAS</h1>
-            <p id="boas_vindas" style="margin-top:8px;">Olá, usuário!</p>
+            <p id="boas_vindas">Olá, usuário!</p>
         </div>
         
-        <div class="user-info" id="user-info-area">
+        <div class="user-info">
             <div class="user-photo-circle" id="user-photo">👤</div>
             <div class="user-details">
                 <h4 id="user-name">Carregando...</h4>
@@ -688,38 +627,37 @@
             </div>
         </div>
         
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:15px;">
-            <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 15px; background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color:white; height:35px; margin:0;">🛡️ MASTER</button>
-            <button onclick="abrirRelatorio()" style="width:auto; padding:0 15px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; height:35px; margin:0;">📊 HISTÓRICO</button>
-            <button onclick="logout()" style="width:auto; padding:0 15px; background: rgba(0,0,0,0.7); color:white; height:35px; margin:0;">🚪 SAIR</button>
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 15px; background:#ff9800; color:white; height:35px;">🛡️ MASTER</button>
+            <button onclick="logout()" style="width:auto; padding:0 15px; background:#666; color:white; height:35px;">🚪 SAIR</button>
         </div>
         
         <div class="supermercado-input">
             <small>🏪 LOCAL DA COMPRA</small>
             <div class="supermercado-simple">
                 <input type="text" id="input_supermercado" placeholder="Digite o nome do supermercado...">
-                <button onclick="salvarSupermercado()" style="background: var(--success); color:white;">✅</button>
+                <button onclick="salvarSupermercado()" style="background: #2e7d32; color:white;">✅</button>
             </div>
             <div id="supermercado_atual" class="local-atual"></div>
         </div>
         
-        <div class="card" style="border-left: 5px solid #4caf50;">
+        <div class="card">
             <small>💰 SALDO DISPONÍVEL</small>
             <div style="display:flex; gap:10px;">
-                <input type="number" id="input_saldo" step="0.01" style="font-size:20px; font-weight:bold; margin:0;">
-                <button onclick="atualizarSaldoGlobal()" style="width:50px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin:0;">✅</button>
+                <input type="number" id="input_saldo" step="0.01" value="1000" style="font-size:20px; font-weight:bold;">
+                <button onclick="atualizarSaldoGlobal()" style="width:50px; background:#4caf50; color:white;">✅</button>
             </div>
         </div>
 
         <div class="card">
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); color:white; flex:1; margin:0;" onclick="alternarScanner()">📷 ESCANEAR</button>
-                <button style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color:white; flex:1; margin:0;" onclick="document.getElementById('camera-input').click()">📸 TIRAR FOTO</button>
+                <button onclick="alternarScanner()" style="background:#9c27b0; color:white; flex:1;">📷 ESCANEAR</button>
+                <button onclick="document.getElementById('camera-input').click()" style="background:#2196f3; color:white; flex:1;">📸 TIRAR FOTO</button>
             </div>
             
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
             <div style="text-align:center">
-                <img id="img-preview" style="max-height:100px; border-radius:12px; display:none; margin-bottom:10px;">
+                <img id="img-preview" style="max-height:100px; border-radius:12px; display:none;">
             </div>
             <div id="reader"></div>
             
@@ -741,67 +679,48 @@
             <div id="codigo-info" class="codigo-info" style="display:none;"></div>
             <input type="text" id="nome_prod" placeholder="📦 Nome do Produto">
             <div style="display:flex; gap:10px;">
-                <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd (kg)" style="flex:1">
+                <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd" style="flex:1">
                 <input type="number" id="valor_prod" placeholder="💰 Preço R$" step="0.01" style="flex:2">
             </div>
             <select id="metodo_pagto">
                 <option value="saldo">💳 Abater do Saldo</option>
                 <option value="extra">💵 Pagamento Extra</option>
             </select>
-            <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
+            <button style="background: #4caf50; color:white; margin-top:10px;" onclick="adicionarItem()">➕ ADICIONAR ITEM</button>
         </div>
 
         <div id="lista_itens"></div>
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:18px;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
 
-    <!-- Container da Câmera Frontal (selfie) -->
+    <!-- Câmera Frontal -->
     <div id="cameraContainer" class="video-container">
         <video id="cameraVideo" autoplay playsinline></video>
         <canvas id="cameraCanvas" style="display:none;"></canvas>
         <div class="video-controls">
-            <button onclick="tirarFotoCamera()" style="background: #4caf50;">📸 TIRAR FOTO</button>
-            <button onclick="fecharCamera()" style="background: #ff1744;">❌ FECHAR</button>
+            <button onclick="tirarFotoCamera()" style="background:#4caf50;">📸 TIRAR FOTO</button>
+            <button onclick="fecharCamera()" style="background:#ff1744;">❌ FECHAR</button>
         </div>
     </div>
 
-    <!-- Container da Câmera para foto do produto -->
+    <!-- Câmera Produto -->
     <div id="cameraProdutoContainer" class="video-container">
         <video id="cameraProdutoVideo" autoplay playsinline></video>
         <canvas id="cameraProdutoCanvas" style="display:none;"></canvas>
         <div class="video-controls">
-            <button onclick="tirarFotoProduto()" style="background: #4caf50;">📸 TIRAR FOTO</button>
-            <button onclick="fecharCameraProduto()" style="background: #ff1744;">❌ FECHAR</button>
+            <button onclick="tirarFotoProduto()" style="background:#4caf50;">📸 TIRAR FOTO</button>
+            <button onclick="fecharCameraProduto()" style="background:#ff1744;">❌ FECHAR</button>
         </div>
     </div>
 
-    <!-- MODAL DE EDIÇÃO DE ITEM -->
-    <div id="modal-editar-item" class="modal">
+    <!-- MODAL RELATÓRIO -->
+    <div id="modal-relatorio" class="modal">
         <div class="modal-content">
-            <h3>✏️ Editar Item</h3>
-            <div style="text-align:center;">
-                <img id="edit-foto-preview" class="photo-preview-item" style="display:none;">
-                <button id="btn-tirar-foto-edicao" class="btn-camera" style="margin:10px auto;" onclick="abrirCameraProdutoParaEdicao()">📸 Tirar Nova Foto</button>
-                <button id="btn-remover-foto-edicao" style="background:#f44336; height:35px; margin:5px auto;" onclick="removerFotoEdicao()">🗑️ Remover Foto</button>
-            </div>
-            <input type="text" id="edit-nome" placeholder="Nome do Produto">
-            <input type="number" id="edit-qtd" step="0.001" placeholder="Quantidade">
-            <input type="number" id="edit-preco" step="0.01" placeholder="Preço Total R$">
-            <select id="edit-metodo">
-                <option value="saldo">💳 Abater do Saldo</option>
-                <option value="extra">💵 Pagamento Extra</option>
-            </select>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button onclick="salvarEdicaoItem()" style="background: #4caf50;">💾 SALVAR ALTERAÇÕES</button>
-                <button onclick="fecharModalEdicao()" style="background: #999;">❌ Cancelar</button>
-            </div>
+            <h3>📊 Relatório Geral</h3>
+            <div id="conteudo-relatorio"></div>
+            <button onclick="fecharModal('modal-relatorio')">FECHAR</button>
         </div>
     </div>
-
-    <!-- MODAIS RELATÓRIOS -->
-    <div id="modal-relatorio-geral" class="modal"><div class="modal-content"><h3>📊 Relatório Geral</h3><div id="conteudo-relatorio-geral"></div><button onclick="fecharModal('modal-relatorio-geral')">FECHAR</button></div></div>
-    <div id="modal-comparativo" class="modal"><div class="modal-content"><h3>💰 Comparativo de Preços</h3><input type="text" id="filtro-produto" placeholder="Filtrar..." oninput="filtrarComparativo()"><div id="conteudo-comparativo"></div><button onclick="fecharModal('modal-comparativo')">FECHAR</button></div></div>
-    <div id="modal-historico" class="modal"><div class="modal-content"><h3>📋 Meu Histórico</h3><div id="conteudo-historico"></div><button onclick="fecharModal('modal-historico')">FECHAR</button></div></div>
 
 </div>
 
@@ -814,4 +733,542 @@
 </div>
 
 <script>
-   
+    const DB_KEY = "LISTA_COMPRAS_FINAL";
+    const SENHA_PADRAO = "Compras@2026";
+    
+    let dadosApp = null;
+    let userLogado = sessionStorage.getItem('user');
+    let scanner = null;
+    let buscaTimeout = null;
+    let ultimoCodigoBuscado = '';
+    let supermercadoAtual = '';
+    let fotoCadastroTemp = null;
+    let fotoProdutoTemp = null;
+    let cameraStream = null;
+    let cameraProdutoStream = null;
+    
+    const BALANCA_PRODUTOS = {
+        '2006200036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 }
+    };
+    
+    function hashSenha(senha) {
+        let hash = 0;
+        for (let i = 0; i < senha.length; i++) {
+            hash = ((hash << 5) - hash) + senha.charCodeAt(i);
+        }
+        return hash.toString();
+    }
+    
+    function criarMaster() {
+        return {
+            id: "master",
+            nome: "Master",
+            senhaHash: hashSenha("Melissa@2016"),
+            role: "master",
+            lista: [],
+            historico: [],
+            foto: null
+        };
+    }
+    
+    function carregarDados() {
+        try {
+            const dadosSalvos = localStorage.getItem(DB_KEY);
+            if (dadosSalvos) {
+                dadosApp = JSON.parse(dadosSalvos);
+            } else {
+                dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
+                dadosApp.usuarios["master"] = criarMaster();
+            }
+            if (!dadosApp.usuarios["master"]) {
+                dadosApp.usuarios["master"] = criarMaster();
+            }
+            if (dadosApp.saldo === undefined) dadosApp.saldo = 1000;
+            if (!dadosApp.precos) dadosApp.precos = {};
+            salvarDados();
+        } catch(e) {
+            console.error("Erro:", e);
+            dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
+            dadosApp.usuarios["master"] = criarMaster();
+            salvarDados();
+        }
+    }
+    
+    function salvarDados() {
+        localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
+        const indicator = document.getElementById('saving-indicator');
+        indicator.classList.add('active');
+        setTimeout(() => indicator.classList.remove('active'), 500);
+    }
+    
+    function mostrarToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    function toggleSenha(inputId, btn) {
+        const input = document.getElementById(inputId);
+        input.type = input.type === "password" ? "text" : "password";
+        btn.textContent = input.type === "password" ? "👁️" : "🙈";
+    }
+    
+    function mostrarTela(id) {
+        document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+        const barra = document.getElementById('barra-resumo');
+        barra.style.display = (id === 'app-principal') ? 'block' : 'none';
+        if(id === 'app-principal') document.body.classList.add('body-com-resumo');
+        else document.body.classList.remove('body-com-resumo');
+    }
+    
+    async function abrirCameraFrontal() {
+        const video = document.getElementById('cameraVideo');
+        const container = document.getElementById('cameraContainer');
+        if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            video.srcObject = cameraStream;
+            container.classList.add('active');
+        } catch(err) {
+            mostrarToast("❌ Erro ao acessar a câmera!");
+        }
+    }
+    
+    function fecharCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        document.getElementById('cameraContainer').classList.remove('active');
+    }
+    
+    async function tirarFotoCamera() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('cameraCanvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.7);
+        fotoCadastroTemp = imageData;
+        const preview = document.getElementById('foto-preview-cadastro');
+        const placeholder = document.getElementById('foto-placeholder');
+        preview.src = imageData;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+        fecharCamera();
+        mostrarToast('📸 Selfie capturada!');
+    }
+    
+    function abrirCameraProduto() {
+        const video = document.getElementById('cameraProdutoVideo');
+        const container = document.getElementById('cameraProdutoContainer');
+        if (cameraProdutoStream) cameraProdutoStream.getTracks().forEach(track => track.stop());
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                cameraProdutoStream = stream;
+                video.srcObject = stream;
+                container.classList.add('active');
+            })
+            .catch(() => mostrarToast("❌ Erro na câmera"));
+    }
+    
+    function fecharCameraProduto() {
+        if (cameraProdutoStream) {
+            cameraProdutoStream.getTracks().forEach(track => track.stop());
+            cameraProdutoStream = null;
+        }
+        document.getElementById('cameraProdutoContainer').classList.remove('active');
+    }
+    
+    async function tirarFotoProduto() {
+        const video = document.getElementById('cameraProdutoVideo');
+        const canvas = document.getElementById('cameraProdutoCanvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.7);
+        fotoProdutoTemp = imageData;
+        const preview = document.getElementById('img-preview');
+        preview.src = imageData;
+        preview.style.display = 'block';
+        fecharCameraProduto();
+        mostrarToast('📸 Foto do produto capturada!');
+    }
+    
+    function processarFoto(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            fotoProdutoTemp = e.target.result;
+            document.getElementById('img-preview').src = e.target.result;
+            document.getElementById('img-preview').style.display = 'block';
+            mostrarToast('📸 Foto capturada!');
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    }
+    
+    function lerCodigoBalanca() {
+        const codigo = document.getElementById('codigo_balanca').value.trim();
+        if (!codigo) { mostrarToast('Digite o código!'); return; }
+        const produto = BALANCA_PRODUTOS[codigo];
+        const infoDiv = document.getElementById('info_balanca');
+        if (produto) {
+            document.getElementById('nome_prod').value = produto.nome;
+            document.getElementById('valor_prod').value = produto.total;
+            document.getElementById('qtd_prod').value = produto.peso;
+            infoDiv.innerHTML = `✅ ${produto.nome}<br>⚖️ ${produto.peso}kg x R$ ${produto.precoKg}/kg = R$ ${produto.total}`;
+            infoDiv.classList.add('show');
+            mostrarToast(`✅ ${produto.nome}`);
+        } else {
+            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido`;
+            infoDiv.classList.add('show');
+        }
+        document.getElementById('codigo').value = codigo;
+        setTimeout(() => infoDiv.classList.remove('show'), 4000);
+        document.getElementById('codigo_balanca').value = '';
+    }
+    
+    function handleCodigoBarras(codigo) {
+        if(buscaTimeout) clearTimeout(buscaTimeout);
+        if(codigo.length < 4) return;
+        if(dadosApp.precos[codigo]) {
+            document.getElementById('nome_prod').value = dadosApp.precos[codigo];
+            return;
+        }
+        buscaTimeout = setTimeout(() => buscarProduto(codigo), 800);
+    }
+    
+    async function buscarProduto(codigo) {
+        if(!codigo || ultimoCodigoBuscado === codigo) return;
+        ultimoCodigoBuscado = codigo;
+        const indicator = document.getElementById('searching-indicator');
+        indicator.classList.add('active');
+        try {
+            const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${codigo}.json`);
+            const data = await response.json();
+            if(data?.status === 1 && data.product) {
+                let nome = data.product.product_name_pt || data.product.product_name;
+                if(nome) {
+                    nome = nome.split(',')[0].trim();
+                    document.getElementById('nome_prod').value = nome;
+                    dadosApp.precos[codigo] = nome;
+                    salvarDados();
+                    mostrarToast(`✅ ${nome}`);
+                }
+            }
+        } catch(error) {
+            console.error("Erro na busca");
+        } finally {
+            indicator.classList.remove('active');
+            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
+        }
+    }
+    
+    function salvarSupermercado() {
+        supermercadoAtual = document.getElementById('input_supermercado').value.trim();
+        if(supermercadoAtual) {
+            document.getElementById('supermercado_atual').innerHTML = `📍 ${supermercadoAtual}`;
+            mostrarToast(`Supermercado: ${supermercadoAtual}`);
+        }
+    }
+    
+    function registrarUsuario() {
+        const nome = document.getElementById('novo_nome').value.trim();
+        if(!nome) { alert("Digite o nome!"); return; }
+        for (const id in dadosApp.usuarios) {
+            if (dadosApp.usuarios[id].nome.toLowerCase() === nome.toLowerCase()) {
+                alert("Nome já existe!");
+                return;
+            }
+        }
+        const id = "user_" + Date.now();
+        dadosApp.usuarios[id] = { 
+            id: id, nome: nome, senhaHash: hashSenha(SENHA_PADRAO), 
+            role: "user", lista: [], historico: [], foto: fotoCadastroTemp || null
+        };
+        salvarDados();
+        mostrarToast(`✅ ${nome} cadastrado! Senha: ${SENHA_PADRAO}`);
+        limparCadastroFoto();
+        document.getElementById('novo_nome').value = '';
+        mostrarTela('tela-login');
+    }
+    
+    function limparCadastroFoto() {
+        fotoCadastroTemp = null;
+        document.getElementById('foto-preview-cadastro').style.display = 'none';
+        document.getElementById('foto-placeholder').style.display = 'block';
+    }
+    
+    function tentarLogin() {
+        const nome = document.getElementById('login_user').value.trim();
+        const senha = document.getElementById('login_pass').value;
+        if (!nome) { alert("Digite o nome!"); return; }
+        let usuarioEncontrado = null;
+        let usuarioId = null;
+        for (const [id, user] of Object.entries(dadosApp.usuarios)) {
+            if (user.nome.toLowerCase() === nome.toLowerCase()) {
+                usuarioEncontrado = user;
+                usuarioId = id;
+                break;
+            }
+        }
+        if (!usuarioEncontrado) { alert("Usuário não encontrado!"); return; }
+        if (usuarioEncontrado.senhaHash === hashSenha(senha)) {
+            userLogado = usuarioId;
+            sessionStorage.setItem('user', usuarioId);
+            if (usuarioEncontrado.reset) {
+                const novaSenha = prompt("Crie sua nova senha (mínimo 4 caracteres):");
+                if (novaSenha && novaSenha.length >= 4) {
+                    dadosApp.usuarios[usuarioId].senhaHash = hashSenha(novaSenha);
+                    dadosApp.usuarios[usuarioId].reset = false;
+                    salvarDados();
+                    mostrarToast('✅ Senha alterada!');
+                }
+            }
+            entrarApp();
+        } else {
+            alert(`Senha incorreta!\nSenha padrão: ${SENHA_PADRAO}`);
+        }
+    }
+    
+    function entrarApp() {
+        const user = dadosApp.usuarios[userLogado];
+        mostrarTela('app-principal');
+        document.getElementById('boas_vindas').innerHTML = `Olá, ${user.nome}! 👋`;
+        document.getElementById('user-name').innerHTML = user.nome;
+        document.getElementById('user-role').innerHTML = user.role === 'master' ? 'Administrador' : 'Membro';
+        const userPhoto = document.getElementById('user-photo');
+        if(user.foto) {
+            userPhoto.innerHTML = `<img src="${user.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+        } else {
+            userPhoto.innerHTML = user.nome.charAt(0).toUpperCase();
+        }
+        document.getElementById('btn-master').style.display = user.role === 'master' ? 'block' : 'none';
+        document.getElementById('input_saldo').value = dadosApp.saldo;
+        renderizar();
+    }
+    
+    function adicionarItem() {
+        const nome = document.getElementById('nome_prod').value.trim() || "Produto";
+        const preco = parseFloat(document.getElementById('valor_prod').value);
+        const qtd = parseFloat(document.getElementById('qtd_prod').value) || 1;
+        const met = document.getElementById('metodo_pagto').value;
+        if(isNaN(preco) || preco <= 0) { alert("Preço inválido!"); return; }
+        dadosApp.usuarios[userLogado].lista.push({ 
+            nome, preco, qtd, met, total: preco * qtd, 
+            foto: fotoProdutoTemp, supermercado: supermercadoAtual,
+            data: new Date().toISOString()
+        });
+        salvarDados();
+        fotoProdutoTemp = null;
+        document.getElementById('img-preview').style.display = 'none';
+        document.getElementById('nome_prod').value = "";
+        document.getElementById('valor_prod').value = "";
+        document.getElementById('codigo').value = "";
+        renderizar();
+        mostrarToast('➕ Item adicionado!');
+    }
+    
+    function renderizar() {
+        const div = document.getElementById('lista_itens');
+        div.innerHTML = "";
+        let tSaldo = 0, tExtra = 0;
+        const itens = dadosApp.usuarios[userLogado]?.lista || [];
+        itens.forEach((it, i) => {
+            if(it.met === 'saldo') tSaldo += it.total; 
+            else tExtra += it.total;
+            div.innerHTML += `
+                <div class="item-lista">
+                    <div style="display:flex; flex:1; align-items:center;">
+                        <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
+                        <div><b>${it.nome}</b><br><small>${it.qtd} x R$ ${(it.total/it.qtd).toFixed(2)} = R$ ${it.total.toFixed(2)}</small></div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-delete" onclick="removerItem(${i})">&times;</button>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
+        document.getElementById('res_extra').innerText = "R$ " + tExtra.toFixed(2);
+        document.getElementById('res_saldo_sobra').innerText = "R$ " + (dadosApp.saldo - tSaldo).toFixed(2);
+    }
+    
+    function removerItem(i) {
+        if(confirm('Remover item?')) {
+            dadosApp.usuarios[userLogado].lista.splice(i, 1);
+            salvarDados();
+            renderizar();
+        }
+    }
+    
+    function finalizarCompra() {
+        const itens = dadosApp.usuarios[userLogado].lista;
+        if(itens.length === 0) { alert('Nenhum item!'); return; }
+        let gasto = 0, extra = 0;
+        itens.forEach(it => { if(it.met === 'saldo') gasto += it.total; else extra += it.total; });
+        if(gasto > dadosApp.saldo) { alert(`Saldo insuficiente!`); return; }
+        if(confirm(`Confirmar compra?\n💰 Saldo: R$ ${gasto.toFixed(2)}\n💵 Extra: R$ ${extra.toFixed(2)}`)) {
+            dadosApp.usuarios[userLogado].historico.push({
+                data: new Date().toISOString(),
+                itens: [...itens],
+                gastoSaldo: gasto,
+                pagamentoExtra: extra,
+                supermercado: supermercadoAtual
+            });
+            dadosApp.saldo -= gasto;
+            dadosApp.usuarios[userLogado].lista = [];
+            salvarDados();
+            mostrarToast('✅ Compra finalizada!');
+            entrarApp();
+        }
+    }
+    
+    function abrirMaster() {
+        mostrarTela('painel-master');
+        carregarListaMaster();
+    }
+    
+    function carregarListaMaster() {
+        const listaDiv = document.getElementById('lista-usuarios-master');
+        const totalSpan = document.getElementById('total-membros');
+        listaDiv.innerHTML = '';
+        const usuarios = Object.values(dadosApp.usuarios);
+        totalSpan.innerText = usuarios.length;
+        usuarios.forEach(u => {
+            listaDiv.innerHTML += `
+                <div class="usuario-item">
+                    <div class="usuario-foto">${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%;">` : u.nome.charAt(0)}</div>
+                    <div style="flex:1;"><b>${u.nome}</b><br><small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small></div>
+                    ${u.id !== 'master' ? `<button onclick="excluirUsuario('${u.id}')" style="width:35px; height:35px; background:#ff1744; color:white;">X</button>` : ''}
+                </div>`;
+        });
+    }
+    
+    function excluirUsuario(uid) {
+        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome}?`)) {
+            delete dadosApp.usuarios[uid];
+            salvarDados();
+            carregarListaMaster();
+            mostrarToast('Usuário excluído');
+        }
+    }
+    
+    function mostrarRelatorioGeral() {
+        let todasCompras = [];
+        let totalGeral = 0;
+        for (const id in dadosApp.usuarios) {
+            const user = dadosApp.usuarios[id];
+            if(user.historico) {
+                user.historico.forEach(compra => {
+                    todasCompras.push({ ...compra, usuarioNome: user.nome });
+                    totalGeral += compra.gastoSaldo;
+                });
+            }
+        }
+        const conteudo = document.getElementById('conteudo-relatorio');
+        conteudo.innerHTML = `
+            <div style="margin-bottom:20px;"><b>💰 Total Geral: R$ ${totalGeral.toFixed(2)}</b></div>
+            ${todasCompras.slice().reverse().slice(0, 20).map(compra => `
+                <div style="border-bottom:1px solid #eee; padding:8px;">
+                    <small>${new Date(compra.data).toLocaleString()}</small>
+                    <div><b>${compra.usuarioNome}</b> - R$ ${compra.gastoSaldo.toFixed(2)}</div>
+                </div>
+            `).join('') || '<div>Sem compras</div>'}
+        `;
+        document.getElementById('modal-relatorio').style.display = 'flex';
+    }
+    
+    function fecharModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+    
+    function alternarScanner() {
+        if(!scanner) {
+            document.getElementById('reader').style.display = 'block';
+            scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                document.getElementById('codigo').value = txt;
+                handleCodigoBarras(txt);
+                pararScanner();
+                mostrarToast('📷 Código lido!');
+            }).catch(() => alert("Erro na câmera"));
+        } else pararScanner();
+    }
+    
+    function pararScanner() {
+        if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; });
+    }
+    
+    function atualizarSaldoGlobal() {
+        const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
+        if(!isNaN(novoSaldo) && novoSaldo >= 0) {
+            dadosApp.saldo = novoSaldo;
+            salvarDados();
+            renderizar();
+            mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
+        }
+    }
+    
+    function exportarBackup() {
+        const dataStr = JSON.stringify(dadosApp, null, 2);
+        const link = document.createElement('a');
+        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        link.download = `backup_compras_${new Date().toISOString().slice(0,19)}.json`;
+        link.click();
+        mostrarToast('💾 Backup exportado!');
+    }
+    
+    function importarBackup() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const backup = JSON.parse(event.target.result);
+                    if(confirm('⚠️ Isso substituirá todos os dados. Continuar?')) {
+                        dadosApp = backup;
+                        salvarDados();
+                        mostrarToast('✅ Backup restaurado!');
+                        location.reload();
+                    }
+                } catch(err) { mostrarToast('❌ Arquivo inválido!'); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+    
+    function resetarTodosDados() {
+        if(confirm('⚠️ ATENÇÃO! Isso apagará TODOS os dados!')) {
+            dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
+            dadosApp.usuarios["master"] = criarMaster();
+            salvarDados();
+            mostrarToast('🗑️ Dados resetados!');
+            setTimeout(() => location.reload(), 1500);
+        }
+    }
+    
+    function logout() { sessionStorage.clear(); location.reload(); }
+    
+    window.onclick = (event) => { if (event.target.classList.contains('modal')) event.target.style.display = 'none'; }
+    
+    carregarDados();
+    
+    window.onload = () => {
+        if(userLogado && dadosApp.usuarios[userLogado]) {
+            entrarApp();
+        } else {
+            mostrarTela('tela-login');
+        }
+    };
+</script>
+</body>
+</html>
