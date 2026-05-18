@@ -234,7 +234,6 @@
             font-size: 14px;
         }
         
-        /* Botão para alternar câmera */
         .btn-switch-camera {
             background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
             color: white;
@@ -516,12 +515,10 @@
         
         .info-balanca.show { display: block; }
         
-        /* Esconder elementos */
         .hidden-section {
             display: none !important;
         }
         
-        /* Container do vídeo da câmera */
         .video-container {
             position: fixed;
             top: 0;
@@ -559,9 +556,49 @@
             margin: 0;
         }
         
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-edit {
+            background: #2196f3;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        
+        .btn-delete {
+            background: #ff1744;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
+        
+        .photo-preview-item {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin: 10px auto;
+            border: 2px solid #ddd;
+        }
     </style>
 </head>
 <body>
@@ -718,7 +755,7 @@
         <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:18px;" onclick="finalizarCompra()">✅ FINALIZAR COMPRA</button>
     </div>
 
-    <!-- Container da Câmera Frontal -->
+    <!-- Container da Câmera Frontal (selfie) -->
     <div id="cameraContainer" class="video-container">
         <video id="cameraVideo" autoplay playsinline></video>
         <canvas id="cameraCanvas" style="display:none;"></canvas>
@@ -728,7 +765,40 @@
         </div>
     </div>
 
-    <!-- MODAIS -->
+    <!-- Container da Câmera para foto do produto -->
+    <div id="cameraProdutoContainer" class="video-container">
+        <video id="cameraProdutoVideo" autoplay playsinline></video>
+        <canvas id="cameraProdutoCanvas" style="display:none;"></canvas>
+        <div class="video-controls">
+            <button onclick="tirarFotoProduto()" style="background: #4caf50;">📸 TIRAR FOTO</button>
+            <button onclick="fecharCameraProduto()" style="background: #ff1744;">❌ FECHAR</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO DE ITEM -->
+    <div id="modal-editar-item" class="modal">
+        <div class="modal-content">
+            <h3>✏️ Editar Item</h3>
+            <div style="text-align:center;">
+                <img id="edit-foto-preview" class="photo-preview-item" style="display:none;">
+                <button id="btn-tirar-foto-edicao" class="btn-camera" style="margin:10px auto;" onclick="abrirCameraProdutoParaEdicao()">📸 Tirar Nova Foto</button>
+                <button id="btn-remover-foto-edicao" style="background:#f44336; height:35px; margin:5px auto;" onclick="removerFotoEdicao()">🗑️ Remover Foto</button>
+            </div>
+            <input type="text" id="edit-nome" placeholder="Nome do Produto">
+            <input type="number" id="edit-qtd" step="0.001" placeholder="Quantidade">
+            <input type="number" id="edit-preco" step="0.01" placeholder="Preço Total R$">
+            <select id="edit-metodo">
+                <option value="saldo">💳 Abater do Saldo</option>
+                <option value="extra">💵 Pagamento Extra</option>
+            </select>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button onclick="salvarEdicaoItem()" style="background: #4caf50;">💾 SALVAR ALTERAÇÕES</button>
+                <button onclick="fecharModalEdicao()" style="background: #999;">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAIS RELATÓRIOS -->
     <div id="modal-relatorio-geral" class="modal"><div class="modal-content"><h3>📊 Relatório Geral</h3><div id="conteudo-relatorio-geral"></div><button onclick="fecharModal('modal-relatorio-geral')">FECHAR</button></div></div>
     <div id="modal-comparativo" class="modal"><div class="modal-content"><h3>💰 Comparativo de Preços</h3><input type="text" id="filtro-produto" placeholder="Filtrar..." oninput="filtrarComparativo()"><div id="conteudo-comparativo"></div><button onclick="fecharModal('modal-comparativo')">FECHAR</button></div></div>
     <div id="modal-historico" class="modal"><div class="modal-content"><h3>📋 Meu Histórico</h3><div id="conteudo-historico"></div><button onclick="fecharModal('modal-historico')">FECHAR</button></div></div>
@@ -744,765 +814,4 @@
 </div>
 
 <script>
-    const DB_KEY = "LISTA_COMPRAS_FINAL";
-    const SENHA_PADRAO = "Compras@2026";
-    
-    let cameraStream = null;
-    let fotoCadastroTemp = null;
-    
-    function criarMaster() {
-        let hash = 0;
-        let senha = "Melissa@2016";
-        for (let i = 0; i < senha.length; i++) {
-            hash = ((hash << 5) - hash) + senha.charCodeAt(i);
-        }
-        return {
-            id: "master",
-            nome: "Master",
-            senhaHash: hash.toString(),
-            role: "master",
-            lista: [],
-            reset: false,
-            historico: [],
-            foto: null
-        };
-    }
-    
-    let dadosApp = null;
-    let userLogado = sessionStorage.getItem('user');
-    let scanner = null;
-    let fotoTemp = null;
-    let buscaTimeout = null;
-    let ultimoCodigoBuscado = '';
-    let supermercadoAtual = '';
-    
-    const BALANCA_PRODUTOS = {
-        '2006200036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 },
-        '2037740124046': { nome: 'CARNE BOVINA', peso: 3.266, precoKg: 37.9, total: 124.04 }
-    };
-    
-    function hashSenha(senha) {
-        let hash = 0;
-        for (let i = 0; i < senha.length; i++) {
-            hash = ((hash << 5) - hash) + senha.charCodeAt(i);
-        }
-        return hash.toString();
-    }
-    
-    // Função para abrir câmera frontal
-    async function abrirCameraFrontal() {
-        const video = document.getElementById('cameraVideo');
-        const container = document.getElementById('cameraContainer');
-        
-        // Fechar stream existente
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-        }
-        
-        try {
-            // Solicitar câmera frontal (user)
-            cameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { exact: "user" } }
-            });
-            video.srcObject = cameraStream;
-            container.classList.add('active');
-        } catch (err) {
-            // Se falhar, tentar qualquer câmera
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = cameraStream;
-                container.classList.add('active');
-                mostrarToast("⚠️ Usando câmera padrão (frontal não disponível)");
-            } catch (err2) {
-                mostrarToast("❌ Erro ao acessar a câmera!");
-                console.error("Erro câmera:", err2);
-            }
-        }
-    }
-    
-    function fecharCamera() {
-        const container = document.getElementById('cameraContainer');
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-            cameraStream = null;
-        }
-        container.classList.remove('active');
-    }
-    
-    function tirarFotoCamera() {
-        const video = document.getElementById('cameraVideo');
-        const canvas = document.getElementById('cameraCanvas');
-        const context = canvas.getContext('2d');
-        
-        // Definir tamanho do canvas
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // Desenhar o frame do vídeo no canvas
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Converter para base64
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
-        
-        // Salvar a foto
-        fotoCadastroTemp = imageData;
-        
-        // Mostrar preview
-        const preview = document.getElementById('foto-preview-cadastro');
-        const placeholder = document.getElementById('foto-placeholder');
-        preview.src = imageData;
-        preview.style.display = 'block';
-        placeholder.style.display = 'none';
-        
-        // Fechar câmera
-        fecharCamera();
-        
-        mostrarToast('📸 Selfie capturada com sucesso!');
-    }
-    
-    function carregarDados() {
-        try {
-            const dadosSalvos = localStorage.getItem(DB_KEY);
-            if (dadosSalvos) {
-                dadosApp = JSON.parse(dadosSalvos);
-                console.log("✅ Dados carregados:", dadosApp);
-            } else {
-                console.log("📦 Criando novos dados");
-                dadosApp = { usuarios: {}, saldo: 0, precos: {} };
-                dadosApp.usuarios["master"] = criarMaster();
-                salvarDados();
-            }
-            
-            if (!dadosApp.usuarios["master"]) {
-                dadosApp.usuarios["master"] = criarMaster();
-                salvarDados();
-            }
-            
-            console.log("👥 Usuários:", Object.values(dadosApp.usuarios).map(u => u.nome));
-        } catch(e) {
-            console.error("Erro crítico:", e);
-            dadosApp = { usuarios: {}, saldo: 0, precos: {} };
-            dadosApp.usuarios["master"] = criarMaster();
-            salvarDados();
-        }
-    }
-    
-    function salvarDados() {
-        localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
-        console.log("💾 Dados salvos!");
-    }
-    
-    function mostrarToast(msg, duracao = 3000) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), duracao);
-    }
-    
-    function carregarListaMaster() {
-        const listaDiv = document.getElementById('lista-usuarios-master');
-        const totalSpan = document.getElementById('total-membros');
-        if (!listaDiv) return;
-        
-        listaDiv.innerHTML = '';
-        
-        if (!dadosApp.usuarios || Object.keys(dadosApp.usuarios).length === 0) {
-            listaDiv.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Nenhum membro cadastrado</div>';
-            if(totalSpan) totalSpan.innerText = '0';
-            return;
-        }
-        
-        const usuariosArray = Object.values(dadosApp.usuarios);
-        if(totalSpan) totalSpan.innerText = usuariosArray.length;
-        
-        usuariosArray.forEach(u => {
-            listaDiv.innerHTML += `
-                <div class="usuario-item">
-                    <div class="usuario-foto">
-                        ${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : u.nome.charAt(0).toUpperCase()}
-                    </div>
-                    <div style="flex:1;">
-                        <b>${u.nome}</b><br>
-                        <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
-                        ${u.reset ? '<small class="badge" style="background:#ff9800; color:white;">Senha padrão</small>' : ''}
-                    </div>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="resetarSenha('${u.id}')" style="width:60px; height:30px; background:orange; color:white; margin:0; font-size:11px;">RESET</button>
-                        ${u.id !== 'master' ? `<button onclick="excluirUsuario('${u.id}')" style="width:35px; height:30px; background:#ff1744; color:white; margin:0;">X</button>` : ''}
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    function resetarSenha(uid) {
-        if(confirm(`Resetar senha de ${dadosApp.usuarios[uid].nome} para "${SENHA_PADRAO}"?`)) {
-            dadosApp.usuarios[uid].senhaHash = hashSenha(SENHA_PADRAO);
-            dadosApp.usuarios[uid].reset = true;
-            salvarDados();
-            mostrarToast(`✅ Senha resetada: ${SENHA_PADRAO}`);
-            carregarListaMaster();
-        }
-    }
-    
-    function excluirUsuario(uid) {
-        if(confirm(`Excluir ${dadosApp.usuarios[uid].nome} permanentemente?`)) {
-            delete dadosApp.usuarios[uid];
-            salvarDados();
-            mostrarToast('🗑️ Usuário excluído');
-            carregarListaMaster();
-        }
-    }
-    
-    function mostrarIndicadorBusca(mostrar) {
-        const indicator = document.getElementById('searching-indicator');
-        if(mostrar) indicator.classList.add('active');
-        else indicator.classList.remove('active');
-    }
-    
-    function lerCodigoBalanca() {
-        const codigo = document.getElementById('codigo_balanca').value.trim();
-        if (!codigo) { mostrarToast('Digite o código da etiqueta!'); return; }
-        processarCodigoBalanca(codigo);
-        document.getElementById('codigo_balanca').value = '';
-    }
-    
-    function processarCodigoBalanca(codigo) {
-        let produto = BALANCA_PRODUTOS[codigo];
-        if (!produto) {
-            const codigoLimpo = codigo.replace(/^0+/, '');
-            produto = BALANCA_PRODUTOS[codigoLimpo];
-        }
-        
-        const infoDiv = document.getElementById('info_balanca');
-        
-        if (produto) {
-            document.getElementById('nome_prod').value = produto.nome;
-            document.getElementById('valor_prod').value = produto.total;
-            document.getElementById('qtd_prod').value = produto.peso;
-            infoDiv.innerHTML = `✅ ${produto.nome}<br>⚖️ ${produto.peso}kg x R$ ${produto.precoKg}/kg = R$ ${produto.total}`;
-            infoDiv.classList.add('show');
-            mostrarToast(`✅ ${produto.nome} - R$ ${produto.total}`);
-            dadosApp.precos[codigo] = produto.nome;
-            salvarDados();
-        } else {
-            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido. Preencha manualmente.`;
-            infoDiv.classList.add('show');
-            mostrarToast('🏷️ Código de balança - Preencha manualmente');
-        }
-        
-        document.getElementById('codigo').value = codigo;
-        document.getElementById('codigo-info').innerHTML = '🏷️ Código de Balança';
-        document.getElementById('codigo-info').style.display = 'block';
-        setTimeout(() => infoDiv.classList.remove('show'), 4000);
-    }
-    
-    function identificarTipoCodigo(codigo) {
-        const str = codigo.toString();
-        const infoDiv = document.getElementById('codigo-info');
-        if ((str.length === 13 || str.length === 15) && str.startsWith('2')) {
-            infoDiv.innerHTML = '🏷️ Código de Balança';
-            infoDiv.style.display = 'block';
-            return 'BALANCA';
-        } else if (str.length === 13) {
-            infoDiv.innerHTML = '📦 Código EAN-13';
-            infoDiv.style.display = 'block';
-            return 'EAN-13';
-        } else if (str.length === 8) {
-            infoDiv.innerHTML = '📦 Código EAN-8';
-            infoDiv.style.display = 'block';
-            return 'EAN-8';
-        } else if (str.length >= 4 && str.length <= 9 && /^\d+$/.test(str)) {
-            infoDiv.innerHTML = '🏷️ Código de Balança';
-            infoDiv.style.display = 'block';
-            return 'BALANCA';
-        }
-        return 'OUTRO';
-    }
-    
-    function handleCodigoBarras(codigo) {
-        if(buscaTimeout) clearTimeout(buscaTimeout);
-        if(codigo.length < 4) { document.getElementById('codigo-info').style.display = 'none'; return; }
-        
-        const tipo = identificarTipoCodigo(codigo);
-        if (tipo === 'BALANCA') { processarCodigoBalanca(codigo); return; }
-        
-        if(dadosApp.precos[codigo]) {
-            document.getElementById('nome_prod').value = dadosApp.precos[codigo];
-            mostrarToast(`📦 ${dadosApp.precos[codigo]}`);
-            return;
-        }
-        buscaTimeout = setTimeout(() => buscarProduto(codigo), 800);
-    }
-    
-    async function buscarProduto(codigo) {
-        if(!codigo || codigo.length < 4 || ultimoCodigoBuscado === codigo) return;
-        ultimoCodigoBuscado = codigo;
-        mostrarIndicadorBusca(true);
-        
-        try {
-            const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${codigo}.json`);
-            const data = await response.json();
-            if(data?.status === 1 && data.product) {
-                let nome = data.product.product_name_pt || data.product.product_name || data.product.generic_name;
-                if(nome) {
-                    nome = nome.split(',')[0].trim();
-                    document.getElementById('nome_prod').value = nome;
-                    dadosApp.precos[codigo] = nome;
-                    salvarDados();
-                    mostrarToast(`✅ ${nome}`);
-                }
-            } else {
-                mostrarToast('❌ Produto não encontrado');
-            }
-        } catch(error) {
-            mostrarToast('❌ Erro na busca');
-        } finally {
-            mostrarIndicadorBusca(false);
-            setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
-        }
-    }
-    
-    function limparCadastroFoto() {
-        fotoCadastroTemp = null;
-        document.getElementById('foto-preview-cadastro').style.display = 'none';
-        document.getElementById('foto-placeholder').style.display = 'block';
-    }
-    
-    function processarFoto(event) {
-        const file = event.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            fotoTemp = e.target.result;
-            document.getElementById('img-preview').src = fotoTemp;
-            document.getElementById('img-preview').style.display = 'block';
-            mostrarToast('📸 Foto capturada!');
-        };
-        reader.readAsDataURL(file);
-        event.target.value = '';
-    }
-    
-    function salvarSupermercado() {
-        supermercadoAtual = document.getElementById('input_supermercado').value.trim();
-        if(supermercadoAtual) {
-            document.getElementById('supermercado_atual').innerHTML = `📍 ${supermercadoAtual}`;
-            mostrarToast(`Supermercado: ${supermercadoAtual}`);
-        } else {
-            document.getElementById('supermercado_atual').innerHTML = '';
-        }
-        salvarDados();
-    }
-    
-    function mostrarTela(id) {
-        document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
-        const barra = document.getElementById('barra-resumo');
-        barra.style.display = (id === 'app-principal') ? 'block' : 'none';
-        if(id === 'app-principal') document.body.classList.add('body-com-resumo');
-        else document.body.classList.remove('body-com-resumo');
-    }
-    
-    function toggleSenha(inputId, btn) {
-        const input = document.getElementById(inputId);
-        input.type = input.type === "password" ? "text" : "password";
-        btn.textContent = input.type === "password" ? "👁️" : "🙈";
-    }
-    
-    function abrirMaster() {
-        mostrarTela('painel-master');
-        carregarListaMaster();
-    }
-    
-    function registrarUsuario() {
-        const nome = document.getElementById('novo_nome').value.trim();
-        if(!nome) {
-            alert("❌ Digite o nome do membro!");
-            return;
-        }
-        
-        let nomeExiste = false;
-        for (const id in dadosApp.usuarios) {
-            if (dadosApp.usuarios[id].nome.toLowerCase() === nome.toLowerCase()) {
-                nomeExiste = true;
-                break;
-            }
-        }
-        
-        if (nomeExiste) {
-            alert(`❌ Já existe um membro com o nome "${nome}"!\n\nUse um nome diferente.`);
-            return;
-        }
-        
-        const id = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-        
-        dadosApp.usuarios[id] = { 
-            id: id,
-            nome: nome, 
-            senhaHash: hashSenha(SENHA_PADRAO), 
-            role: "user", 
-            lista: [], 
-            reset: true, 
-            historico: [], 
-            foto: fotoCadastroTemp || null
-        };
-        
-        salvarDados();
-        mostrarToast(`✅ ${nome} cadastrado com sucesso!\n📝 Senha: ${SENHA_PADRAO}`, 5000);
-        
-        limparCadastroFoto();
-        document.getElementById('novo_nome').value = '';
-        document.getElementById('foto-preview-cadastro').style.display = 'none';
-        document.getElementById('foto-placeholder').style.display = 'block';
-        
-        mostrarTela('tela-login');
-    }
-    
-    function tentarLogin() {
-        const nomeDigitado = document.getElementById('login_user').value.trim();
-        const senhaDigitada = document.getElementById('login_pass').value;
-        
-        if (!nomeDigitado) {
-            alert("Digite o nome do usuário!");
-            return;
-        }
-        
-        let usuarioEncontrado = null;
-        let usuarioId = null;
-        
-        for (const [id, user] of Object.entries(dadosApp.usuarios)) {
-            if (user.nome.toLowerCase() === nomeDigitado.toLowerCase()) {
-                usuarioEncontrado = user;
-                usuarioId = id;
-                break;
-            }
-        }
-        
-        if (!usuarioEncontrado) {
-            alert(`❌ Usuário "${nomeDigitado}" não encontrado!`);
-            return;
-        }
-        
-        if (usuarioEncontrado.senhaHash === hashSenha(senhaDigitada)) {
-            userLogado = usuarioId;
-            sessionStorage.setItem('user', usuarioId);
-            
-            if (usuarioEncontrado.reset) {
-                mostrarToast('⚠️ Esta é a senha padrão. Crie uma nova senha!', 4000);
-                const novaSenha = prompt("Digite sua nova senha (mínimo 4 caracteres):");
-                if (novaSenha && novaSenha.length >= 4) {
-                    dadosApp.usuarios[usuarioId].senhaHash = hashSenha(novaSenha);
-                    dadosApp.usuarios[usuarioId].reset = false;
-                    salvarDados();
-                    mostrarToast('✅ Senha alterada com sucesso!');
-                }
-            }
-            entrarApp();
-        } else {
-            alert(`❌ Senha incorreta!\n\nSenha padrão: ${SENHA_PADRAO}`);
-        }
-    }
-    
-    function entrarApp() {
-        const user = dadosApp.usuarios[userLogado];
-        mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerHTML = `Olá, ${user.nome}! 👋`;
-        document.getElementById('user-name').innerHTML = user.nome;
-        document.getElementById('user-role').innerHTML = user.role === 'master' ? 'Administrador' : 'Membro';
-        
-        const userPhoto = document.getElementById('user-photo');
-        if(user.foto) {
-            userPhoto.innerHTML = `<img src="${user.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-        } else {
-            userPhoto.innerHTML = user.nome.charAt(0).toUpperCase();
-            userPhoto.style.fontSize = '30px';
-        }
-        
-        document.getElementById('btn-master').style.display = user.role === 'master' ? 'block' : 'none';
-        document.getElementById('input_saldo').value = dadosApp.saldo;
-        document.getElementById('input_supermercado').value = '';
-        supermercadoAtual = '';
-        document.getElementById('supermercado_atual').innerHTML = '';
-        document.getElementById('codigo-info').style.display = 'none';
-        renderizar();
-    }
-    
-    function adicionarItem() {
-        const nome = document.getElementById('nome_prod').value.trim() || "Produto";
-        const preco = parseFloat(document.getElementById('valor_prod').value);
-        const qtd = parseFloat(document.getElementById('qtd_prod').value) || 1;
-        const met = document.getElementById('metodo_pagto').value;
-        
-        if(isNaN(preco) || preco <= 0) return alert("💰 Preço inválido!");
-        
-        dadosApp.usuarios[userLogado].lista.push({ 
-            nome, preco, qtd, met, total: preco * qtd, 
-            foto: fotoTemp, supermercado: supermercadoAtual,
-            data: new Date().toISOString()
-        });
-        
-        salvarDados();
-        fotoTemp = null;
-        document.getElementById('img-preview').style.display = 'none';
-        document.getElementById('nome_prod').value = "";
-        document.getElementById('valor_prod').value = "";
-        document.getElementById('codigo').value = "";
-        document.getElementById('codigo_balanca').value = "";
-        document.getElementById('codigo-info').style.display = 'none';
-        renderizar();
-        mostrarToast('➕ Item adicionado!');
-    }
-    
-    function renderizar() {
-        const div = document.getElementById('lista_itens');
-        div.innerHTML = "";
-        let tSaldo = 0, tExtra = 0;
-        const itens = dadosApp.usuarios[userLogado]?.lista || [];
-        
-        if(itens.length === 0) {
-            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item adicionado</div>';
-        }
-        
-        itens.forEach((it, i) => {
-            if(it.met === 'saldo') tSaldo += it.total; 
-            else tExtra += it.total;
-            div.innerHTML += `
-                <div class="item-lista">
-                    <div style="display:flex; flex:1; align-items:center;">
-                        <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
-                        <div><b>${it.nome.substring(0, 25)}</b><br><small>${it.qtd.toFixed(3)} x R$ ${(it.total/it.qtd).toFixed(2)} = R$ ${it.total.toFixed(2)}</small></div>
-                    </div>
-                    <button onclick="removerItem(${i})" style="width:30px; color:#ff1744; font-size:20px;">&times;</button>
-                </div>`;
-        });
-        document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
-        document.getElementById('res_extra').innerText = "R$ " + tExtra.toFixed(2);
-        document.getElementById('res_saldo_sobra').innerText = "R$ " + (dadosApp.saldo - tSaldo).toFixed(2);
-    }
-    
-    function removerItem(i) {
-        if(confirm('Remover item?')) {
-            dadosApp.usuarios[userLogado].lista.splice(i, 1);
-            salvarDados();
-            renderizar();
-        }
-    }
-    
-    function finalizarCompra() {
-        const itens = dadosApp.usuarios[userLogado].lista;
-        if(itens.length === 0) return alert('Nenhum item!');
-        
-        let gasto = 0, extra = 0;
-        itens.forEach(it => {
-            if(it.met === 'saldo') gasto += it.total;
-            else extra += it.total;
-        });
-        
-        if(gasto > dadosApp.saldo) return alert(`Saldo insuficiente! R$ ${gasto.toFixed(2)}`);
-        
-        if(confirm(`Confirmar compra?\n💰 Saldo: R$ ${gasto.toFixed(2)}\n💵 Extra: R$ ${extra.toFixed(2)}`)) {
-            dadosApp.usuarios[userLogado].historico.push({
-                data: new Date().toISOString(),
-                itens: [...itens],
-                gastoSaldo: gasto,
-                pagamentoExtra: extra,
-                supermercado: supermercadoAtual,
-                usuario: dadosApp.usuarios[userLogado].nome
-            });
-            dadosApp.saldo -= gasto;
-            dadosApp.usuarios[userLogado].lista = [];
-            salvarDados();
-            mostrarToast('✅ Compra finalizada!');
-            entrarApp();
-        }
-    }
-    
-    function abrirRelatorio() {
-        const historico = dadosApp.usuarios[userLogado]?.historico || [];
-        const modal = document.getElementById('modal-historico');
-        const conteudo = document.getElementById('conteudo-historico');
-        
-        if(historico.length === 0) {
-            conteudo.innerHTML = '<p style="text-align:center;">Nenhuma compra registrada</p>';
-        } else {
-            conteudo.innerHTML = historico.slice().reverse().map(compra => `
-                <div style="border-bottom:1px solid #eee; padding:10px;">
-                    <small>📅 ${new Date(compra.data).toLocaleString()}</small>
-                    ${compra.supermercado ? `<div>🏪 ${compra.supermercado}</div>` : ''}
-                    <div>💰 R$ ${compra.gastoSaldo.toFixed(2)} | 💵 R$ ${compra.pagamentoExtra.toFixed(2)}</div>
-                    <small>${compra.itens.length} itens</small>
-                </div>
-            `).join('');
-        }
-        modal.style.display = 'flex';
-    }
-    
-    function mostrarRelatorioGeral() {
-        let todasCompras = [];
-        let totalGeral = 0;
-        let comprasPorUsuario = {};
-        
-        for (const id in dadosApp.usuarios) {
-            const user = dadosApp.usuarios[id];
-            if(user.historico) {
-                user.historico.forEach(compra => {
-                    todasCompras.push({ ...compra, usuarioNome: user.nome });
-                    totalGeral += compra.gastoSaldo;
-                    comprasPorUsuario[user.nome] = (comprasPorUsuario[user.nome] || 0) + compra.gastoSaldo;
-                });
-            }
-        }
-        
-        todasCompras.sort((a,b) => new Date(b.data) - new Date(a.data));
-        
-        const conteudo = document.getElementById('conteudo-relatorio-geral');
-        conteudo.innerHTML = `
-            <div style="margin-bottom:20px;">
-                <div class="stat-card"><b>💰 Total Geral: R$ ${totalGeral.toFixed(2)}</b></div>
-            </div>
-            <h4>👥 Gastos por Membro</h4>
-            ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${nome}: R$ ${valor.toFixed(2)}</div>`).join('') || '<div>Sem dados</div>'}
-            <h4>📋 Últimas Compras</h4>
-            ${todasCompras.slice(0, 10).map(compra => `
-                <div style="border-bottom:1px solid #eee; padding:8px;">
-                    <small>${new Date(compra.data).toLocaleString()}</small>
-                    <div><b>${compra.usuarioNome}</b> - R$ ${compra.gastoSaldo.toFixed(2)}</div>
-                </div>
-            `).join('') || '<div>Sem compras</div>'}
-        `;
-        document.getElementById('modal-relatorio-geral').style.display = 'flex';
-    }
-    
-    function mostrarComparativoPrecos() {
-        let produtos = {};
-        for (const id in dadosApp.usuarios) {
-            const user = dadosApp.usuarios[id];
-            if(user.historico) {
-                user.historico.forEach(compra => {
-                    compra.itens.forEach(item => {
-                        const chave = item.nome.toLowerCase();
-                        if(!produtos[chave]) produtos[chave] = { nome: item.nome, precos: [] };
-                        produtos[chave].precos.push(item.total / item.qtd);
-                    });
-                });
-            }
-        }
-        
-        let html = '<table class="comparison-table"><tr><th>Produto</th><th>Menor</th><th>Maior</th></tr>';
-        for (const key in produtos) {
-            const prod = produtos[key];
-            const menor = Math.min(...prod.precos);
-            const maior = Math.max(...prod.precos);
-            html += `<tr><td><b>${prod.nome}</b></td><td style="color:green">R$ ${menor.toFixed(2)}</td><td style="color:red">R$ ${maior.toFixed(2)}</td></tr>`;
-        }
-        html += '</table>';
-        
-        document.getElementById('conteudo-comparativo').innerHTML = html || '<p>Nenhum produto registrado</p>';
-        document.getElementById('modal-comparativo').style.display = 'flex';
-    }
-    
-    function filtrarComparativo() {
-        const filtro = document.getElementById('filtro-produto').value.toLowerCase();
-        const rows = document.querySelectorAll('#conteudo-comparativo table tr');
-        rows.forEach((row, i) => { if(i > 0) row.style.display = row.textContent.toLowerCase().includes(filtro) ? '' : 'none'; });
-    }
-    
-    function fecharModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-    
-    function alternarScanner() {
-        if(!scanner) {
-            document.getElementById('reader').style.display = 'block';
-            scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-                document.getElementById('codigo').value = txt;
-                handleCodigoBarras(txt);
-                pararScanner();
-                mostrarToast('📷 Código lido!');
-            }).catch(() => alert("Erro na câmera"));
-        } else pararScanner();
-    }
-    
-    function pararScanner() {
-        if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; });
-    }
-    
-    function atualizarSaldoGlobal() {
-        const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
-        if(!isNaN(novoSaldo) && novoSaldo >= 0) {
-            dadosApp.saldo = novoSaldo;
-            salvarDados();
-            renderizar();
-            mostrarToast(`💰 Saldo: R$ ${novoSaldo.toFixed(2)}`);
-        }
-    }
-    
-    function logout() { sessionStorage.clear(); location.reload(); }
-    
-    function exportarBackup() {
-        const dataStr = JSON.stringify(dadosApp, null, 2);
-        const link = document.createElement('a');
-        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        link.download = `backup_compras_${new Date().toISOString().slice(0,19)}.json`;
-        link.click();
-        mostrarToast('💾 Backup exportado!');
-    }
-    
-    function importarBackup() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá todos os dados atuais. Continuar?')) {
-                        dadosApp = backup;
-                        salvarDados();
-                        mostrarToast('✅ Backup restaurado!');
-                        location.reload();
-                    }
-                } catch(err) {
-                    mostrarToast('❌ Arquivo inválido!');
-                }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    }
-    
-    function resetarTodosDados() {
-        if(confirm('⚠️ ATENÇÃO! Isso irá apagar TODOS os dados permanentemente!')) {
-            if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários serão perdidos!')) {
-                dadosApp = { usuarios: {}, saldo: 0, precos: {} };
-                dadosApp.usuarios["master"] = criarMaster();
-                salvarDados();
-                mostrarToast('🗑️ Dados resetados! Apenas o Master permanece.');
-                setTimeout(() => location.reload(), 1500);
-            }
-        }
-    }
-    
-    window.onclick = (event) => {
-        if (event.target.classList.contains('modal')) event.target.style.display = 'none';
-    }
-    
-    carregarDados();
-    
-    window.onload = () => {
-        console.log("🚀 Sistema iniciado!");
-        console.log("👥 Usuários cadastrados:", Object.values(dadosApp.usuarios).map(u => u.nome));
-        
-        if(userLogado && dadosApp.usuarios[userLogado]) {
-            entrarApp();
-        } else {
-            mostrarTela('tela-login');
-        }
-    };
-</script>
-</body>
-</html>
+   
