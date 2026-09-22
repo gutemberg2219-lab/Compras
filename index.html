@@ -775,9 +775,13 @@
         </div>
         
         <input type="text" id="novo_nome" placeholder="👤 Nome do Membro">
-        <div class="supermercado-input">
-            ℹ️ Senha padrão: <strong>Compras@2026</strong><br>
-            <small>⚠️ Trocar a senha no primeiro acesso</small>
+        <div class="password-wrapper">
+            <input type="password" id="novo_senha" placeholder="🔒 Crie uma senha (mín. 4 caracteres)">
+            <button type="button" class="toggle-password" onclick="toggleSenha('novo_senha', this)">👁️</button>
+        </div>
+        <div class="password-wrapper">
+            <input type="password" id="novo_senha_confirma" placeholder="🔒 Confirme a senha">
+            <button type="button" class="toggle-password" onclick="toggleSenha('novo_senha_confirma', this)">👁️</button>
         </div>
         <button style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white;" onclick="registrarUsuario()">✅ CADASTRAR</button>
         <button class="btn-voltar" onclick="limparCadastroFoto(); mostrarTela('tela-login')">⬅️ VOLTAR</button>
@@ -970,7 +974,6 @@
 
 <script>
     const DB_KEY = "LISTA_COMPRAS_FINAL";
-    const SENHA_PADRAO = "Compras@2026";
     
     let dadosApp = null;
     let userLogado = sessionStorage.getItem('user');
@@ -1002,7 +1005,7 @@
         return {
             id: "master",
             nome: "Master",
-            senhaHash: hashSenha("Melissa@2016"),
+            senhaHash: hashSenha("Compras@2026"),
             role: "master",
             lista: [],
             historico: [],
@@ -1034,10 +1037,51 @@
     }
     
     function salvarDados() {
-        localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
-        const indicator = document.getElementById('saving-indicator');
-        indicator.classList.add('active');
-        setTimeout(() => indicator.classList.remove('active'), 500);
+        try {
+            localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
+            const indicator = document.getElementById('saving-indicator');
+            indicator.classList.add('active');
+            setTimeout(() => indicator.classList.remove('active'), 500);
+        } catch (e) {
+            console.error("Erro ao salvar:", e);
+            mostrarToast('⚠️ Armazenamento cheio! Faça um backup e remova fotos/compras antigas.');
+        }
+    }
+    
+    // Redimensiona/comprime uma imagem (dataURL) antes de guardar, evitando estourar o localStorage
+    function redimensionarImagem(dataUrl, maxLargura = 700, qualidade = 0.6) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                let largura = img.width;
+                let altura = img.height;
+                if (largura > maxLargura) {
+                    altura = Math.round(altura * (maxLargura / largura));
+                    largura = maxLargura;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = largura;
+                canvas.height = altura;
+                canvas.getContext('2d').drawImage(img, 0, 0, largura, altura);
+                resolve(canvas.toDataURL('image/jpeg', qualidade));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    }
+    
+    // Captura um frame de <video> já redimensionado, para as câmeras ao vivo (selfie/produto)
+    function capturarQuadroVideo(video, canvas, maxLargura = 700, qualidade = 0.6) {
+        let largura = video.videoWidth;
+        let altura = video.videoHeight;
+        if (largura > maxLargura) {
+            altura = Math.round(altura * (maxLargura / largura));
+            largura = maxLargura;
+        }
+        canvas.width = largura;
+        canvas.height = altura;
+        canvas.getContext('2d').drawImage(video, 0, 0, largura, altura);
+        return canvas.toDataURL('image/jpeg', qualidade);
     }
     
     function mostrarToast(msg) {
@@ -1087,10 +1131,7 @@
     async function tirarFotoCamera() {
         const video = document.getElementById('cameraVideo');
         const canvas = document.getElementById('cameraCanvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL('image/jpeg', 0.7);
+        const imageData = capturarQuadroVideo(video, canvas);
         fotoCadastroTemp = imageData;
         const preview = document.getElementById('foto-preview-cadastro');
         const placeholder = document.getElementById('foto-placeholder');
@@ -1131,10 +1172,7 @@
     async function tirarFotoProduto() {
         const video = document.getElementById('cameraProdutoVideo');
         const canvas = document.getElementById('cameraProdutoCanvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL('image/jpeg', 0.7);
+        const imageData = capturarQuadroVideo(video, canvas);
         
         if (isEdicaoMode) {
             fotoEdicaoTemp = imageData;
@@ -1157,9 +1195,10 @@
         const file = event.target.files[0];
         if(!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            fotoProdutoTemp = e.target.result;
-            document.getElementById('img-preview').src = e.target.result;
+        reader.onload = async (e) => {
+            const imagemReduzida = await redimensionarImagem(e.target.result);
+            fotoProdutoTemp = imagemReduzida;
+            document.getElementById('img-preview').src = imagemReduzida;
             document.getElementById('img-preview').style.display = 'block';
             mostrarToast('📸 Foto capturada!');
         };
@@ -1236,7 +1275,12 @@
     
     function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
+        const senha = document.getElementById('novo_senha').value;
+        const senhaConfirma = document.getElementById('novo_senha_confirma').value;
         if(!nome) { alert("Digite o nome!"); return; }
+        if(nome.toLowerCase() === 'master') { alert("Esse nome não pode ser usado!"); return; }
+        if(!senha || senha.length < 4) { alert("A senha deve ter no mínimo 4 caracteres!"); return; }
+        if(senha !== senhaConfirma) { alert("As senhas não coincidem!"); return; }
         for (const id in dadosApp.usuarios) {
             if (dadosApp.usuarios[id].nome.toLowerCase() === nome.toLowerCase()) {
                 alert("Nome já existe!");
@@ -1245,13 +1289,15 @@
         }
         const id = "user_" + Date.now();
         dadosApp.usuarios[id] = { 
-            id: id, nome: nome, senhaHash: hashSenha(SENHA_PADRAO), 
+            id: id, nome: nome, senhaHash: hashSenha(senha), 
             role: "user", lista: [], historico: [], foto: fotoCadastroTemp || null
         };
         salvarDados();
-        mostrarToast(`✅ ${nome} cadastrado! Senha: ${SENHA_PADRAO}`);
+        mostrarToast(`✅ ${nome} cadastrado com sucesso!`);
         limparCadastroFoto();
         document.getElementById('novo_nome').value = '';
+        document.getElementById('novo_senha').value = '';
+        document.getElementById('novo_senha_confirma').value = '';
         mostrarTela('tela-login');
     }
     
@@ -1278,18 +1324,9 @@
         if (usuarioEncontrado.senhaHash === hashSenha(senha)) {
             userLogado = usuarioId;
             sessionStorage.setItem('user', usuarioId);
-            if (usuarioEncontrado.reset) {
-                const novaSenha = prompt("Crie sua nova senha (mínimo 4 caracteres):");
-                if (novaSenha && novaSenha.length >= 4) {
-                    dadosApp.usuarios[usuarioId].senhaHash = hashSenha(novaSenha);
-                    dadosApp.usuarios[usuarioId].reset = false;
-                    salvarDados();
-                    mostrarToast('✅ Senha alterada!');
-                }
-            }
             entrarApp();
         } else {
-            alert(`Senha incorreta!\nSenha padrão: ${SENHA_PADRAO}`);
+            alert("Senha incorreta!");
         }
     }
     
