@@ -1,34 +1,36 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LISTA DE COMPRAS - Sistema Familiar</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Versão fixa + hash de integridade (SRI): o navegador recusa o arquivo se ele for alterado no CDN -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
+            integrity="sha384-c9d8RFSL+u3exBOJ4Yp3HUJXS4znl9f+z66d1y54ig+ea249SpqR+w1wyvXz/lk+"
+            crossorigin="anonymous"></script>
     <style>
-        :root { 
-            --primary: #0066ff; 
-            --success: #2e7d32; 
-            --danger: #ff1744; 
-            --warning: #ff9800; 
+        :root {
+            --primary: #0066ff;
+            --success: #2e7d32;
+            --danger: #ff1744;
+            --warning: #ff9800;
             --info: #2196f3;
         }
-        
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-            font-family: 'Segoe UI', 'Poppins', sans-serif; 
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Poppins', sans-serif;
         }
-        
-        body { 
+
+        body {
             min-height: 100vh;
             position: relative;
             padding: 15px;
             overflow-x: hidden;
         }
-        
+
         /* FUNDO COM MOVIMENTO - ZOOM INFINITO */
         body::before {
             content: '';
@@ -44,13 +46,13 @@
             z-index: -2;
             animation: zoomBackground 20s ease-in-out infinite;
         }
-        
+
         @keyframes zoomBackground {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-        
+
         /* CAMADA ESCURA COM FADE */
         body::after {
             content: '';
@@ -63,47 +65,48 @@
             z-index: -1;
             animation: fadeOverlay 8s ease-in-out infinite;
         }
-        
+
         @keyframes fadeOverlay {
             0%, 100% { background: rgba(0, 0, 0, 0.5); }
             50% { background: rgba(0, 0, 0, 0.4); }
         }
-        
+
         .body-com-resumo { padding-bottom: 160px; }
-        
+
         /* CARDS COM ANIMAÇÃO */
-        .card { 
+        .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 20px; 
-            padding: 20px; 
-            margin-bottom: 15px; 
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             transition: transform 0.3s, box-shadow 0.3s;
             border: 1px solid rgba(255,255,255,0.2);
             animation: cardSlideUp 0.5s ease-out;
         }
-        
+
         @keyframes cardSlideUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 12px 40px rgba(0,0,0,0.15);
         }
-        
+
         .password-wrapper {
             position: relative;
             width: 100%;
             margin-bottom: 10px;
         }
-        
+
         .password-wrapper input {
             width: 100%;
             height: 50px;
             padding: 0 45px 0 15px !important;
+            margin-bottom: 0; /* o espaço fica no wrapper; com margem aqui o ícone do olho ficava 5px abaixo do centro */
             border: 2px solid #e0e0e0;
             border-radius: 12px;
             font-size: 16px;
@@ -111,12 +114,12 @@
             background: rgba(255,255,255,0.9);
             transition: all 0.3s;
         }
-        
+
         .password-wrapper input:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
-        
+
         .toggle-password {
             position: absolute;
             right: 12px;
@@ -133,48 +136,48 @@
             color: #666;
             transition: color 0.3s;
         }
-        
+
         .toggle-password:hover { color: #667eea; }
-        
+
         /* Mantém o ícone centralizado durante o clique/toque, sobrescrevendo o transform genérico do button:active */
         .toggle-password:active { transform: translateY(-50%) scale(0.9); }
-        
-        input, select { 
-            width: 100%; 
-            height: 50px; 
-            padding: 0 15px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 12px; 
-            font-size: 16px; 
-            margin-bottom: 10px; 
-            outline: none; 
+
+        input, select {
+            width: 100%;
+            height: 50px;
+            padding: 0 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            outline: none;
             background: rgba(255,255,255,0.9);
             transition: all 0.3s;
         }
-        
+
         input:focus, select:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
             transform: scale(1.01);
         }
-        
-        button { 
-            width: 100%; 
-            height: 50px; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-bottom: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px; 
-            transition: all 0.3s; 
+
+        button {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
             position: relative;
             overflow: hidden;
         }
-        
+
         button::before {
             content: '';
             position: absolute;
@@ -187,60 +190,60 @@
             transform: translate(-50%, -50%);
             transition: width 0.6s, height 0.6s;
         }
-        
+
         button:hover::before {
             width: 300px;
             height: 300px;
         }
-        
+
         button:active { transform: scale(0.96); }
-        
-        .item-lista { 
+
+        .item-lista {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px; 
-            padding: 12px; 
-            margin-bottom: 8px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             border: 1px solid rgba(255,255,255,0.3);
             animation: slideIn 0.4s ease-out;
             transition: all 0.3s;
         }
-        
+
         .item-lista:hover {
             transform: translateX(5px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(-30px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        
-        .thumb-lista { 
-            width: 45px; 
-            height: 45px; 
-            border-radius: 8px; 
-            margin-right: 12px; 
+
+        .thumb-lista {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            margin-right: 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex; 
-            align-items: center; 
+            display: flex;
+            align-items: center;
             justify-content: center;
             color: white;
             font-size: 24px;
             overflow: hidden;
             transition: transform 0.3s;
         }
-        
+
         .thumb-lista:hover { transform: scale(1.05); }
-        
+
         .thumb-lista img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         .user-photo-circle {
             width: 60px;
             height: 60px;
@@ -256,16 +259,16 @@
             transition: all 0.3s;
             animation: pulse 2s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
             50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
         }
-        
+
         .user-photo-circle:hover {
             transform: scale(1.05) rotate(5deg);
         }
-        
+
         .user-info {
             display: flex;
             align-items: center;
@@ -277,14 +280,14 @@
             animation: fadeInLeft 0.5s ease-out;
             backdrop-filter: blur(5px);
         }
-        
+
         @keyframes fadeInLeft {
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        
+
         .user-details { flex: 1; }
-        
+
         /* NOME DO USUÁRIO EM BRANCO */
         .user-details h4 {
             color: white !important;
@@ -292,13 +295,13 @@
             font-size: 18px;
             margin-bottom: 5px;
         }
-        
+
         .user-details small {
             color: rgba(255, 255, 255, 0.95) !important;
             font-size: 12px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
-        
+
         .photo-upload-area {
             display: flex;
             flex-direction: column;
@@ -306,7 +309,7 @@
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         .photo-preview-circle {
             width: 100px;
             height: 100px;
@@ -322,42 +325,42 @@
             transition: all 0.3s;
             animation: float 3s ease-in-out infinite;
         }
-        
+
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-8px); }
         }
-        
-        .photo-preview-circle:hover { 
+
+        .photo-preview-circle:hover {
             transform: scale(1.05) rotate(3deg);
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
-        
+
         .photo-preview-circle img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         .photo-preview-circle span { font-size: 40px; color: white; }
-        
+
         .btn-camera {
             background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
             color: white;
             height: 40px;
             font-size: 14px;
         }
-        
-        #reader { 
-            width: 100%; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            display: none; 
-            margin-bottom: 15px; 
+
+        #reader {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            margin-bottom: 15px;
             background: #000;
             animation: fadeIn 0.3s ease-out;
         }
-        
+
         .searching-indicator {
             display: none;
             align-items: center;
@@ -369,9 +372,9 @@
             color: white;
             animation: pulse 1s ease-in-out infinite;
         }
-        
+
         .searching-indicator.active { display: flex; }
-        
+
         .spinner {
             width: 16px;
             height: 16px;
@@ -380,102 +383,102 @@
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-        
+
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .resumo-fixo { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
+
+        .resumo-fixo {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 15px; 
-            box-shadow: 0 -5px 25px rgba(0,0,0,0.1); 
-            display: none; 
-            border-radius: 20px 20px 0 0; 
+            padding: 15px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1);
+            display: none;
+            border-radius: 20px 20px 0 0;
             z-index: 999;
             animation: slideUp 0.5s ease-out;
         }
-        
+
         @keyframes slideUp {
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
         }
-        
+
         .tela { display: none; animation: fadeIn 0.4s ease-out; }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.98); }
             to { opacity: 1; transform: scale(1); }
         }
-        
-        .badge { 
-            display: inline-block; 
-            padding: 4px 8px; 
-            border-radius: 12px; 
-            font-size: 12px; 
-            font-weight: bold; 
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
             transition: all 0.3s;
         }
-        
+
         .badge:hover { transform: scale(1.05); }
-        
+
         .badge-success { background: #4caf50; color: white; }
         .badge-warning { background: #ff9800; color: white; }
-        
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0,0,0,0.8);
             backdrop-filter: blur(5px);
-            z-index: 1000; 
-            justify-content: center; 
-            align-items: center; 
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
             animation: fadeIn 0.3s ease-out;
         }
-        
-        .modal-content { 
+
+        .modal-content {
             background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px; 
-            padding: 20px; 
-            max-width: 95%; 
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 95%;
             width: 500px;
             max-height: 90%;
             overflow-y: auto;
             animation: modalSlideIn 0.4s ease-out;
         }
-        
+
         @keyframes modalSlideIn {
             from { opacity: 0; transform: scale(0.8) translateY(-50px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
-        
-        .toast { 
-            position: fixed; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; 
-            padding: 12px 20px; 
-            border-radius: 12px; 
-            z-index: 1001; 
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            z-index: 1001;
             animation: toastIn 0.4s ease-out;
             max-width: 90%;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        
+
         @keyframes toastIn {
             from { transform: translateX(-50%) translateY(100px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
-        
+
         .main-title {
             text-align: center;
             margin-bottom: 20px;
@@ -485,12 +488,12 @@
             border-radius: 20px;
             animation: titleGlow 3s ease-in-out infinite;
         }
-        
+
         @keyframes titleGlow {
             0%, 100% { box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2); }
             50% { box-shadow: 0 5px 30px rgba(102, 126, 234, 0.5); }
         }
-        
+
         .main-title h1 {
             font-size: 32px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -499,29 +502,29 @@
             color: transparent;
             font-weight: bold;
         }
-        
+
         .btn-voltar {
             background: rgba(255,255,255,0.9);
             color: #667eea;
             border: 2px solid #667eea;
         }
-        
+
         .supermercado-input {
             background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
         }
-        
+
         .supermercado-simple {
             display: flex;
             gap: 10px;
             align-items: center;
         }
-        
+
         .supermercado-simple input { flex: 1; margin: 0; }
         .supermercado-simple button { width: auto; padding: 0 15px; margin: 0; height: 50px; background: #2e7d32; color: white; }
-        
+
         .local-atual {
             margin-top: 8px;
             font-size: 12px;
@@ -532,9 +535,9 @@
             border-radius: 8px;
             transition: all 0.3s;
         }
-        
+
         .local-atual:hover { background: rgba(102, 126, 234, 0.2); }
-        
+
         .saving-indicator {
             position: fixed;
             top: 10px;
@@ -550,14 +553,14 @@
             gap: 8px;
             animation: slideInRight 0.3s ease-out;
         }
-        
+
         @keyframes slideInRight {
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
         }
-        
+
         .saving-indicator.active { display: flex; }
-        
+
         .usuario-item {
             display: flex;
             align-items: center;
@@ -567,12 +570,12 @@
             transition: all 0.3s;
             animation: fadeInLeft 0.3s ease-out;
         }
-        
+
         .usuario-item:hover {
             background: rgba(102, 126, 234, 0.05);
             transform: translateX(5px);
         }
-        
+
         .usuario-foto {
             width: 45px;
             height: 45px;
@@ -586,9 +589,9 @@
             color: white;
             transition: transform 0.3s;
         }
-        
+
         .usuario-foto:hover { transform: scale(1.1); }
-        
+
         .codigo-info {
             font-size: 11px;
             color: #666;
@@ -599,19 +602,19 @@
             border-radius: 8px;
             animation: fadeIn 0.3s ease-out;
         }
-        
+
         .balanca-container {
             background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
         }
-        
+
         .balanca-container h4 { margin-bottom: 10px; color: #ff9800; }
         .balanca-input-group { display: flex; gap: 8px; }
         .balanca-input-group input { flex: 2; margin: 0; }
         .balanca-input-group button { flex: 1; margin: 0; background: #ff9800; color: white; }
-        
+
         .info-balanca {
             margin-top: 8px;
             font-size: 12px;
@@ -621,9 +624,9 @@
             display: none;
             animation: fadeIn 0.3s ease-out;
         }
-        
+
         .info-balanca.show { display: block; }
-        
+
         .video-container {
             position: fixed;
             top: 0;
@@ -638,33 +641,33 @@
             align-items: center;
             animation: fadeIn 0.3s ease-out;
         }
-        
+
         .video-container.active { display: flex; }
-        
+
         #cameraVideo, #cameraProdutoVideo {
             width: 100%;
             max-width: 400px;
             border-radius: 20px;
             border: 3px solid white;
         }
-        
+
         .video-controls {
             display: flex;
             gap: 15px;
             margin-top: 20px;
         }
-        
+
         .video-controls button {
             width: auto;
             padding: 0 25px;
             margin: 0;
         }
-        
+
         .item-actions {
             display: flex;
             gap: 8px;
         }
-        
+
         .btn-edit {
             background: #2196f3;
             color: white;
@@ -679,12 +682,12 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        
+
         .btn-edit:hover {
             background: #1976d2;
             transform: scale(1.1);
         }
-        
+
         .btn-delete {
             background: #ff1744;
             color: white;
@@ -699,12 +702,12 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        
+
         .btn-delete:hover {
             background: #d50000;
             transform: scale(1.1);
         }
-        
+
         .photo-preview-item {
             width: 80px;
             height: 80px;
@@ -714,14 +717,14 @@
             border: 2px solid #ddd;
             transition: all 0.3s;
         }
-        
+
         .photo-preview-item:hover {
             transform: scale(1.05);
             border-color: #667eea;
         }
-        
+
         .form-group { margin-bottom: 15px; }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
@@ -729,7 +732,7 @@
             font-size: 14px;
             color: #333;
         }
-        
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
@@ -739,12 +742,12 @@
 <body>
 
 <div id="app" style="max-width:500px; margin: auto;">
-    
+
     <div class="saving-indicator" id="saving-indicator">
         <div class="spinner"></div>
         <span>Salvando...</span>
     </div>
-    
+
     <!-- TELA DE LOGIN -->
     <div id="tela-login" class="tela card">
         <div class="main-title">
@@ -752,7 +755,7 @@
             <p>Sistema Familiar de Compras</p>
         </div>
         <h2 style="text-align:center; margin-bottom:20px;">🔐 Login Família</h2>
-        
+
         <input type="text" id="login_user" placeholder="👤 Digite o nome do usuário">
         <div class="password-wrapper">
             <input type="password" id="login_pass" placeholder="🔒 Senha">
@@ -769,7 +772,7 @@
             <p>Sistema Familiar de Compras</p>
         </div>
         <h2 style="text-align:center;">📝 Novo Membro</h2>
-        
+
         <div class="photo-upload-area">
             <div class="photo-preview-circle" id="fotoPreviewCircle" onclick="abrirCameraFrontal()">
                 <span id="foto-placeholder">📸</span>
@@ -777,7 +780,7 @@
             </div>
             <button type="button" class="btn-camera" onclick="abrirCameraFrontal()">📷 Tirar Foto (Selfie)</button>
         </div>
-        
+
         <input type="text" id="novo_nome" placeholder="👤 Nome do Membro">
         <div class="password-wrapper">
             <input type="password" id="novo_senha" placeholder="🔒 Crie uma senha (mín. 4 caracteres)">
@@ -798,13 +801,13 @@
             <p>Painel Administrativo</p>
         </div>
         <button class="btn-voltar" onclick="mostrarTela('app-principal')">⬅️ VOLTAR</button>
-        
+
         <div style="display:flex; gap:8px; margin:15px 0; flex-wrap:wrap;">
             <button onclick="mostrarRelatorioGeral()" style="background: #2196f3; color:white;">📊 RELATÓRIO</button>
             <button onclick="exportarBackup()" style="background: #4caf50; color:white;">💾 BACKUP</button>
             <button onclick="importarBackup()" style="background: #ff9800; color:white;">📥 RESTAURAR</button>
         </div>
-        
+
         <h3>🛡️ Membros Cadastrados (<span id="total-membros">0</span>)</h3>
         <div id="lista-usuarios-master"></div>
         <button onclick="resetarTodosDados()" style="background: #ff1744; color: white;">⚠️ RESETAR TUDO</button>
@@ -816,7 +819,7 @@
             <h1>🛒 LISTA DE COMPRAS</h1>
             <p id="boas_vindas">Olá, usuário!</p>
         </div>
-        
+
         <div class="user-info">
             <div class="user-photo-circle" id="user-photo">👤</div>
             <div class="user-details">
@@ -824,12 +827,13 @@
                 <small id="user-role"></small>
             </div>
         </div>
-        
+
         <div style="display:flex; gap:8px; margin-bottom:15px;">
             <button id="btn-master" onclick="abrirMaster()" style="display:none; width:auto; padding:0 15px; background:#ff9800; color:white; height:35px;">🛡️ MASTER</button>
+            <button onclick="abrirModalSenha('trocar')" style="width:auto; padding:0 15px; background:#2196f3; color:white; height:35px;">🔑 SENHA</button>
             <button onclick="logout()" style="width:auto; padding:0 15px; background:#666; color:white; height:35px;">🚪 SAIR</button>
         </div>
-        
+
         <div class="supermercado-input">
             <small>🏪 LOCAL DA COMPRA</small>
             <div class="supermercado-simple">
@@ -838,7 +842,7 @@
             </div>
             <div id="supermercado_atual" class="local-atual"></div>
         </div>
-        
+
         <div class="card">
             <small>💰 SALDO DISPONÍVEL</small>
             <div style="display:flex; gap:10px;">
@@ -852,13 +856,13 @@
                 <button onclick="alternarScanner()" style="background:#9c27b0; color:white; flex:1;">📷 ESCANEAR</button>
                 <button onclick="document.getElementById('camera-input').click()" style="background:#2196f3; color:white; flex:1;">📸 TIRAR FOTO</button>
             </div>
-            
+
             <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="processarFoto(event)">
             <div style="text-align:center">
                 <img id="img-preview" style="max-height:100px; border-radius:12px; display:none;">
             </div>
             <div id="reader"></div>
-            
+
             <div class="balanca-container">
                 <h4>🏷️ CÓDIGO DE BALANÇA</h4>
                 <div class="balanca-input-group">
@@ -867,18 +871,18 @@
                 </div>
                 <div id="info_balanca" class="info-balanca"></div>
             </div>
-            
+
             <div class="searching-indicator" id="searching-indicator">
                 <div class="spinner"></div>
                 <span>Buscando produto...</span>
             </div>
-            
+
             <input type="text" id="codigo" placeholder="🔢 Código de Barras" oninput="handleCodigoBarras(this.value)">
             <div id="codigo-info" class="codigo-info" style="display:none;"></div>
             <input type="text" id="nome_prod" placeholder="📦 Nome do Produto">
             <div style="display:flex; gap:10px;">
                 <input type="number" id="qtd_prod" value="1" step="0.001" placeholder="Qtd" style="flex:1">
-                <input type="number" id="valor_prod" placeholder="💰 Preço R$" step="0.01" style="flex:2">
+                <input type="number" id="valor_prod" placeholder="💰 Preço un/kg R$" step="0.01" style="flex:2">
             </div>
             <select id="metodo_pagto">
                 <option value="saldo">💳 Abater do Saldo</option>
@@ -895,7 +899,7 @@
     <div id="modal-editar" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom:15px;">✏️ Editar Produto</h3>
-            
+
             <div class="form-group">
                 <label>📷 Foto do Produto</label>
                 <div style="text-align:center;">
@@ -906,22 +910,22 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label>📦 Nome do Produto</label>
                 <input type="text" id="edit-nome" placeholder="Nome do produto">
             </div>
-            
+
             <div class="form-group">
                 <label>⚖️ Quantidade</label>
                 <input type="number" id="edit-qtd" step="0.001" placeholder="Quantidade">
             </div>
-            
+
             <div class="form-group">
-                <label>💰 Preço Total (R$)</label>
-                <input type="number" id="edit-preco" step="0.01" placeholder="Preço total">
+                <label>💰 Preço por unidade/kg (R$)</label>
+                <input type="number" id="edit-preco" step="0.01" placeholder="Preço por unidade ou kg">
             </div>
-            
+
             <div class="form-group">
                 <label>💳 Método de Pagamento</label>
                 <select id="edit-metodo">
@@ -929,10 +933,34 @@
                     <option value="extra">Pagamento Extra</option>
                 </select>
             </div>
-            
+
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button onclick="salvarEdicaoItem()" style="background: #4caf50; color:white;">💾 SALVAR</button>
                 <button onclick="fecharModalEdicao()" style="background: #999; color:white;">❌ CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SENHA (primeiro acesso do Master / troca obrigatória / trocar senha) -->
+    <div id="modal-senha" class="modal">
+        <div class="modal-content">
+            <h3 id="senha-titulo" style="margin-bottom:8px;">🔑 Trocar senha</h3>
+            <p id="senha-texto" style="margin-bottom:15px; color:#555; font-size:14px;"></p>
+            <div class="password-wrapper" id="senha-atual-wrapper">
+                <input type="password" id="senha_atual" placeholder="🔒 Senha atual">
+                <button type="button" class="toggle-password" onclick="toggleSenha('senha_atual', this)">👁️</button>
+            </div>
+            <div class="password-wrapper">
+                <input type="password" id="senha_nova" placeholder="🔒 Nova senha">
+                <button type="button" class="toggle-password" onclick="toggleSenha('senha_nova', this)">👁️</button>
+            </div>
+            <div class="password-wrapper">
+                <input type="password" id="senha_nova_confirma" placeholder="🔒 Confirme a nova senha">
+                <button type="button" class="toggle-password" onclick="toggleSenha('senha_nova_confirma', this)">👁️</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button onclick="salvarNovaSenha()" style="background:#4caf50; color:white;">💾 SALVAR</button>
+                <button id="btn-cancelar-senha" onclick="fecharModalSenha()" style="background:#999; color:white;">❌ CANCELAR</button>
             </div>
         </div>
     </div>
@@ -978,45 +1006,92 @@
 
 <script>
     const DB_KEY = "LISTA_COMPRAS_FINAL";
-    
+
     let dadosApp = null;
     let userLogado = sessionStorage.getItem('user');
     let scanner = null;
+    let scannerParando = false;
     let buscaTimeout = null;
     let ultimoCodigoBuscado = '';
     let supermercadoAtual = '';
     let fotoCadastroTemp = null;
     let fotoProdutoTemp = null;
     let fotoEdicaoTemp = null;
+    let fotoEdicaoRemovida = false;
     let editandoIndex = null;
     let cameraStream = null;
     let cameraProdutoStream = null;
     let isEdicaoMode = false;
-    
+
     const BALANCA_PRODUTOS = {
         '2006200036601': { nome: 'LINGUIÇA TOSCANA AURORA', peso: 1.356, precoKg: 26.99, total: 36.60 }
     };
-    
-    function hashSenha(senha) {
+
+    // Hash antigo (32 bits, sem sal). Mantido só para validar senhas cadastradas antes desta versão:
+    // no primeiro login bem-sucedido a senha é convertida para PBKDF2.
+    function hashSenhaLegado(senha) {
         let hash = 0;
         for (let i = 0; i < senha.length; i++) {
             hash = ((hash << 5) - hash) + senha.charCodeAt(i);
         }
         return hash.toString();
     }
-    
+
+    const PBKDF2_ITERACOES = 310000;
+    // Web Crypto só existe em HTTPS, localhost ou arquivo local
+    const cryptoDisponivel = !!(window.crypto && window.crypto.subtle);
+
+    function bytesParaHex(bytes) {
+        return Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function hexParaBytes(hex) {
+        return new Uint8Array(hex.match(/../g).map(h => parseInt(h, 16)));
+    }
+
+    async function derivarPbkdf2(senha, salHex, iteracoes) {
+        const chave = await crypto.subtle.importKey('raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveBits']);
+        const bits = await crypto.subtle.deriveBits(
+            { name: 'PBKDF2', salt: hexParaBytes(salHex), iterations: iteracoes, hash: 'SHA-256' }, chave, 256);
+        return bytesParaHex(bits);
+    }
+
+    // Devolve os campos de senha a gravar no usuário (hash + sal + iterações)
+    async function gerarHashSenha(senha) {
+        if (!cryptoDisponivel) {
+            // Sem HTTPS não há Web Crypto: usa o hash antigo, que é convertido no próximo login em HTTPS
+            return { senhaHash: hashSenhaLegado(senha), senhaSal: null, senhaIter: null };
+        }
+        const sal = bytesParaHex(crypto.getRandomValues(new Uint8Array(16)));
+        return { senhaHash: await derivarPbkdf2(senha, sal, PBKDF2_ITERACOES), senhaSal: sal, senhaIter: PBKDF2_ITERACOES };
+    }
+
+    async function verificarSenha(user, senha) {
+        if (!user || !user.senhaHash) return false;
+        if (user.senhaSal) {
+            if (!cryptoDisponivel) {
+                alert('Abra o app por HTTPS (ou como arquivo local) para fazer login.');
+                return false;
+            }
+            return (await derivarPbkdf2(senha, user.senhaSal, user.senhaIter)) === user.senhaHash;
+        }
+        return user.senhaHash === hashSenhaLegado(senha);
+    }
+
+    // O Master nasce sem senha: ela é definida na primeira abertura do app, e nada fica escrito no código
     function criarMaster() {
         return {
             id: "master",
             nome: "Master",
-            senhaHash: hashSenha("Compras@2026"),
+            senhaHash: null,
+            senhaDefinida: false,
             role: "master",
             lista: [],
             historico: [],
             foto: null
         };
     }
-    
+
     function carregarDados() {
         try {
             const dadosSalvos = localStorage.getItem(DB_KEY);
@@ -1026,8 +1101,13 @@
                 dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
                 dadosApp.usuarios["master"] = criarMaster();
             }
+            if (!dadosApp.usuarios || typeof dadosApp.usuarios !== 'object') dadosApp.usuarios = {};
             if (!dadosApp.usuarios["master"]) {
                 dadosApp.usuarios["master"] = criarMaster();
+            }
+            for (const u of Object.values(dadosApp.usuarios)) {
+                if (!Array.isArray(u.lista)) u.lista = [];
+                if (!Array.isArray(u.historico)) u.historico = [];
             }
             if (dadosApp.saldo === undefined) dadosApp.saldo = 1000;
             if (!dadosApp.precos) dadosApp.precos = {};
@@ -1039,19 +1119,21 @@
             salvarDados();
         }
     }
-    
+
     function salvarDados() {
         try {
             localStorage.setItem(DB_KEY, JSON.stringify(dadosApp));
             const indicator = document.getElementById('saving-indicator');
             indicator.classList.add('active');
             setTimeout(() => indicator.classList.remove('active'), 500);
+            return true;
         } catch (e) {
             console.error("Erro ao salvar:", e);
             mostrarToast('⚠️ Armazenamento cheio! Faça um backup e remova fotos/compras antigas.');
+            return false;
         }
     }
-    
+
     // Redimensiona/comprime uma imagem (dataURL) antes de guardar, evitando estourar o localStorage
     function redimensionarImagem(dataUrl, maxLargura = 700, qualidade = 0.6) {
         return new Promise((resolve) => {
@@ -1073,9 +1155,10 @@
             img.src = dataUrl;
         });
     }
-    
+
     // Captura um frame de <video> já redimensionado, para as câmeras ao vivo (selfie/produto)
     function capturarQuadroVideo(video, canvas, maxLargura = 700, qualidade = 0.6) {
+        if (!video.videoWidth) return null; // câmera ainda carregando: o quadro sairia vazio
         let largura = video.videoWidth;
         let altura = video.videoHeight;
         if (largura > maxLargura) {
@@ -1087,7 +1170,7 @@
         canvas.getContext('2d').drawImage(video, 0, 0, largura, altura);
         return canvas.toDataURL('image/jpeg', qualidade);
     }
-    
+
     function mostrarToast(msg) {
         const toast = document.createElement('div');
         toast.className = 'toast';
@@ -1095,13 +1178,26 @@
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
     }
-    
+
+    // Escapa texto antes de inserir via innerHTML (nomes digitados, vindos da API Open Food Facts ou de um backup)
+    function escaparHtml(texto) {
+        return String(texto ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function formatarMoeda(valor) {
+        return (Number(valor) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function arredondar(valor) {
+        return Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
+    }
+
     function toggleSenha(inputId, btn) {
         const input = document.getElementById(inputId);
         input.type = input.type === "password" ? "text" : "password";
         btn.textContent = input.type === "password" ? "👁️" : "🙈";
     }
-    
+
     function mostrarTela(id) {
         document.querySelectorAll('.tela').forEach(t => t.style.display = 'none');
         document.getElementById(id).style.display = 'block';
@@ -1110,7 +1206,7 @@
         if(id === 'app-principal') document.body.classList.add('body-com-resumo');
         else document.body.classList.remove('body-com-resumo');
     }
-    
+
     async function abrirCameraFrontal() {
         const video = document.getElementById('cameraVideo');
         const container = document.getElementById('cameraContainer');
@@ -1123,7 +1219,7 @@
             mostrarToast("❌ Erro ao acessar a câmera!");
         }
     }
-    
+
     function fecharCamera() {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
@@ -1131,11 +1227,12 @@
         }
         document.getElementById('cameraContainer').classList.remove('active');
     }
-    
+
     async function tirarFotoCamera() {
         const video = document.getElementById('cameraVideo');
         const canvas = document.getElementById('cameraCanvas');
         const imageData = capturarQuadroVideo(video, canvas);
+        if (!imageData) { mostrarToast('⏳ Aguarde a câmera carregar e tente de novo.'); return; }
         fotoCadastroTemp = imageData;
         const preview = document.getElementById('foto-preview-cadastro');
         const placeholder = document.getElementById('foto-placeholder');
@@ -1145,7 +1242,7 @@
         fecharCamera();
         mostrarToast('📸 Selfie capturada!');
     }
-    
+
     function abrirCameraProduto() {
         const video = document.getElementById('cameraProdutoVideo');
         const container = document.getElementById('cameraProdutoContainer');
@@ -1158,12 +1255,12 @@
             })
             .catch(() => mostrarToast("❌ Erro na câmera"));
     }
-    
+
     function abrirCameraProdutoEdicao() {
         isEdicaoMode = true;
         abrirCameraProduto();
     }
-    
+
     function fecharCameraProduto() {
         if (cameraProdutoStream) {
             cameraProdutoStream.getTracks().forEach(track => track.stop());
@@ -1172,14 +1269,16 @@
         document.getElementById('cameraProdutoContainer').classList.remove('active');
         isEdicaoMode = false;
     }
-    
+
     async function tirarFotoProduto() {
         const video = document.getElementById('cameraProdutoVideo');
         const canvas = document.getElementById('cameraProdutoCanvas');
         const imageData = capturarQuadroVideo(video, canvas);
-        
+        if (!imageData) { mostrarToast('⏳ Aguarde a câmera carregar e tente de novo.'); return; }
+
         if (isEdicaoMode) {
             fotoEdicaoTemp = imageData;
+            fotoEdicaoRemovida = false;
             const preview = document.getElementById('edit-foto-preview');
             preview.src = imageData;
             preview.style.display = 'block';
@@ -1191,10 +1290,10 @@
             preview.style.display = 'block';
             mostrarToast('📸 Foto do produto capturada!');
         }
-        
+
         fecharCameraProduto();
     }
-    
+
     function processarFoto(event) {
         const file = event.target.files[0];
         if(!file) return;
@@ -1209,7 +1308,7 @@
         reader.readAsDataURL(file);
         event.target.value = '';
     }
-    
+
     function lerCodigoBalanca() {
         const codigo = document.getElementById('codigo_balanca').value.trim();
         if (!codigo) { mostrarToast('Digite o código!'); return; }
@@ -1217,20 +1316,21 @@
         const infoDiv = document.getElementById('info_balanca');
         if (produto) {
             document.getElementById('nome_prod').value = produto.nome;
-            document.getElementById('valor_prod').value = produto.total;
+            // O campo de preço é por kg: o total do item é calculado como preço/kg × peso
+            document.getElementById('valor_prod').value = produto.precoKg;
             document.getElementById('qtd_prod').value = produto.peso;
-            infoDiv.innerHTML = `✅ ${produto.nome}<br>⚖️ ${produto.peso}kg x R$ ${produto.precoKg}/kg = R$ ${produto.total}`;
+            infoDiv.innerHTML = `✅ ${escaparHtml(produto.nome)}<br>⚖️ ${produto.peso}kg x ${formatarMoeda(produto.precoKg)}/kg = ${formatarMoeda(produto.total)}`;
             infoDiv.classList.add('show');
             mostrarToast(`✅ ${produto.nome}`);
         } else {
-            infoDiv.innerHTML = `⚠️ Código ${codigo} não reconhecido`;
+            infoDiv.textContent = `⚠️ Código ${codigo} não reconhecido`;
             infoDiv.classList.add('show');
         }
         document.getElementById('codigo').value = codigo;
         setTimeout(() => infoDiv.classList.remove('show'), 4000);
         document.getElementById('codigo_balanca').value = '';
     }
-    
+
     function handleCodigoBarras(codigo) {
         if(buscaTimeout) clearTimeout(buscaTimeout);
         if(codigo.length < 4) return;
@@ -1240,7 +1340,7 @@
         }
         buscaTimeout = setTimeout(() => buscarProduto(codigo), 800);
     }
-    
+
     async function buscarProduto(codigo) {
         if(!codigo || ultimoCodigoBuscado === codigo) return;
         ultimoCodigoBuscado = codigo;
@@ -1266,18 +1366,18 @@
             setTimeout(() => { if(ultimoCodigoBuscado === codigo) ultimoCodigoBuscado = ''; }, 2000);
         }
     }
-    
+
     function salvarSupermercado() {
         supermercadoAtual = document.getElementById('input_supermercado').value.trim();
         if(supermercadoAtual) {
-            document.getElementById('supermercado_atual').innerHTML = `📍 ${supermercadoAtual}`;
+            document.getElementById('supermercado_atual').textContent = `📍 ${supermercadoAtual}`;
             mostrarToast(`Supermercado: ${supermercadoAtual}`);
         } else {
-            document.getElementById('supermercado_atual').innerHTML = '';
+            document.getElementById('supermercado_atual').textContent = '';
         }
     }
-    
-    function registrarUsuario() {
+
+    async function registrarUsuario() {
         const nome = document.getElementById('novo_nome').value.trim();
         const senha = document.getElementById('novo_senha').value;
         const senhaConfirma = document.getElementById('novo_senha_confirma').value;
@@ -1292,8 +1392,8 @@
             }
         }
         const id = "user_" + Date.now();
-        dadosApp.usuarios[id] = { 
-            id: id, nome: nome, senhaHash: hashSenha(senha), 
+        dadosApp.usuarios[id] = {
+            id: id, nome: nome, ...(await gerarHashSenha(senha)),
             role: "user", lista: [], historico: [], foto: fotoCadastroTemp || null
         };
         salvarDados();
@@ -1304,14 +1404,14 @@
         document.getElementById('novo_senha_confirma').value = '';
         mostrarTela('tela-login');
     }
-    
+
     function limparCadastroFoto() {
         fotoCadastroTemp = null;
         document.getElementById('foto-preview-cadastro').style.display = 'none';
         document.getElementById('foto-placeholder').style.display = 'block';
     }
-    
-    function tentarLogin() {
+
+    async function tentarLogin() {
         const nome = document.getElementById('login_user').value.trim();
         const senha = document.getElementById('login_pass').value;
         if (!nome) { alert("Digite o nome!"); return; }
@@ -1325,44 +1425,112 @@
             }
         }
         if (!usuarioEncontrado) { alert("Usuário não encontrado!"); return; }
-        if (usuarioEncontrado.senhaHash === hashSenha(senha)) {
-            userLogado = usuarioId;
-            sessionStorage.setItem('user', usuarioId);
-            entrarApp();
+        if (!(await verificarSenha(usuarioEncontrado, senha))) { alert("Senha incorreta!"); return; }
+        // Senha ainda no formato antigo: converte para PBKDF2 agora que ela foi confirmada
+        if (!usuarioEncontrado.senhaSal && cryptoDisponivel) {
+            Object.assign(usuarioEncontrado, await gerarHashSenha(senha));
+            salvarDados();
+        }
+        document.getElementById('login_pass').value = '';
+        userLogado = usuarioId;
+        // Master ainda com a senha antiga (que estava escrita no código): obriga a troca antes de entrar
+        if (usuarioEncontrado.role === 'master' && !usuarioEncontrado.senhaDefinida) {
+            abrirModalSenha('obrigatoria');
+            return;
+        }
+        sessionStorage.setItem('user', usuarioId);
+        entrarApp();
+    }
+
+    // Modal de senha: 'definir-master' (primeiro acesso), 'obrigatoria' (Master com a senha antiga) ou 'trocar'
+    let modoSenha = null;
+
+    function abrirModalSenha(modo) {
+        modoSenha = modo;
+        const textos = {
+            'definir-master': ['🛡️ Primeiro acesso', 'Defina a senha do administrador (Master), com pelo menos 6 caracteres. Ela não fica escrita no código do app, então guarde-a bem.'],
+            'obrigatoria': ['🔑 Nova senha do Master', 'A senha antiga do Master estava escrita no código do app e não é mais segura. Escolha uma nova para continuar.'],
+            'trocar': ['🔑 Trocar senha', 'Digite a senha atual e escolha a nova.']
+        };
+        document.getElementById('senha-titulo').textContent = textos[modo][0];
+        document.getElementById('senha-texto').textContent = textos[modo][1];
+        document.getElementById('senha-atual-wrapper').style.display = modo === 'trocar' ? 'block' : 'none';
+        document.getElementById('btn-cancelar-senha').style.display = modo === 'definir-master' ? 'none' : 'flex';
+        ['senha_atual', 'senha_nova', 'senha_nova_confirma'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('modal-senha').style.display = 'flex';
+    }
+
+    function fecharModalSenha() {
+        if (modoSenha === 'definir-master') return; // sem senha do Master o app não pode ser usado
+        if (modoSenha === 'obrigatoria') userLogado = null; // cancelou a troca: não entra no app
+        modoSenha = null;
+        document.getElementById('modal-senha').style.display = 'none';
+    }
+
+    async function salvarNovaSenha() {
+        const modo = modoSenha;
+        const alvo = dadosApp.usuarios[modo === 'definir-master' ? 'master' : userLogado];
+        if (!alvo) return;
+        const nova = document.getElementById('senha_nova').value;
+        const confirma = document.getElementById('senha_nova_confirma').value;
+        if (modo === 'trocar' && !(await verificarSenha(alvo, document.getElementById('senha_atual').value))) {
+            alert("Senha atual incorreta!");
+            return;
+        }
+        const minimo = alvo.role === 'master' ? 6 : 4;
+        if (nova.length < minimo) { alert(`A nova senha deve ter no mínimo ${minimo} caracteres!`); return; }
+        if (nova !== confirma) { alert("As senhas não coincidem!"); return; }
+        if (modo === 'obrigatoria' && await verificarSenha(alvo, nova)) { alert("Escolha uma senha diferente da antiga!"); return; }
+        Object.assign(alvo, await gerarHashSenha(nova));
+        if (alvo.role === 'master') alvo.senhaDefinida = true;
+        salvarDados();
+        modoSenha = null;
+        document.getElementById('modal-senha').style.display = 'none';
+        if (modo === 'definir-master') {
+            mostrarToast('✅ Senha do Master definida! Agora entre como Master.');
         } else {
-            alert("Senha incorreta!");
+            mostrarToast('✅ Senha alterada!');
+        }
+        if (modo === 'obrigatoria') {
+            sessionStorage.setItem('user', userLogado);
+            entrarApp();
         }
     }
-    
+
     function entrarApp() {
         const user = dadosApp.usuarios[userLogado];
         mostrarTela('app-principal');
-        document.getElementById('boas_vindas').innerHTML = `Olá, ${user.nome}! 👋`;
-        document.getElementById('user-name').innerHTML = user.nome;
-        document.getElementById('user-role').innerHTML = user.role === 'master' ? 'Administrador' : 'Membro';
+        document.getElementById('boas_vindas').textContent = `Olá, ${user.nome}! 👋`;
+        document.getElementById('user-name').textContent = user.nome;
+        document.getElementById('user-role').textContent = user.role === 'master' ? 'Administrador' : 'Membro';
         const userPhoto = document.getElementById('user-photo');
         if(user.foto) {
-            userPhoto.innerHTML = `<img src="${user.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            userPhoto.innerHTML = `<img src="${escaparHtml(user.foto)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
         } else {
-            userPhoto.innerHTML = user.nome.charAt(0).toUpperCase();
+            userPhoto.textContent = user.nome.charAt(0).toUpperCase();
         }
         document.getElementById('btn-master').style.display = user.role === 'master' ? 'block' : 'none';
         document.getElementById('input_saldo').value = dadosApp.saldo;
         renderizar();
     }
-    
+
     function adicionarItem() {
         const nome = document.getElementById('nome_prod').value.trim() || "Produto";
         const preco = parseFloat(document.getElementById('valor_prod').value);
         const qtd = parseFloat(document.getElementById('qtd_prod').value) || 1;
         const met = document.getElementById('metodo_pagto').value;
         if(isNaN(preco) || preco <= 0) { alert("Preço inválido!"); return; }
-        dadosApp.usuarios[userLogado].lista.push({ 
-            nome, preco, qtd, met, total: preco * qtd, 
+        if(qtd <= 0) { alert("Quantidade inválida!"); return; }
+        dadosApp.usuarios[userLogado].lista.push({
+            nome, preco, qtd, met, total: arredondar(preco * qtd),
             foto: fotoProdutoTemp, supermercado: supermercadoAtual,
             data: new Date().toISOString()
         });
-        salvarDados();
+        if (!salvarDados()) {
+            // Não coube no armazenamento: desfaz, para a tela não mostrar um item que sumiria ao recarregar
+            dadosApp.usuarios[userLogado].lista.pop();
+            return;
+        }
         fotoProdutoTemp = null;
         document.getElementById('img-preview').style.display = 'none';
         document.getElementById('nome_prod').value = "";
@@ -1373,25 +1541,25 @@
         renderizar();
         mostrarToast('➕ Item adicionado!');
     }
-    
+
     function renderizar() {
         const div = document.getElementById('lista_itens');
-        div.innerHTML = "";
         let tSaldo = 0, tExtra = 0;
         const itens = dadosApp.usuarios[userLogado]?.lista || [];
+        let html = '';
         if(itens.length === 0) {
-            div.innerHTML = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item na lista</div>';
+            html = '<div class="card" style="text-align:center; color:#999;">🛒 Nenhum item na lista</div>';
         }
         itens.forEach((it, i) => {
-            if(it.met === 'saldo') tSaldo += it.total; 
+            if(it.met === 'saldo') tSaldo += it.total;
             else tExtra += it.total;
-            div.innerHTML += `
+            html += `
                 <div class="item-lista">
                     <div style="display:flex; flex:1; align-items:center;">
-                        <div class="thumb-lista">${it.foto ? `<img src="${it.foto}">` : '📦'}</div>
+                        <div class="thumb-lista">${it.foto ? `<img src="${escaparHtml(it.foto)}">` : '📦'}</div>
                         <div>
-                            <b>${it.nome.substring(0, 30)}</b><br>
-                            <small>${it.qtd} x R$ ${(it.total/it.qtd).toFixed(2)} = R$ ${it.total.toFixed(2)}</small>
+                            <b>${escaparHtml(String(it.nome).substring(0, 30))}</b><br>
+                            <small>${escaparHtml(it.qtd)} x ${formatarMoeda(it.preco)} = ${formatarMoeda(it.total)}</small>
                             <br><small class="badge ${it.met === 'saldo' ? 'badge-success' : 'badge-warning'}">${it.met === 'saldo' ? '💰 Saldo' : '💵 Extra'}</small>
                         </div>
                     </div>
@@ -1401,20 +1569,21 @@
                     </div>
                 </div>`;
         });
-        document.getElementById('res_saldo_uso').innerText = "R$ " + tSaldo.toFixed(2);
-        document.getElementById('res_extra').innerText = "R$ " + tExtra.toFixed(2);
-        document.getElementById('res_saldo_sobra').innerText = "R$ " + (dadosApp.saldo - tSaldo).toFixed(2);
+        div.innerHTML = html;
+        document.getElementById('res_saldo_uso').innerText = formatarMoeda(tSaldo);
+        document.getElementById('res_extra').innerText = formatarMoeda(tExtra);
+        document.getElementById('res_saldo_sobra').innerText = formatarMoeda(dadosApp.saldo - tSaldo);
     }
-    
+
     function abrirEditarItem(index) {
         editandoIndex = index;
         const item = dadosApp.usuarios[userLogado].lista[index];
-        
+
         document.getElementById('edit-nome').value = item.nome;
         document.getElementById('edit-qtd').value = item.qtd;
         document.getElementById('edit-preco').value = item.preco;
         document.getElementById('edit-metodo').value = item.met;
-        
+
         const preview = document.getElementById('edit-foto-preview');
         if (item.foto) {
             preview.src = item.foto;
@@ -1422,54 +1591,58 @@
         } else {
             preview.style.display = 'none';
         }
-        
+
         fotoEdicaoTemp = null;
+        fotoEdicaoRemovida = false;
         document.getElementById('modal-editar').style.display = 'flex';
     }
-    
+
     function salvarEdicaoItem() {
         if (editandoIndex === null) return;
-        
+
         const item = dadosApp.usuarios[userLogado].lista[editandoIndex];
         const novoNome = document.getElementById('edit-nome').value.trim();
         const novaQtd = parseFloat(document.getElementById('edit-qtd').value);
         const novoPreco = parseFloat(document.getElementById('edit-preco').value);
         const novoMetodo = document.getElementById('edit-metodo').value;
-        
+
         if (!novoNome) { alert("Digite o nome do produto!"); return; }
         if (isNaN(novaQtd) || novaQtd <= 0) { alert("Quantidade inválida!"); return; }
         if (isNaN(novoPreco) || novoPreco <= 0) { alert("Preço inválido!"); return; }
-        
+
         item.nome = novoNome;
         item.qtd = novaQtd;
         item.preco = novoPreco;
         item.met = novoMetodo;
-        item.total = novoPreco * novaQtd;
-        
+        item.total = arredondar(novoPreco * novaQtd);
+
         if (fotoEdicaoTemp !== null) {
             item.foto = fotoEdicaoTemp;
+        } else if (fotoEdicaoRemovida) {
+            item.foto = null;
         }
-        
+
         salvarDados();
         renderizar();
         fecharModalEdicao();
         mostrarToast('✅ Produto editado com sucesso!');
     }
-    
+
     function removerFotoEdicao() {
         fotoEdicaoTemp = null;
+        fotoEdicaoRemovida = true;
         const preview = document.getElementById('edit-foto-preview');
         preview.style.display = 'none';
         preview.src = '';
         mostrarToast('🗑️ Foto removida');
     }
-    
+
     function fecharModalEdicao() {
         document.getElementById('modal-editar').style.display = 'none';
         editandoIndex = null;
         fotoEdicaoTemp = null;
     }
-    
+
     function removerItem(i) {
         if(confirm('Remover este item da lista?')) {
             dadosApp.usuarios[userLogado].lista.splice(i, 1);
@@ -1478,54 +1651,55 @@
             mostrarToast('🗑️ Item removido');
         }
     }
-    
+
     function finalizarCompra() {
         const itens = dadosApp.usuarios[userLogado].lista;
         if(itens.length === 0) { alert('Nenhum item na lista!'); return; }
         let gasto = 0, extra = 0;
         itens.forEach(it => { if(it.met === 'saldo') gasto += it.total; else extra += it.total; });
-        if(gasto > dadosApp.saldo) { alert(`Saldo insuficiente! Necessário: R$ ${gasto.toFixed(2)}`); return; }
-        if(confirm(`Confirmar compra?\n\n💰 Gasto do Saldo: R$ ${gasto.toFixed(2)}\n💵 Pagamento Extra: R$ ${extra.toFixed(2)}\n✅ Saldo restante: R$ ${(dadosApp.saldo - gasto).toFixed(2)}\n\nDeseja finalizar?`)) {
+        gasto = arredondar(gasto);
+        extra = arredondar(extra);
+        if(gasto > arredondar(dadosApp.saldo)) { alert(`Saldo insuficiente! Necessário: ${formatarMoeda(gasto)}`); return; }
+        if(confirm(`Confirmar compra?\n\n💰 Gasto do Saldo: ${formatarMoeda(gasto)}\n💵 Pagamento Extra: ${formatarMoeda(extra)}\n✅ Saldo restante: ${formatarMoeda(dadosApp.saldo - gasto)}\n\nDeseja finalizar?`)) {
             dadosApp.usuarios[userLogado].historico.push({
                 data: new Date().toISOString(),
-                itens: [...itens],
+                // Sem as fotos: o relatório não as mostra e elas enchiam o armazenamento a cada compra
+                itens: itens.map(({ foto, ...resto }) => resto),
                 gastoSaldo: gasto,
                 pagamentoExtra: extra,
                 supermercado: supermercadoAtual,
                 usuario: dadosApp.usuarios[userLogado].nome
             });
-            dadosApp.saldo -= gasto;
+            dadosApp.saldo = arredondar(dadosApp.saldo - gasto);
             dadosApp.usuarios[userLogado].lista = [];
             salvarDados();
             mostrarToast('✅ Compra finalizada com sucesso!');
             entrarApp();
         }
     }
-    
+
     function abrirMaster() {
         mostrarTela('painel-master');
         carregarListaMaster();
     }
-    
+
     function carregarListaMaster() {
         const listaDiv = document.getElementById('lista-usuarios-master');
         const totalSpan = document.getElementById('total-membros');
-        listaDiv.innerHTML = '';
         const usuarios = Object.values(dadosApp.usuarios);
         totalSpan.innerText = usuarios.length;
-        usuarios.forEach(u => {
-            listaDiv.innerHTML += `
+        // JSON.stringify + escaparHtml: o id vai seguro para dentro do onclick (string JS dentro de atributo HTML)
+        listaDiv.innerHTML = usuarios.map(u => `
                 <div class="usuario-item">
-                    <div class="usuario-foto">${u.foto ? `<img src="${u.foto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : u.nome.charAt(0).toUpperCase()}</div>
+                    <div class="usuario-foto">${u.foto ? `<img src="${escaparHtml(u.foto)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : escaparHtml(String(u.nome).charAt(0).toUpperCase())}</div>
                     <div style="flex:1;">
-                        <b>${u.nome}</b><br>
+                        <b>${escaparHtml(u.nome)}</b><br>
                         <small class="badge ${u.role === 'master' ? 'badge-warning' : 'badge-success'}">${u.role === 'master' ? 'MASTER' : 'MEMBRO'}</small>
                     </div>
-                    ${u.id !== 'master' ? `<button onclick="excluirUsuario('${u.id}')" style="width:35px; height:35px; background:#ff1744; color:white; border-radius:8px;">🗑️</button>` : ''}
-                </div>`;
-        });
+                    ${u.id !== 'master' ? `<button onclick="excluirUsuario(${escaparHtml(JSON.stringify(u.id))})" style="width:35px; height:35px; background:#ff1744; color:white; border-radius:8px;">🗑️</button>` : ''}
+                </div>`).join('');
     }
-    
+
     function excluirUsuario(uid) {
         if(confirm(`Excluir ${dadosApp.usuarios[uid].nome} permanentemente?`)) {
             delete dadosApp.usuarios[uid];
@@ -1534,7 +1708,7 @@
             mostrarToast('✅ Usuário excluído');
         }
     }
-    
+
     function mostrarRelatorioGeral() {
         let todasCompras = [];
         let totalGeral = 0;
@@ -1555,106 +1729,136 @@
         } else {
             conteudo.innerHTML = `
                 <div style="margin-bottom:20px; padding:10px; background:linear-gradient(135deg, #667eea20, #764ba220); border-radius:12px; text-align:center;">
-                    <b>💰 Total Geral Gasto: R$ ${totalGeral.toFixed(2)}</b>
+                    <b>💰 Total Geral Gasto: ${formatarMoeda(totalGeral)}</b>
                 </div>
                 <h4>👥 Gastos por Membro</h4>
-                ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${nome}: R$ ${valor.toFixed(2)}</div>`).join('')}
+                ${Object.entries(comprasPorUsuario).map(([nome, valor]) => `<div>${escaparHtml(nome)}: ${formatarMoeda(valor)}</div>`).join('')}
                 <h4 style="margin-top:15px;">📋 Últimas Compras</h4>
                 ${todasCompras.slice().reverse().slice(0, 20).map(compra => `
                     <div style="border-bottom:1px solid #eee; padding:10px; animation: fadeIn 0.3s ease-out;">
-                        <small>📅 ${new Date(compra.data).toLocaleString()}</small>
-                        <div><b>👤 ${compra.usuarioNome}</b></div>
-                        <div>💰 Saldo: R$ ${compra.gastoSaldo.toFixed(2)} | 💵 Extra: R$ ${compra.pagamentoExtra.toFixed(2)}</div>
-                        ${compra.supermercado ? `<div>🏪 ${compra.supermercado}</div>` : ''}
-                        <small>📦 ${compra.itens.length} itens</small>
+                        <small>📅 ${escaparHtml(new Date(compra.data).toLocaleString('pt-BR'))}</small>
+                        <div><b>👤 ${escaparHtml(compra.usuarioNome)}</b></div>
+                        <div>💰 Saldo: ${formatarMoeda(compra.gastoSaldo)} | 💵 Extra: ${formatarMoeda(compra.pagamentoExtra)}</div>
+                        ${compra.supermercado ? `<div>🏪 ${escaparHtml(compra.supermercado)}</div>` : ''}
+                        <small>📦 ${Array.isArray(compra.itens) ? compra.itens.length : 0} itens</small>
                     </div>
                 `).join('')}
             `;
         }
         document.getElementById('modal-relatorio').style.display = 'flex';
     }
-    
+
     function fecharModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
-    
+
     function alternarScanner() {
+        if (scannerParando) return;
         if(!scanner) {
             document.getElementById('reader').style.display = 'block';
             scanner = new Html5Qrcode("reader");
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+                if (scannerParando) return; // o leitor pode disparar várias vezes antes de parar
                 document.getElementById('codigo').value = txt;
                 handleCodigoBarras(txt);
                 pararScanner();
                 mostrarToast('📷 Código lido!');
-            }).catch(() => alert("Erro na câmera"));
+            }).catch(() => {
+                // A câmera não abriu: libera o leitor para uma nova tentativa (antes ele ficava travado)
+                scanner = null;
+                document.getElementById('reader').style.display = 'none';
+                alert("Erro na câmera");
+            });
         } else pararScanner();
     }
-    
+
     function pararScanner() {
-        if(scanner) scanner.stop().then(() => { scanner = null; document.getElementById('reader').style.display = 'none'; });
+        if (!scanner || scannerParando) return;
+        scannerParando = true;
+        const s = scanner;
+        // Promise.resolve().then: stop() pode lançar erro direto em vez de rejeitar
+        Promise.resolve().then(() => s.stop())
+            .catch(() => {})
+            .finally(() => {
+                scanner = null;
+                scannerParando = false;
+                document.getElementById('reader').style.display = 'none';
+            });
     }
-    
+
     function atualizarSaldoGlobal() {
         const novoSaldo = parseFloat(document.getElementById('input_saldo').value);
         if(!isNaN(novoSaldo) && novoSaldo >= 0) {
-            dadosApp.saldo = novoSaldo;
+            dadosApp.saldo = arredondar(novoSaldo);
             salvarDados();
             renderizar();
-            mostrarToast(`💰 Saldo atualizado: R$ ${novoSaldo.toFixed(2)}`);
+            mostrarToast(`💰 Saldo atualizado: ${formatarMoeda(novoSaldo)}`);
         } else {
             alert("Digite um valor válido!");
         }
     }
-    
+
     function exportarBackup() {
         const dataStr = JSON.stringify(dadosApp, null, 2);
+        // Blob em vez de data: URL: o Chrome não baixa data: URLs acima de ~2 MB (backups com fotos)
+        const url = URL.createObjectURL(new Blob([dataStr], { type: 'application/json' }));
         const link = document.createElement('a');
-        link.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        link.download = `backup_compras_${new Date().toISOString().slice(0,19)}.json`;
+        link.href = url;
+        link.download = `backup_compras_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        document.body.appendChild(link);
         link.click();
-        mostrarToast('💾 Backup exportado com sucesso!');
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        mostrarToast('💾 Backup exportado! Ele tem fotos, senhas cifradas e o histórico: guarde em local seguro.');
     }
-    
+
     function importarBackup() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
         input.onchange = (e) => {
             const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const backup = JSON.parse(event.target.result);
-                    if(confirm('⚠️ Isso substituirá TODOS os dados atuais. Continuar?')) {
-                        dadosApp = backup;
-                        salvarDados();
-                        mostrarToast('✅ Backup restaurado com sucesso!');
-                        location.reload();
-                    }
-                } catch(err) { mostrarToast('❌ Arquivo inválido!'); }
-            };
+            reader.onload = (event) => restaurarBackupDeTexto(event.target.result);
             reader.readAsText(file);
         };
         input.click();
     }
-    
+
+    // Valida antes de substituir: um JSON que não fosse backup apagava todos os dados
+    function restaurarBackupDeTexto(texto) {
+        let backup;
+        try { backup = JSON.parse(texto); } catch (err) { mostrarToast('❌ Arquivo inválido!'); return false; }
+        const usuarios = backup && backup.usuarios;
+        const valido = usuarios && typeof usuarios === 'object' && !Array.isArray(usuarios) &&
+            Object.values(usuarios).every(u => u && typeof u === 'object' && typeof u.nome === 'string');
+        if (!valido) { mostrarToast('❌ Esse arquivo não é um backup da Lista de Compras.'); return false; }
+        if (!confirm('⚠️ Isso substituirá TODOS os dados atuais. Continuar?')) return false;
+        dadosApp = backup;
+        if (!salvarDados()) { carregarDados(); return false; }
+        mostrarToast('✅ Backup restaurado com sucesso!');
+        location.reload();
+        return true;
+    }
+
     function resetarTodosDados() {
         if(confirm('⚠️ ATENÇÃO! Isso apagará TODOS os dados permanentemente!')) {
             if(confirm('ÚLTIMA CONFIRMAÇÃO: Todos os usuários e compras serão perdidos!')) {
                 dadosApp = { usuarios: {}, saldo: 1000, precos: {} };
                 dadosApp.usuarios["master"] = criarMaster();
                 salvarDados();
-                mostrarToast('🗑️ Dados resetados! Apenas o Master permanece.');
+                mostrarToast('🗑️ Dados resetados! Defina de novo a senha do Master.');
                 setTimeout(() => location.reload(), 1500);
             }
         }
     }
-    
+
     function logout() { sessionStorage.clear(); location.reload(); }
-    
-    window.onclick = (event) => { 
+
+    window.onclick = (event) => {
         if (event.target.classList.contains('modal')) {
+            if (event.target.id === 'modal-senha') { fecharModalSenha(); return; }
             event.target.style.display = 'none';
             if (event.target.id === 'modal-editar') {
                 editandoIndex = null;
@@ -1662,13 +1866,23 @@
             }
         }
     }
-    
+
     carregarDados();
-    
+
     window.onload = () => {
-        if(userLogado && dadosApp.usuarios[userLogado]) {
+        // Instalação nova ou depois de "Resetar tudo": o Master ainda não tem senha
+        if (!dadosApp.usuarios["master"].senhaHash) {
+            mostrarTela('tela-login');
+            abrirModalSenha('definir-master');
+            return;
+        }
+        const user = userLogado && dadosApp.usuarios[userLogado];
+        // Sessão aberta antes desta versão com o Master ainda na senha antiga: pede login de novo
+        if (user && !(user.role === 'master' && !user.senhaDefinida)) {
             entrarApp();
         } else {
+            userLogado = null;
+            sessionStorage.removeItem('user');
             mostrarTela('tela-login');
         }
     };
